@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Mail, Lock, Eye, EyeOff, AlertCircle } from 'lucide-react';
-import { supabase } from '@/integrations/supabase/client';
+// ...existing code...
+// Removed Supabase import; using AuthContext login
 import { useToast } from '@/hooks/use-toast';
 import { motion } from 'framer-motion';
 import PageTransition from '@/components/PageTransition';
@@ -16,7 +17,7 @@ const Login = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
   const location = useLocation();
-  const { user } = useAuth();
+  const { login, user } = useAuth();
   
   useEffect(() => {
     if (user) {
@@ -29,37 +30,17 @@ const Login = () => {
     e.preventDefault();
     setIsLoading(true);
     setError(null);
-    
     try {
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
-      
-      if (error) {
-        setError(error.message);
-        toast({
-          variant: "destructive",
-          title: "Login failed",
-          description: error.message,
-        });
-      } else if (data.user) {
-        const from = location.state?.from?.pathname || '/dashboard';
-        
-        toast({
-          title: "Login successful",
-          description: "Welcome back to Twende Travel!",
-        });
-        
-        navigate(from, { replace: true });
-      }
+      await login(email, password);
+      const from = (location.state as any)?.from?.pathname || '/dashboard';
+      navigate(from, { replace: true });
     } catch (err) {
-      console.error('Login error:', err);
-      setError('An unexpected error occurred. Please try again.');
+      const message = err instanceof Error ? err.message : 'Login failed';
+      setError(message);
       toast({
-        variant: "destructive",
-        title: "Login failed",
-        description: "An unexpected error occurred. Please try again.",
+        variant: 'destructive',
+        title: 'Login failed',
+        description: message,
       });
     } finally {
       setIsLoading(false);

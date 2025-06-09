@@ -7,7 +7,6 @@ import { ChatWindow } from "@/components/chat/ChatWindow";
 import { Card } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
-import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Plus, Search, User, Filter, Phone } from "lucide-react";
 import { Input } from "@/components/ui/input";

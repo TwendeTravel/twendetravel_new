@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Mail, Lock, Eye, EyeOff, User, AlertCircle } from 'lucide-react';
-import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -15,7 +14,7 @@ const Signup = () => {
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { register, user } = useAuth();
   
   useEffect(() => {
     if (user) {
@@ -40,42 +39,18 @@ const Signup = () => {
     }
     
     try {
-      const { data, error } = await supabase.auth.signUp({
+      // Call register from AuthContext
+      await register({
         email,
         password,
-        options: {
-          data: {
-            name: name,
-          },
-        },
+        first_name: name,
+        last_name: ''
       });
-      
-      if (error) {
-        setError(error.message);
-        toast({
-          variant: "destructive",
-          title: "Signup failed",
-          description: error.message,
-        });
-      } else if (data.user) {
-        try {
-          const { roleService } = await import('@/services/roles');
-          await roleService.createUserRole(data.user.id, 'traveller');
-        } catch (roleError) {
-          console.error('Error creating user role:', roleError);
-        }
-        
-        toast({
-          title: "Account created successfully",
-          description: "Welcome to Twende Travel! You may need to verify your email depending on settings.",
-        });
-        
-        if (data.session) {
-          navigate('/dashboard');
-        } else {
-          navigate('/login');
-        }
-      }
+      toast({
+        title: "Account created successfully",
+        description: "Welcome to Twende Travel!",
+      });
+      navigate('/dashboard', { replace: true });
     } catch (err) {
       console.error('Signup error:', err);
       setError('An unexpected error occurred. Please try again.');

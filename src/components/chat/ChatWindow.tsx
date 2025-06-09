@@ -7,7 +7,6 @@ import { ChatMessage } from "./ChatMessage";
 import { ChatInput } from "./ChatInput";
 import { Card } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { supabase } from "@/integrations/supabase/client";
 import { Loader } from "@/components/Loader";
 import { Phone, User, Calendar, Info } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
