@@ -1,0 +1,12 @@
+module.exports = {
+  content: ["./src/**/*.{js,ts,jsx,tsx,css}"],
+theme: {
+    extend: {
+      colors: {
+        background: "hsl(var(--background) / <alpha-value>)",
+        border:     "hsl(var(--border) / <alpha-value>)",
+        foreground: "hsl(var(--foreground) / <alpha-value>)",
+      },
+    },
+  },  plugins: [],
+}
