@@ -1,21 +1,18 @@
 /** @type {import('tailwindcss').Config} */
-
-import type { Config } from "tailwindcss";
-
-export default {
-	darkMode: ["class"],
-	content: [
-		"./index.html",
-		"./src/**/*.{js,ts,jsx,tsx,html,vue,md,mdx,astro}",
-		"./pages/**/*.{ts,tsx}",
-		"./components/**/*.{ts,tsx}",
-		"./app/**/*.{ts,tsx}",
-	],
-	safelist: [
-		'bg-background',
-		'bg-foreground',
-		// others you need
-	],
+module.exports = {
+  darkMode: ['class'],
+  content: [
+    './index.html',
+    './src/**/*.{js,ts,jsx,tsx,css,html}',
+    './pages/**/*.{js,ts,jsx,tsx,css,html}',
+    './components/**/*.{js,ts,jsx,tsx,css,html}',
+    './app/**/*.{js,ts,jsx,tsx,css,html}',
+  ],
+  safelist: [
+    'bg-background',
+    'bg-foreground',
+    // add any other patterns you need forced in
+  ],
 	prefix: "",
 	theme: {
 		container: {
@@ -166,5 +163,5 @@ export default {
 	},
 
 	plugins: [require("tailwindcss-animate")],
-} satisfies Config;
+};
 
