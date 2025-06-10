@@ -5,10 +5,13 @@ import type { Config } from "tailwindcss";
 export default {
 	darkMode: ["class"],
 	content: [
+		"./index.html",
+		"./src/**/*.{js,ts,jsx,tsx}",
+		"./src/**/*.{vue,html,md,mdx}",
+		"./src/**/*.{astro,html,js,jsx,ts,tsx}",
 		"./pages/**/*.{ts,tsx}",
 		"./components/**/*.{ts,tsx}",
 		"./app/**/*.{ts,tsx}",
-		"./src/**/*.{ts,tsx}",
 	],
 	prefix: "",
 	theme: {
@@ -54,20 +57,20 @@ export default {
 					DEFAULT: 'hsl(var(--card))',
 					foreground: 'hsl(var(--card-foreground))'
 				},
-                // Twende Travel custom colors
-                twende: {
-                    // Primary colors
-                    teal: '#1A5F7A',
-                    orange: '#FF7F50',
-                    green: '#4D724D',
-                    // Secondary colors
-                    beige: '#F2D2BD',
-                    skyblue: '#A3D5FF',
-                    terracotta: '#C35831',
-                    // Accent colors
-                    gold: '#FFD700',
-                    coral: '#FF6B6B',
-                },
+				// Twende Travel custom colors
+				twende: {
+					// Primary colors
+					teal: '#1A5F7A',
+					orange: '#FF7F50',
+					green: '#4D724D',
+					// Secondary colors
+					beige: '#F2D2BD',
+					skyblue: '#A3D5FF',
+					terracotta: '#C35831',
+					// Accent colors
+					gold: '#FFD700',
+					coral: '#FF6B6B',
+				},
 				sidebar: {
 					DEFAULT: 'hsl(var(--sidebar-background))',
 					foreground: 'hsl(var(--sidebar-foreground))',
@@ -134,28 +137,28 @@ export default {
 			animation: {
 				'accordion-down': 'accordion-down 0.2s ease-out',
 				'accordion-up': 'accordion-up 0.2s ease-out',
-                'fade-in': 'fade-in 0.5s ease-out',
-                'slide-up': 'slide-up 0.5s ease-out',
-                'slide-down': 'slide-down 0.5s ease-out',
-                'slide-left': 'slide-left 0.5s ease-out',
-                'slide-right': 'slide-right 0.5s ease-out',
-                'bounce': 'bounce 1s infinite',
-                'pulse': 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
-                'floating': 'floating 3s ease-in-out infinite',
-                'spin-slow': 'spin 3s linear infinite',
+				'fade-in': 'fade-in 0.5s ease-out',
+				'slide-up': 'slide-up 0.5s ease-out',
+				'slide-down': 'slide-down 0.5s ease-out',
+				'slide-left': 'slide-left 0.5s ease-out',
+				'slide-right': 'slide-right 0.5s ease-out',
+				'bounce': 'bounce 1s infinite',
+				'pulse': 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+				'floating': 'floating 3s ease-in-out infinite',
+				'spin-slow': 'spin 3s linear infinite',
 			},
-            fontFamily: {
-                'montserrat': ['Montserrat', 'sans-serif'],
-                'opensans': ['Open Sans', 'sans-serif'],
-                'poppins': ['Poppins', 'sans-serif'],
-                'caveat': ['Caveat', 'cursive'],
-            },
-            backgroundImage: {
-                'hero-pattern': "url('https://images.unsplash.com/photo-1482938289607-e9573fc25ebb?auto=format&fit=crop&w=1920&q=80')",
-                'kenya-pattern': "linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), url('https://images.unsplash.com/photo-1517022812141-23620dba5c23?auto=format&fit=crop&w=1920&q=80')",
-                'ghana-pattern': "linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), url('https://images.unsplash.com/photo-1472396961693-142e6e269027?auto=format&fit=crop&w=1920&q=80')",
-                'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',
-            }
+			fontFamily: {
+				'montserrat': ['Montserrat', 'sans-serif'],
+				'opensans': ['Open Sans', 'sans-serif'],
+				'poppins': ['Poppins', 'sans-serif'],
+				'caveat': ['Caveat', 'cursive'],
+			},
+			backgroundImage: {
+				'hero-pattern': "url('https://images.unsplash.com/photo-1482938289607-e9573fc25ebb?auto=format&fit=crop&w=1920&q=80')",
+				'kenya-pattern': "linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), url('https://images.unsplash.com/photo-1517022812141-23620dba5c23?auto=format&fit=crop&w=1920&q=80')",
+				'ghana-pattern': "linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), url('https://images.unsplash.com/photo-1472396961693-142e6e269027?auto=format&fit=crop&w=1920&q=80')",
+				'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',
+			}
 		}
 	},
 	plugins: [require("tailwindcss-animate")],

@@ -6,9 +6,7 @@ export default {
 	darkMode: ["class"],
 	content: [
 		"./index.html",
-		"./src/**/*.{js,ts,jsx,tsx}",
-		"./src/**/*.{vue,html,md,mdx}",
-		"./src/**/*.{astro,html,js,jsx,ts,tsx}",
+		"./src/**/*.{js,ts,jsx,tsx,html,vue,md,mdx,astro}",
 		"./pages/**/*.{ts,tsx}",
 		"./components/**/*.{ts,tsx}",
 		"./app/**/*.{ts,tsx}",
