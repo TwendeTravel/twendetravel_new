@@ -242,6 +242,12 @@
   }
 }
 
+@layer utilities {
+  .border-border {
+    border-color: hsl(var(--border));
+  }
+}
+
 /* Custom animations for floating elements */
 @keyframes float {
   0% {
