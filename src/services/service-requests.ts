@@ -1,4 +1,5 @@
-const API_URL = 'https://twendetravel.infinityfreeapp.com/api';
+import { apiFetch } from '@/lib/api';
+import { toast } from '@/components/ui/use-toast';
 
 export interface ServiceRequest {
   id: string;
@@ -12,35 +13,31 @@ export interface ServiceRequest {
 
 export const serviceRequestService = {
   async getUserRequests(): Promise<ServiceRequest[]> {
-    const token = localStorage.getItem('token');
-    const response = await fetch(`${API_URL}/service-requests`, {
-      headers: {
-        'Authorization': `Bearer ${token}`,
-      },
-    });
-    
-    if (!response.ok) {
-      throw new Error('Failed to fetch service requests');
+    try {
+      return await apiFetch<ServiceRequest[]>('service-requests');
+    } catch (error: any) {
+      toast({
+        title: 'Error fetching requests',
+        description: error.message || 'Unable to load service requests',
+        variant: 'destructive',
+      });
+      throw error;
     }
-    
-    return response.json();
   },
 
   async create(data: Partial<ServiceRequest>): Promise<ServiceRequest> {
-    const token = localStorage.getItem('token');
-    const response = await fetch(`${API_URL}/service-requests`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(data),
-    });
-    
-    if (!response.ok) {
-      throw new Error('Failed to create service request');
+    try {
+      return await apiFetch<ServiceRequest>('service-requests', {
+        method: 'POST',
+        body: JSON.stringify(data),
+      });
+    } catch (error: any) {
+      toast({
+        title: 'Error creating request',
+        description: error.message || 'Unable to create service request',
+        variant: 'destructive',
+      });
+      throw error;
     }
-    
-    return response.json();
   },
 };

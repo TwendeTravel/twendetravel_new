@@ -1,80 +1,59 @@
 
 import { toast } from "@/components/ui/use-toast";
-import type { Database } from "@/integrations/supabase/types";
+import { apiFetch } from "@/lib/api";
 
-export type Trip = Database['public']['Tables']['trips']['Row'];
-type TripInsert = Database['public']['Tables']['trips']['Insert'];
+export interface Trip {
+  id: string;
+  title: string;
+  description: string;
+  // ...other fields as defined by your backend
+}
+// Data shape for creating a trip (omit server-managed fields)
+export type TripInsert = Omit<Trip, 'id'>;
 
 export const tripService = {
-  async getAll() {
-    const { data, error } = await supabase
-      .from('trips')
-      .select('*');
-    
-    if (error) {
+  async getAll(): Promise<Trip[]> {
+    try {
+      return await apiFetch<Trip[]>('trips');
+    } catch (error: any) {
       toast({
         title: "Error fetching trips",
-        description: error.message,
+        description: error.message || 'Unable to load trips',
         variant: "destructive",
       });
       throw error;
     }
-    
-    return data as Trip[];
   },
 
-  async create(tripData: Omit<TripInsert, 'user_id' | 'created_at' | 'updated_at'>) {
-    // Get the current user ID
-    const { data: sessionData } = await supabase.auth.getSession();
-    const userId = sessionData.session?.user.id;
-    
-    if (!userId) {
-      toast({
-        title: "Authentication Error",
-        description: "You must be logged in to create a trip",
-        variant: "destructive",
+  async create(tripData: TripInsert): Promise<Trip> {
+    try {
+      return await apiFetch<Trip>('trips', {
+        method: 'POST',
+        body: JSON.stringify(tripData),
       });
-      throw new Error("User not authenticated");
-    }
-    
-    const { data, error } = await supabase
-      .from('trips')
-      .insert({
-        ...tripData,
-        user_id: userId
-      })
-      .select()
-      .single();
-    
-    if (error) {
+    } catch (error: any) {
       toast({
         title: "Error creating trip",
-        description: error.message,
+        description: error.message || 'Unable to create trip',
         variant: "destructive",
       });
       throw error;
     }
-    
-    return data as Trip;
   },
 
-  async update(id: string, tripData: Partial<Trip>) {
-    const { data, error } = await supabase
-      .from('trips')
-      .update(tripData)
-      .eq('id', id)
-      .select()
-      .single();
-    
-    if (error) {
+  async update(id: string, tripData: Partial<Trip>): Promise<Trip> {
+    try {
+      return await apiFetch<Trip>(`trips/${id}`, {
+        method: 'PUT',
+        body: JSON.stringify(tripData),
+      });
+    } catch (error: any) {
       toast({
         title: "Error updating trip",
-        description: error.message,
+        description: error.message || 'Unable to update trip',
         variant: "destructive",
       });
       throw error;
     }
-    
-    return data as Trip;
   }
 };

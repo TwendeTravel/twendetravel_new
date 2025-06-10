@@ -1,100 +1,67 @@
 
 import { toast } from "@/components/ui/use-toast";
-import type { Database } from "@/integrations/supabase/types";
+import { apiFetch } from "@/lib/api";
 
-export type Message = Database['public']['Tables']['messages']['Row'];
-type MessageInsert = Database['public']['Tables']['messages']['Insert'];
+/** A chat message record */
+export interface Message {
+  id: string;
+  conversation_id: string;
+  sender_id: string;
+  content: string;
+  status: string;
+  created_at: string;
+  updated_at?: string;
+}
+/** Data to send a new chat message */
+export interface MessageSendData {
+  conversation_id: string;
+  content: string;
+}
 
 export const messageService = {
-  async getByConversationId(conversationId: string) {
-    const { data, error } = await supabase
-      .from('messages')
-      .select('*')
-      .eq('conversation_id', conversationId)
-      .order('created_at', { ascending: true });
-
-    if (error) {
+  /** Fetch messages for a conversation */
+  async getByConversationId(conversationId: string): Promise<Message[]> {
+    try {
+      return await apiFetch<Message[]>(`conversations/${conversationId}/messages`);
+    } catch (error: any) {
       toast({
         title: "Error fetching messages",
-        description: error.message,
+        description: error.message || 'Unable to load messages',
         variant: "destructive",
       });
       throw error;
     }
-
-    return data;
   },
 
-  subscribeToNewMessages(conversationId: string, callback: (message: Message) => void) {
-    return supabase
-      .channel(`messages-${conversationId}`)
-      .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'messages',
-          filter: `conversation_id=eq.${conversationId}`
-        },
-        (payload) => callback(payload.new as Message)
-      )
-      .subscribe();
-  },
+  // Real-time subscriptions removed; consider WebSocket integration if needed
 
-  async send(message: Omit<MessageInsert, 'sender_id' | 'created_at' | 'updated_at' | 'status'>) {
-    const { data: sessionData } = await supabase.auth.getSession();
-    const userId = sessionData.session?.user.id;
-    
-    if (!userId) {
-      toast({
-        title: "Authentication Error",
-        description: "You must be logged in to send messages",
-        variant: "destructive",
+  /** Send a new message in a conversation */
+  async send(data: MessageSendData): Promise<Message> {
+    try {
+      return await apiFetch<Message>(`conversations/${data.conversation_id}/messages`, {
+        method: 'POST',
+        body: JSON.stringify({ content: data.content }),
       });
-      throw new Error("User not authenticated");
-    }
-
-    // Update the conversation's updated_at timestamp
-    await supabase
-      .from('conversations')
-      .update({ updated_at: new Date().toISOString() })
-      .eq('id', message.conversation_id);
-
-    const { data, error } = await supabase
-      .from('messages')
-      .insert({
-        ...message,
-        sender_id: userId,
-        status: 'sent'
-      })
-      .select()
-      .single();
-
-    if (error) {
+    } catch (error: any) {
       toast({
         title: "Error sending message",
-        description: error.message,
+        description: error.message || 'Unable to send message',
         variant: "destructive",
       });
       throw error;
     }
-
-    return data;
   },
 
-  async markAsRead(messageId: string) {
-    const { data, error } = await supabase
-      .from('messages')
-      .update({ status: 'read' })
-      .eq('id', messageId)
-      .select()
-      .single();
-
-    if (error) {
+  /** Mark a message as read */
+  async markAsRead(messageId: string): Promise<Message> {
+    try {
+      return await apiFetch<Message>(`messages/${messageId}`, {
+        method: 'PUT',
+        body: JSON.stringify({ status: 'read' }),
+      });
+    } catch (error) {
       console.error('Error marking message as read:', error);
-      return null;
+      return Promise.reject(error);
     }
-
-    return data;
-  }
+  },
 };

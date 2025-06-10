@@ -1,98 +1,67 @@
 
 import { toast } from "@/components/ui/use-toast";
-import type { Database } from "@/integrations/supabase/types";
+import { apiFetch } from "@/lib/api";
 
-export type ChatMessage = Database['public']['Tables']['messages']['Row'];
-export type ChatConversation = Database['public']['Tables']['conversations']['Row'];
+/** A chat message */
+export interface ChatMessage {
+  id: string;
+  conversation_id: string;
+  sender_id: string;
+  content: string;
+  created_at: string;
+}
+/** A chat conversation */
+export interface ChatConversation {
+  id: string;
+  traveler_id: string;
+  admin_id: string | null;
+  status: string;
+  // ...other fields
+}
 
 export const chatService = {
-  subscribeToMessages(conversationId: string, callback: (message: ChatMessage) => void) {
-    return supabase
-      .channel('messages')
-      .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'messages',
-          filter: `conversation_id=eq.${conversationId}`
-        },
-        (payload) => callback(payload.new as ChatMessage)
-      )
-      .subscribe();
-  },
-  
-  subscribeToConversationUpdates(conversationId: string, callback: (conversation: ChatConversation) => void) {
-    return supabase
-      .channel('conversation-updates')
-      .on(
-        'postgres_changes',
-        {
-          event: 'UPDATE',
-          schema: 'public',
-          table: 'conversations',
-          filter: `id=eq.${conversationId}`
-        },
-        (payload) => callback(payload.new as ChatConversation)
-      )
-      .subscribe();
-  },
-
-  async getConversation(conversationId: string) {
-    const { data, error } = await supabase
-      .from('conversations')
-      .select('*')
-      .eq('id', conversationId)
-      .single();
-
-    if (error) {
+  // Fetch a conversation by ID
+  async getConversation(conversationId: string): Promise<ChatConversation> {
+    try {
+      return await apiFetch<ChatConversation>(`conversations/${conversationId}`);
+    } catch (error: any) {
       toast({
         title: "Error fetching conversation",
-        description: error.message,
+        description: error.message || 'Unable to load conversation',
         variant: "destructive",
       });
       throw error;
     }
-
-    return data;
   },
 
-  async getMessages(conversationId: string) {
-    const { data, error } = await supabase
-      .from('messages')
-      .select('*')
-      .eq('conversation_id', conversationId)
-      .order('created_at', { ascending: true });
-
-    if (error) {
+  // Fetch messages for a conversation
+  async getMessages(conversationId: string): Promise<ChatMessage[]> {
+    try {
+      return await apiFetch<ChatMessage[]>(`conversations/${conversationId}/messages`);
+    } catch (error: any) {
       toast({
         title: "Error fetching messages",
-        description: error.message,
+        description: error.message || 'Unable to load messages',
         variant: "destructive",
       });
       throw error;
     }
-
-    return data;
   },
-  
-  async updateConversationStatus(conversationId: string, status: string) {
-    const { data, error } = await supabase
-      .from('conversations')
-      .update({ status, updated_at: new Date().toISOString() })
-      .eq('id', conversationId)
-      .select()
-      .single();
 
-    if (error) {
+  // Send a new message
+  async sendMessage(conversationId: string, content: string): Promise<ChatMessage> {
+    try {
+      return await apiFetch<ChatMessage>(`conversations/${conversationId}/messages`, {
+        method: 'POST',
+        body: JSON.stringify({ content }),
+      });
+    } catch (error: any) {
       toast({
-        title: "Error updating conversation",
-        description: error.message,
+        title: "Error sending message",
+        description: error.message || 'Unable to send message',
         variant: "destructive",
       });
       throw error;
     }
-
-    return data;
-  }
+  },
 };

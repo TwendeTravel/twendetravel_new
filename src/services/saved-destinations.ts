@@ -1,67 +1,45 @@
 import { toast } from "@/components/ui/use-toast";
-import type { Database } from "@/integrations/supabase/types";
+import { apiFetch } from "@/lib/api";
 
-export type SavedDestination = Database['public']['Tables']['saved_destinations']['Row'];
-type SavedDestinationInsert = Database['public']['Tables']['saved_destinations']['Insert'];
+/** A saved destination record */
+export interface SavedDestination {
+  id: string;
+  destination_id: string;
+  user_id: string;
+  created_at: string;
+}
+/** Data to save a new destination */
+export type SavedDestinationInsert = Omit<SavedDestination, 'id' | 'created_at'>;
 
 export const savedDestinationService = {
-  async getAll() {
-    const { data, error } = await supabase
-      .from('saved_destinations')
-      .select('*');
-    
-    if (error) {
+  async getAll(): Promise<SavedDestination[]> {
+    try {
+      return await apiFetch<SavedDestination[]>('saved-destinations');
+    } catch (error: any) {
       toast({
         title: "Error fetching saved destinations",
-        description: error.message,
+        description: error.message || 'Unable to load saved destinations',
         variant: "destructive",
       });
       throw error;
     }
-    
-    return data as SavedDestination[];
   },
 
-  async toggleSave(destinationId: string) {
-    const { data: existing } = await supabase
-      .from('saved_destinations')
-      .select()
-      .eq('destination_id', destinationId)
-      .maybeSingle();
-    
-    if (existing) {
-      const { error } = await supabase
-        .from('saved_destinations')
-        .delete()
-        .eq('destination_id', destinationId);
-      
-      if (error) {
-        toast({
-          title: "Error removing from saved",
-          description: error.message,
-          variant: "destructive",
-        });
-        throw error;
-      }
-      
-      return null;
-    } else {
-      const { data, error } = await supabase
-        .from('saved_destinations')
-        .insert([{ destination_id: destinationId } as any])
-        .select()
-        .single();
-      
-      if (error) {
-        toast({
-          title: "Error saving destination",
-          description: error.message,
-          variant: "destructive",
-        });
-        throw error;
-      }
-      
-      return data as SavedDestination;
+  /** Toggle saving a destination: adds if not saved, removes if already saved */
+  async toggleSave(destinationId: string): Promise<SavedDestination | null> {
+    try {
+      // Backend should handle toggling or provide separate endpoints
+      return await apiFetch<SavedDestination | null>(
+        `saved-destinations/toggle/${destinationId}`,
+        { method: 'POST' }
+      );
+    } catch (error: any) {
+      toast({
+        title: error instanceof Error ? error.message : 'Error toggling save',
+        description: 'Unable to update saved destinations',
+        variant: 'destructive',
+      });
+      throw error;
     }
   }
 };

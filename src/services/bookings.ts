@@ -1,63 +1,48 @@
 
 import { toast } from "@/components/ui/use-toast";
-import type { Database } from "@/integrations/supabase/types";
+import { apiFetch } from "@/lib/api";
 
-export type Booking = Database['public']['Tables']['bookings']['Row'];
-type BookingInsert = Database['public']['Tables']['bookings']['Insert'];
+/** Booking record returned by API */
+export interface Booking {
+  id: string;
+  trip_id: string;
+  user_id: string;
+  status: string;
+  // ...other fields from backend
+}
+/** Data for creating a booking */
+export type BookingInsert = Omit<Booking, 'id'>;
 
 export const bookingService = {
-  async create(bookingData: Omit<BookingInsert, 'user_id' | 'created_at' | 'updated_at'>) {
-    // Get the current user ID
-    const { data: sessionData } = await supabase.auth.getSession();
-    const userId = sessionData.session?.user.id;
-    
-    if (!userId) {
-      toast({
-        title: "Authentication Error",
-        description: "You must be logged in to create a booking",
-        variant: "destructive",
+  async create(bookingData: BookingInsert): Promise<Booking> {
+    try {
+      return await apiFetch<Booking>('bookings', {
+        method: 'POST',
+        body: JSON.stringify(bookingData),
       });
-      throw new Error("User not authenticated");
-    }
-    
-    const { data, error } = await supabase
-      .from('bookings')
-      .insert({
-        ...bookingData,
-        user_id: userId
-      })
-      .select()
-      .single();
-    
-    if (error) {
+    } catch (error: any) {
       toast({
         title: "Error creating booking",
-        description: error.message,
+        description: error.message || 'Unable to create booking',
         variant: "destructive",
       });
       throw error;
     }
-    
-    return data as Booking;
   },
 
-  async updateStatus(id: string, status: Booking['status']) {
-    const { data, error } = await supabase
-      .from('bookings')
-      .update({ status })
-      .eq('id', id)
-      .select()
-      .single();
-    
-    if (error) {
+  async updateStatus(id: string, status: Booking['status']): Promise<Booking> {
+    try {
+      return await apiFetch<Booking>(`bookings/${id}`, {
+        method: 'PUT',
+        body: JSON.stringify({ status }),
+      });
+    } catch (error: any) {
       toast({
         title: "Error updating booking",
-        description: error.message,
+        description: error.message || 'Unable to update booking',
         variant: "destructive",
       });
       throw error;
     }
-    
-    return data as Booking;
   }
 };
