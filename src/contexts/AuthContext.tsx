@@ -78,73 +78,30 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     checkAuth();
   }, []);
 
-  const login = async (email: string, password: string) => {
-    try {
-      const response = await fetch(`${API_URL}/login`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email, password }),
-      });
+  /* …existing code… */
+const login = async (email: string, password: string) => {
+  const response = await fetch(`${API_URL}/user/login`, {    // ← changed
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email, password }),
+  });
+  /* … */
+};
 
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.error);
-
-      localStorage.setItem('token', data.token);
-      setUser(data.user);
-
-      toast({
-        title: "Signed in successfully",
-        description: `Welcome back, ${data.user.email}!`,
-      });
-    } catch (error) {
-      console.error('Login error:', error);
-      toast({
-        title: "Login failed",
-        description: error instanceof Error ? error.message : "An error occurred during login",
-        variant: "destructive",
-      });
-      throw error;
-    }
-  };
-
-  const register = async (userData: {
-    email: string;
-    password: string;
-    first_name: string;
-    last_name: string;
-  }) => {
-    try {
-      const response = await fetch(`${API_URL}/register`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(userData),
-      });
-
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.error);
-
-      localStorage.setItem('token', data.token);
-      setUser(data.user);
-
-      toast({
-        title: "Registration successful",
-        description: "Your account has been created successfully!",
-      });
-    } catch (error) {
-      console.error('Registration error:', error);
-      toast({
-        title: "Registration failed",
-        description: error instanceof Error ? error.message : "An error occurred during registration",
-        variant: "destructive",
-      });
-      throw error;
-    }
-  };
-
+const register = async (userData: {
+  email: string;
+  password: string;
+  first_name: string;
+  last_name: string;
+}) => {
+  const response = await fetch(`${API_URL}/user/register`, { // ← changed
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(userData),
+  });
+  /* … */
+};
+/* …existing code… */
   const signOut = async () => {
     try {
       localStorage.removeItem('token');
