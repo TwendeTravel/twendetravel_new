@@ -4,7 +4,6 @@ import react from "@vitejs/plugin-react-swc";
 import path from "path";
 import { componentTagger } from "lovable-tagger";
 
-// https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
   server: {
     host: "::",
@@ -15,6 +14,10 @@ export default defineConfig(({ mode }) => ({
     VitePWA({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.ico', 'robots.txt', 'placeholder.svg'],
+      workbox: {
+        // raise the limit from 2 MiB to 5 MiB
+        maximumFileSizeToCacheInBytes: 5 * 1024 * 1024,
+      },
       manifest: {
         name: 'Twende Travel',
         short_name: 'TwendeTravel',
@@ -34,4 +37,9 @@ export default defineConfig(({ mode }) => ({
       "@": path.resolve(__dirname, "./src"),
     },
   },
+  // top‐level build options
+  build: {
+    // bump chunk‐size warning to 3000 KiB
+    chunkSizeWarningLimit: 3000
+  }
 }));
