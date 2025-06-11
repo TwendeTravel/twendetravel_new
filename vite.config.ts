@@ -8,24 +8,27 @@ export default defineConfig(({ mode }) => ({
   server: { host: "::", port: 8080 },
   plugins: [
     react(),
-
-    // ALWAYS register PWA plugin (even in dev)
-    VitePWA({
-      strategies: "generateSW",
-      registerType: "autoUpdate",
-      devOptions: { enabled: true },    // <-- enable virtual module in dev
-      includeAssets: ["favicon.ico", "robots.txt", "placeholder.svg"],
-      workbox: { maximumFileSizeToCacheInBytes: 5 * 1024 * 1024 },
-      manifest: {
-        name: "Twende Travel",
-        short_name: "TwendeTravel",
-        start_url: ".",
-        display: "standalone",
-        background_color: "#ffffff",
-        theme_color: "#ffffff",
-        icons: [{ src: "placeholder.svg", sizes: "any", type: "image/svg+xml" }],
-      },
-    }),
+    // only register PWA plugin in production
+    mode === 'production' &&
+      VitePWA({
+        strategies: 'generateSW',
+        registerType: 'autoUpdate',
+        includeAssets: ['favicon.ico', 'robots.txt', 'placeholder.svg'],
+        workbox: {
+          globDirectory: 'dist',
+          globPatterns: ['**/*.{js,wasm,css,html}'],
+          maximumFileSizeToCacheInBytes: 5 * 1024 * 1024,
+        },
+        manifest: {
+          name: 'Twende Travel',
+          short_name: 'TwendeTravel',
+          start_url: '.',
+          display: 'standalone',
+          background_color: '#ffffff',
+          theme_color: '#ffffff',
+          icons: [{ src: 'placeholder.svg', sizes: 'any', type: 'image/svg+xml' }],
+        },
+      }),
 
     // only run hot-reload tags in dev
     mode === "development" && componentTagger(),

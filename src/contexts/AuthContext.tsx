@@ -75,15 +75,28 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
   const register = async (email: string, password: string, full_name: string) => {
     setIsLoading(true);
-    const { data, error } = await supabase.auth.signUp({ email, password, options: { data: { full_name } } });
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        data: { full_name },
+        emailRedirectTo: import.meta.env.VITE_SUPABASE_REDIRECT_TO || window.location.origin
+      }
+    });
     setIsLoading(false);
     if (error) {
       toast({ title: 'Sign up failed', description: error.message, variant: 'destructive' });
       throw error;
     }
     const u = data.user;
-    setUser({ id: u.id, email: u.email!, full_name });
-    toast({ title: 'Sign up successful', description: 'Welcome!', });
+    if (data.session) {
+      // auto-logged in if session present
+      setUser({ id: u.id, email: u.email!, full_name });
+      toast({ title: 'Sign up successful', description: 'Welcome!' });
+    } else {
+      // email confirmation required
+      toast({ title: 'Check your email', description: 'Please confirm your address before logging in.' });
+    }
   };
 
   const signOut = async () => {
