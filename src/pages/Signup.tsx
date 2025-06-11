@@ -39,13 +39,8 @@ const Signup = () => {
     }
     
     try {
-      // Call register from AuthContext
-      await register({
-        email,
-        password,
-        first_name: name,
-        last_name: ''
-      });
+      // Call register from AuthContext (email, password, first_name, last_name)
+      await register(email, password, name, '');
       toast({
         title: "Account created successfully",
         description: "Welcome to Twende Travel!",

@@ -12,7 +12,6 @@ const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -28,7 +27,6 @@ const Login = () => {
   
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsLoading(true);
     setError(null);
     try {
       await login(email, password);
@@ -42,8 +40,6 @@ const Login = () => {
         title: 'Login failed',
         description: message,
       });
-    } finally {
-      setIsLoading(false);
     }
   };
   
@@ -265,11 +261,11 @@ const Login = () => {
                 <motion.button
                   type="submit"
                   className="btn-primary w-full py-3 relative overflow-hidden"
-                  disabled={isLoading}
+                  // disabled={isLoading}
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                 >
-                  {isLoading ? (
+                  {/* {isLoading ? (
                     <span className="flex items-center justify-center">
                       <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                         <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
@@ -277,9 +273,9 @@ const Login = () => {
                       </svg>
                       Signing In...
                     </span>
-                  ) : (
+                  ) : ( */}
                     "Sign In"
-                  )}
+                  {/* )} */}
                 </motion.button>
               </div>
             </form>

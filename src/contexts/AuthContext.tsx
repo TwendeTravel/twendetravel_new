@@ -1,29 +1,22 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { toast } from '@/hooks/use-toast';
+import { supabase } from '@/lib/supabaseClient';
 
+// User type with full name stored in metadata
 type User = {
-  user_id: string;
+  id: string;
   email: string;
-  first_name: string;
-  last_name: string;
-  role: string;
+  full_name?: string;
 };
 
 type AuthContextType = {
   user: User | null;
   isLoading: boolean;
   login: (email: string, password: string) => Promise<void>;
-  register: (userData: {
-    email: string;
-    password: string;
-    first_name: string;
-    last_name: string;
-  }) => Promise<void>;
+  register: (email: string, password: string, full_name: string) => Promise<void>;
   signOut: () => Promise<void>;
-  updateProfile: (data: Partial<User>) => Promise<void>;
+  updateProfile: (data: { full_name?: string }) => Promise<void>;
 };
-
-const API_URL = 'https://twendetravel.infinityfreeapp.com/api';
 
 const AuthContext = createContext<AuthContextType>({
   user: null,
@@ -45,114 +38,72 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Check for stored token and validate it
-    const checkAuth = async () => {
-      const token = localStorage.getItem('token');
-      if (!token) {
-        setIsLoading(false);
-        return;
+    // initialize session & listen for auth changes
+    (async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.user) {
+        const u = session.user;
+        setUser({ id: u.id, email: u.email!, full_name: u.user_metadata.full_name });
       }
-
-      try {
-        const response = await fetch(`${API_URL}/profile`, {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-          },
-        });
-
-        if (response.ok) {
-          const data = await response.json();
-          setUser(data.user);
-        } else {
-          // Token is invalid
-          localStorage.removeItem('token');
-        }
-      } catch (error) {
-        console.error('Auth check error:', error);
-        localStorage.removeItem('token');
-      }
-
       setIsLoading(false);
+    })();
+    const { data: listener } = supabase.auth.onAuthStateChange((_, session) => {
+      if (session?.user) {
+        const u = session.user;
+        setUser({ id: u.id, email: u.email!, full_name: u.user_metadata.full_name });
+      } else {
+        setUser(null);
+      }
+      setIsLoading(false);
+    });
+    return () => {
+      listener.subscription.unsubscribe();
     };
-
-    checkAuth();
   }, []);
 
-  /* …existing code… */
-const login = async (email: string, password: string) => {
-  const response = await fetch(`${API_URL}/user/login`, {    // ← changed
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ email, password }),
-  });
-  /* … */
-};
-
-const register = async (userData: {
-  email: string;
-  password: string;
-  first_name: string;
-  last_name: string;
-}) => {
-  const response = await fetch(`${API_URL}/user/register`, { // ← changed
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(userData),
-  });
-  /* … */
-};
-/* …existing code… */
-  const signOut = async () => {
-    try {
-      localStorage.removeItem('token');
-      setUser(null);
-      
-      toast({
-        title: "Signed out successfully",
-        description: "You've been logged out of your account.",
-      });
-    } catch (error) {
-      console.error('Error signing out:', error);
-      toast({
-        title: "Error signing out",
-        description: "There was a problem signing out. Please try again.",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const updateProfile = async (data: Partial<User>) => {
-    try {
-      const token = localStorage.getItem('token');
-      if (!token) throw new Error('Not authenticated');
-
-      const response = await fetch(`${API_URL}/profile`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-        },
-        body: JSON.stringify(data),
-      });
-
-      const responseData = await response.json();
-      if (!response.ok) throw new Error(responseData.error);
-
-      setUser(prev => prev ? { ...prev, ...responseData.user } : null);
-
-      toast({
-        title: "Profile updated",
-        description: "Your profile has been updated successfully.",
-      });
-    } catch (error) {
-      console.error('Profile update error:', error);
-      toast({
-        title: "Update failed",
-        description: error instanceof Error ? error.message : "An error occurred while updating your profile",
-        variant: "destructive",
-      });
+  const login = async (email: string, password: string) => {
+    setIsLoading(true);
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+    setIsLoading(false);
+    if (error) {
+      toast({ title: 'Login failed', description: error.message, variant: 'destructive' });
       throw error;
     }
+    const u = data.user;
+    setUser({ id: u.id, email: u.email!, full_name: u.user_metadata.full_name });
+  };
+
+  const register = async (email: string, password: string, full_name: string) => {
+    setIsLoading(true);
+    const { data, error } = await supabase.auth.signUp({ email, password, options: { data: { full_name } } });
+    setIsLoading(false);
+    if (error) {
+      toast({ title: 'Sign up failed', description: error.message, variant: 'destructive' });
+      throw error;
+    }
+    const u = data.user;
+    setUser({ id: u.id, email: u.email!, full_name });
+    toast({ title: 'Sign up successful', description: 'Welcome!', });
+  };
+
+  const signOut = async () => {
+    const { error } = await supabase.auth.signOut();
+    if (error) {
+      toast({ title: 'Error signing out', description: error.message, variant: 'destructive' });
+      throw error;
+    }
+    setUser(null);
+    toast({ title: 'Signed out successfully', description: "You've been logged out." });
+  };
+
+  const updateProfile = async (data: { full_name?: string }) => {
+    const { data: userData, error } = await supabase.auth.updateUser({ data });
+    if (error) {
+      toast({ title: 'Update failed', description: error.message, variant: 'destructive' });
+      throw error;
+    }
+    setUser({ id: userData.id, email: userData.email!, full_name: userData.user_metadata.full_name });
+    toast({ title: 'Profile updated', description: 'Your profile was updated.' });
   };
 
   const value = {

@@ -1,4 +1,4 @@
-const API_URL = 'https://twendetravel.infinityfreeapp.com/api';
+import { supabase } from '@/lib/supabaseClient';
 
 export interface Destination {
   id: string;
@@ -16,32 +16,28 @@ export interface Destination {
 
 export const destinationService = {
   async getAll(): Promise<Destination[]> {
-    const token = localStorage.getItem('token');
-    const response = await fetch(`${API_URL}/destinations`, {
-      headers: {
-        'Authorization': `Bearer ${token}`,
-      },
-    });
+    const { data, error } = await supabase
+      .from<Destination>('destinations')
+      .select('*');
     
-    if (!response.ok) {
-      throw new Error('Failed to fetch destinations');
+    if (error) {
+      throw error;
     }
     
-    return response.json();
+    return data;
   },
 
   async getById(id: string): Promise<Destination> {
-    const token = localStorage.getItem('token');
-    const response = await fetch(`${API_URL}/destinations/${id}`, {
-      headers: {
-        'Authorization': `Bearer ${token}`,
-      },
-    });
+    const { data, error } = await supabase
+      .from<Destination>('destinations')
+      .select('*')
+      .eq('id', id)
+      .single();
     
-    if (!response.ok) {
-      throw new Error('Failed to fetch destination');
+    if (error) {
+      throw error;
     }
     
-    return response.json();
+    return data;
   },
 };
