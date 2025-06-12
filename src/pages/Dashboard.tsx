@@ -30,6 +30,14 @@ const Dashboard = () => {
     }
   }, [activeTab, searchParams, setSearchParams]);
 
+  // Sync activeTab when URL search param changes (e.g. via sidebar clicks)
+  useEffect(() => {
+    const tabFromUrl = searchParams.get("tab") || "overview";
+    if (tabFromUrl !== activeTab) {
+      setActiveTab(tabFromUrl);
+    }
+  }, [searchParams]);
+
   return (
     <PageTransition>
       <div className="min-h-screen bg-background text-foreground">
