@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -72,7 +71,7 @@ export default function ServiceRequestsPanel({ extended = false }: ServiceReques
         <h3 className="text-lg font-medium mb-2">No service requests yet</h3>
         <p className="text-gray-500 mb-4">Create your first service request to get started with your travel plans</p>
         <Button asChild>
-          <Link to="/service-request">
+          <Link to="/dashboard?tab=services">
             <Plus className="mr-2 h-4 w-4" />
             New Service Request
           </Link>
@@ -130,7 +129,7 @@ export default function ServiceRequestsPanel({ extended = false }: ServiceReques
 
       <div className="text-center mt-4">
         <Button asChild>
-          <Link to="/service-request">
+          <Link to="/dashboard?tab=services">
             <Plus className="mr-2 h-4 w-4" />
             New Service Request
           </Link>
