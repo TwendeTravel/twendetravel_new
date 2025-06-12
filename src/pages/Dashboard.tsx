@@ -13,7 +13,7 @@ import CountryNewsWidget from "@/components/dashboard/CountryNewsWidget";
 import ServiceRequestsPanel from "@/components/dashboard/ServiceRequestsPanel";
 import PageTransition from "@/components/PageTransition";
 import FlightSearch from "@/pages/FlightSearch";
-import ServiceRequestForm from '@/components/ServiceRequestForm';
+import { ServiceRequestForm } from '@/components/ServiceRequestForm';
 
 const Dashboard = () => {
   const [searchParams, setSearchParams] = useSearchParams();
