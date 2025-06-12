@@ -18,6 +18,8 @@ async function searchAirport(code: string): Promise<{ skyId: string; entityId: s
   if (cachedAirport) {
     return { skyId: cachedAirport.skyId, entityId: cachedAirport.entityId };
   }
+  // Correct endpoint for airport search
+  // Note: endpoint is singular 'searchAirport'
   const url = `https://${API_HOST}/api/v1/flights/searchAirport?query=${encodeURIComponent(code)}`;
   const res = await fetch(url, {
     headers: {
@@ -87,14 +89,17 @@ export async function getFlightItinerary(
   if (!searchJson.status) {
     throw new Error('Error initiating flight search: ' + JSON.stringify(searchJson.message));
   }
+  // Extract session and itinerary info
   const sessionId: string = searchJson.data.context.sessionId;
-  const itineraryId: string = searchJson.data.id;
+  const itineraryId: string = searchJson.data.context.itineraryId ?? searchJson.data.id;
+  // Use legs array returned by initial search for details
+  const legsParam = searchJson.data.context.legs;
 
-  // Fetch detailed flight information
+  // Fetch detailed flight information using returned legs
   const detailsUrl = `https://${API_HOST}/api/v1/flights/getFlightDetails?sessionId=${encodeURIComponent(
     sessionId
   )}&itineraryId=${encodeURIComponent(itineraryId)}&legs=${encodeURIComponent(
-    JSON.stringify([{ origin, destination, date }])
+    JSON.stringify(legsParam)
   )}&adults=1&currency=USD&locale=en-US&market=en-US&cabinClass=economy&countryCode=US`;
 
   // Check cache in Supabase for current user
