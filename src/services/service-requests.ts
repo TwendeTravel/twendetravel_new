@@ -30,10 +30,10 @@ export const serviceRequestService = {
     if (error) throw error
     return data || []
   },
-  async createRequest(userId: string, items: ServiceRequestItem[], budget: number, totalPrice: number) {
+  async createRequest(userId: string, items: ServiceRequestItem[], budget: number, totalPrice: number, origin: string, destination: string, description: string) {
     const { data, error } = await supabase
       .from('service_requests')
-      .insert({ user_id: userId, items, budget, total_price: totalPrice, status: 'pending' })
+      .insert({ user_id: userId, origin, destination, description, items, budget, total_price: totalPrice, status: 'pending' })
       .select()
       .single()
     if (error) throw error

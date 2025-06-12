@@ -13,6 +13,7 @@ import CountryNewsWidget from "@/components/dashboard/CountryNewsWidget";
 import ServiceRequestsPanel from "@/components/dashboard/ServiceRequestsPanel";
 import PageTransition from "@/components/PageTransition";
 import FlightSearch from "@/pages/FlightSearch";
+import ServiceRequestForm from '@/components/ServiceRequestForm';
 
 const Dashboard = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -55,6 +56,12 @@ const Dashboard = () => {
                   className="text-muted-foreground data-[state=active]:bg-primary/20 data-[state=active]:text-foreground"
                 >
                   Flights
+                </TabsTrigger>
+                <TabsTrigger 
+                  value="services" 
+                  className="text-muted-foreground data-[state=active]:bg-primary/20 data-[state=active]:text-foreground"
+                >
+                  Services
                 </TabsTrigger>
                 <TabsTrigger 
                   value="requests" 
@@ -160,6 +167,18 @@ const Dashboard = () => {
 
               <TabsContent value="flights">
                 <FlightSearch />
+              </TabsContent>
+
+              <TabsContent value="services">
+                <Card className="bg-card/50 backdrop-blur-sm border-border/50 shadow-lg">
+                  <CardHeader>
+                    <CardTitle className="text-foreground">Request Services</CardTitle>
+                    <CardDescription className="text-muted-foreground">Select services and submit your request</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <ServiceRequestForm />
+                  </CardContent>
+                </Card>
               </TabsContent>
 
               <TabsContent value="requests">

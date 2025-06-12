@@ -53,11 +53,12 @@ const DashboardSidebar = () => {
       <nav className="p-4 space-y-1">
         <SidebarLink to="/dashboard" icon={<Home size={18} />} label="Dashboard" end />
         
-        {/* Service Request prominently placed near the top */}
-        <SidebarLink 
-          to="/service-request" 
-          icon={<FileText size={18} />} 
-          label="Request Service" 
+        {/* Link to Dashboard Services tab */}
+        <SidebarLink
+          to="/dashboard?tab=services"
+          icon={<FileText size={18} />}
+          label="Services"
+          end={false}
         />
         
         {/* Common links for all users */}

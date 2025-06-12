@@ -20,6 +20,11 @@ export function ServiceRequestForm() {
   const [budget, setBudget] = useState<number>(0);
   const [loading, setLoading] = useState(false);
 
+  // New fields
+  const [origin, setOrigin] = useState<string>('');
+  const [destinationInput, setDestinationInput] = useState<string>('');
+  const [description, setDescription] = useState<string>('');
+
   useEffect(() => {
     serviceRequestService.getServices()
       .then(data => setServices(data.map(s => ({ ...s, selected: false, qty: 1 }))))
@@ -52,6 +57,15 @@ export function ServiceRequestForm() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    // Validate origin/destination/description
+    if (!origin.trim() || !destinationInput.trim()) {
+      toast({ variant: 'destructive', title: 'Missing info', description: 'Provide origin and destination.' });
+      return;
+    }
+    if (!description.trim()) {
+      toast({ variant: 'destructive', title: 'Missing description', description: 'Describe your ideal experience.' });
+      return;
+    }
     if (!user) {
       toast({ variant: 'destructive', title: 'Not logged in', description: 'Please log in.' });
       return;
@@ -66,7 +80,16 @@ export function ServiceRequestForm() {
     }
     setLoading(true);
     try {
-      await serviceRequestService.createRequest(user.id, items, budget, totalPrice);
+      // Pass origin, destinationInput, description
+      await serviceRequestService.createRequest(
+        user.id,
+        items,
+        budget,
+        totalPrice,
+        origin.trim(),
+        destinationInput.trim(),
+        description.trim()
+      );
       toast({ title: 'Request submitted', description: 'We will follow up shortly.' });
       navigate('/dashboard?tab=requests');
     } catch (err: any) {
@@ -78,6 +101,45 @@ export function ServiceRequestForm() {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
+      {/* New inputs for origin & destination */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label className="block font-medium">Origin</label>
+          <input
+            type="text"
+            value={origin}
+            onChange={e => setOrigin(e.target.value)}
+            placeholder="e.g. Ghana"
+            className="input-field w-full"
+            required
+          />
+        </div>
+        <div>
+          <label className="block font-medium">Destination</label>
+          <input
+            type="text"
+            value={destinationInput}
+            onChange={e => setDestinationInput(e.target.value)}
+            placeholder="e.g. Kenya"
+            className="input-field w-full"
+            required
+          />
+        </div>
+      </div>
+
+      {/* New description textarea */}
+      <div>
+        <label className="block font-medium">Describe your ideal experience</label>
+        <textarea
+          value={description}
+          onChange={e => setDescription(e.target.value)}
+          placeholder="Tell us what you'd like..."
+          className="textarea-field w-full"
+          rows={4}
+          required
+        />
+      </div>
+
       <div className="grid grid-cols-1 gap-4">
         {services.map((s, idx) => (
           <div key={s.id} className="flex items-center space-x-4">
