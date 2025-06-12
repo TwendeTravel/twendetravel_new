@@ -56,15 +56,16 @@ const DashboardSidebar = () => {
   return (
     <aside className="hidden md:block w-64 bg-white dark:bg-gray-900 h-screen border-r dark:border-gray-800 fixed top-16 left-0 overflow-y-auto pb-20">
       <nav className="p-4 space-y-1">
-        <SidebarLink to="/dashboard" icon={<Home size={18} />} label="Dashboard" end />
-        
-        {/* Request Service link */}
+        {/* Services tab (requests or services) */}
         <SidebarLink
           to="/dashboard?tab=requests"
           icon={<FileText size={18} />}
-          label="Request Service"
+          label="Services"
           end
-          matchSearch={search => new URLSearchParams(search).get('tab') === 'requests'}
+          matchSearch={search => {
+            const tab = new URLSearchParams(search).get('tab');
+            return tab === 'requests' || tab === 'services';
+          }}
         />
 
         {/* Common links for all users */}
