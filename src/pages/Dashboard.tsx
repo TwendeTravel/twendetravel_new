@@ -39,12 +39,12 @@ const Dashboard = () => {
           <main className="flex-1 p-4 md:p-6 space-y-6 md:ml-64">
             <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
               <TabsList className="grid grid-cols-2 sm:grid-cols-7 w-full max-w-4xl bg-card/50 backdrop-blur-sm border border-border/50">
-                <TabsTrigger 
+                {/* <TabsTrigger 
                   value="overview" 
                   className="text-muted-foreground data-[state=active]:bg-primary/20 data-[state=active]:text-foreground"
                 >
                   Overview
-                </TabsTrigger>
+                </TabsTrigger> */}
                 <TabsTrigger 
                   value="trips" 
                   className="text-muted-foreground data-[state=active]:bg-primary/20 data-[state=active]:text-foreground"

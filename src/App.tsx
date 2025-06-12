@@ -12,7 +12,7 @@ import MainRoutes from "./routes/MainRoutes";
 const queryClient = new QueryClient();
 
 const App = () => (
-  <ThemeProvider defaultTheme="light" storageKey="twende-theme">
+  <ThemeProvider defaultTheme="dark" storageKey="twende-theme">
     <BrowserRouter>
       <QueryClientProvider client={queryClient}>
         <AuthProvider>
