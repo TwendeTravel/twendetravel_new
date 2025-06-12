@@ -19,6 +19,7 @@ import AdminUsers from "../pages/AdminUsers";
 import AdminTravelManagement from "../pages/AdminTravelManagement";
 import Chat from "../pages/Chat";
 import ServiceRequest from "@/pages/ServiceRequest";
+import FlightSearch from "@/pages/FlightSearch";
 
 export default function MainRoutes() {
   const location = useLocation();
@@ -123,6 +124,14 @@ export default function MainRoutes() {
           element={
             <AuthGuard>
               <ServiceRequest />
+            </AuthGuard>
+          } 
+        />
+        <Route 
+          path="/flights" 
+          element={
+            <AuthGuard>
+              <FlightSearch />
             </AuthGuard>
           } 
         />

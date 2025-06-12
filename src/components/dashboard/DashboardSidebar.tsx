@@ -1,4 +1,3 @@
-
 import { NavLink } from "react-router-dom";
 import { useTheme } from "@/components/ThemeProvider";
 import { useRole } from "@/hooks/useRole";
@@ -14,7 +13,8 @@ import {
   FileText,
   Users,
   Shield,
-  Globe
+  Globe,
+  Plane
 } from "lucide-react";
 
 interface SidebarLinkProps {
@@ -64,6 +64,7 @@ const DashboardSidebar = () => {
         <SidebarLink to="/destination" icon={<Map size={18} />} label="Destinations" />
         <SidebarLink to="/trip" icon={<Calendar size={18} />} label="My Trips" />
         <SidebarLink to="/chat" icon={<MessageSquare size={18} />} label="Messages" />
+        <SidebarLink to="/flights" icon={<Plane size={18} />} label="Flights" />
         
         {/* Admin specific links */}
         {!isLoading && isAdmin && (
