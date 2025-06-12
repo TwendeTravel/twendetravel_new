@@ -1,5 +1,6 @@
 
 import { toast } from "@/components/ui/use-toast";
+import { supabase } from '@/lib/supabaseClient';
 import type { Database } from "@/integrations/supabase/types";
 
 export type Review = Database['public']['Tables']['reviews']['Row'];

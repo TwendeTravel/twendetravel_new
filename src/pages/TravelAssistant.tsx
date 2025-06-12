@@ -7,6 +7,7 @@ import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
 import { Link } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
+import { askGemini } from '@/services/gemini';
 
 const SAMPLE_SUGGESTIONS = [
   "What are the best beaches in Ghana?",
@@ -36,37 +37,24 @@ const TravelAssistant = () => {
   const endOfMessagesRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!input.trim()) return;
-    
-    const newMessages = [...messages, { role: "user" as const, content: input }];
+    const newMessages = [...messages, { role: 'user' as const, content: input }];
     setMessages(newMessages);
-    setInput("");
-    
+    setInput('');
     setIsTyping(true);
-    
-    setTimeout(() => {
-      let response = "I'm sorry, I don't have information about that specific topic yet. Our team is continuously improving my knowledge base to better assist with your travel needs.";
-      
-      const lowerInput = input.toLowerCase();
-      if (lowerInput.includes("beach") || lowerInput.includes("beaches")) {
-        response = "Ghana has some beautiful beaches! Labadi Beach and Kokrobite Beach near Accra are popular spots with golden sands and activities. In Kenya, Diani Beach on the south coast is known for its white sands and clear waters. For a more secluded experience in Ghana, try Busua Beach in the Western Region.";
-      } else if (lowerInput.includes("food") || lowerInput.includes("cuisine") || lowerInput.includes("eat")) {
-        response = "Ghanaian cuisine features dishes like jollof rice, waakye (rice and beans), and fufu with soup. Don't miss street foods like kelewele (spiced fried plantains)! Kenyan cuisine includes ugali (cornmeal porridge) served with stews, nyama choma (grilled meat), and coastal seafood dishes. Both countries have amazing tropical fruits too!";
-      } else if (lowerInput.includes("pack") || lowerInput.includes("bring")) {
-        response = "For a trip to Ghana or Kenya, pack lightweight, breathable clothing, a hat, sunglasses, and strong sunscreen. If you're going on safari, bring neutral-colored clothes (avoid bright colors), comfortable walking shoes, binoculars, and a good camera. Don't forget insect repellent, any necessary medications, and a universal power adapter.";
-      } else if (lowerInput.includes("budget") || lowerInput.includes("cost") || lowerInput.includes("expensive")) {
-        response = "For a week in Accra, a mid-range budget would be around $700-1000 excluding flights. This covers accommodation ($50-100/night), food ($15-30/day), transportation, and some activities. Kenya can be similar, though safari experiences add significant costs ($150-500/day all-inclusive). Budget-conscious travelers can reduce costs by using public transport and eating at local establishments.";
-      } else if (lowerInput.includes("when") || lowerInput.includes("season") || lowerInput.includes("weather")) {
-        response = "The best time to visit Ghana is during the dry seasons (November-March and July-August). For Kenya, January-February and June-September offer the best wildlife viewing with less rain. The Great Migration in the Maasai Mara is typically from July to October. Both countries have warm climates year-round, though Ghana is generally more humid.";
-      } else if (lowerInput.includes("attraction") || lowerInput.includes("visit") || lowerInput.includes("see")) {
-        response = "In Ghana's Cape Coast, don't miss Cape Coast Castle and Elmina Castle (UNESCO World Heritage sites), Kakum National Park with its canopy walkway, and the beautiful beaches. In Kenya, the Maasai Mara Reserve, Amboseli National Park (views of Mt. Kilimanjaro), and the historic Fort Jesus in Mombasa are must-visit sites.";
-      }
-      
-      setMessages([...newMessages, { role: "assistant" as const, content: response }]);
+    try {
+      const response = await askGemini(input);
+      setMessages([...newMessages, { role: 'assistant' as const, content: response }]);
+    } catch (error: any) {
+      const msg = error.message.includes('Offline')
+        ? 'You are offline and no cached response is available.'
+        : 'Sorry, something went wrong. Please try again later.';
+      setMessages([...newMessages, { role: 'assistant' as const, content: msg }]);
+    } finally {
       setIsTyping(false);
-    }, 1500);
+    }
   };
 
   const handleSuggestionClick = (suggestion: string) => {

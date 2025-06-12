@@ -5,6 +5,9 @@ import { useNavigate } from 'react-router-dom';
 import { serviceRequestService, Service, ServiceRequestItem } from '@/services/service-requests';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Button } from '@/components/ui/button';
+import { adminAssignmentService } from '@/services/admin-assignments';
+import { conversationService } from '@/services/conversations';
+import { messageService } from '@/services/messages';
 
 interface ServiceWithState extends Service {
   selected: boolean;
@@ -80,8 +83,7 @@ export function ServiceRequestForm() {
     }
     setLoading(true);
     try {
-      // Pass origin, destinationInput, description
-      await serviceRequestService.createRequest(
+      const newReq = await serviceRequestService.createRequest(
         user.id,
         items,
         budget,
@@ -91,6 +93,25 @@ export function ServiceRequestForm() {
         description.trim()
       );
       toast({ title: 'Request submitted', description: 'We will follow up shortly.' });
+      // Auto-message admin about new service request
+      (async () => {
+        try {
+          const adminId = await adminAssignmentService.getAssignmentForTraveler(user.id);
+          if (adminId) {
+            const conv = await conversationService.create({ admin_id: adminId });
+            const servicesList = items
+              .map(({ service_id, qty }) => {
+                const svc = services.find(s => s.id === service_id);
+                return `${svc?.name ?? 'Service'} x${qty}`;
+              })
+              .join(', ');
+            const msgText = `New service request from ${origin.trim()} ➔ ${destinationInput.trim()}: ${servicesList}. Budget: $${budget}.`;
+            await messageService.sendMessage(conv.id, msgText);
+          }
+        } catch (err) {
+          console.error('Failed to auto-notify admin:', err);
+        }
+      })();
       navigate('/dashboard?tab=requests');
     } catch (err: any) {
       toast({ variant: 'destructive', title: 'Error', description: err.message });
