@@ -53,7 +53,7 @@ export function ServiceRequestForm() {
 
   const totalPrice = services
     .filter(s => s.selected)
-    .reduce((sum, s) => sum + s.rate * s.qty, 0);
+    .reduce((sum, s) => sum + ((s.rate ?? 0) * s.qty), 0);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -150,7 +150,9 @@ export function ServiceRequestForm() {
             />
             <label htmlFor={`svc-${s.id}`} className="flex-1">
               <div className="font-medium">{s.name}</div>
-              <div className="text-sm text-muted-foreground">${s.rate.toFixed(2)}</div>
+              {s.rate != null && (
+                <div className="text-sm text-muted-foreground">${s.rate.toFixed(2)}</div>
+              )}
             </label>
             {s.selected && (
               <input
