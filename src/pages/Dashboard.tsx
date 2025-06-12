@@ -17,26 +17,9 @@ import { ServiceRequestForm } from '@/components/ServiceRequestForm';
 
 const Dashboard = () => {
   const [searchParams, setSearchParams] = useSearchParams();
-  const tabFromUrl = searchParams.get("tab");
-  const [activeTab, setActiveTab] = useState(tabFromUrl || "overview");
+  // Derive active tab directly from the URL search param
+  const activeTab = searchParams.get("tab") || "overview";
 
-  useEffect(() => {
-    // Update URL when tab changes
-    if (activeTab === "overview") {
-      searchParams.delete("tab");
-      setSearchParams(searchParams);
-    } else {
-      setSearchParams({ tab: activeTab });
-    }
-  }, [activeTab, searchParams, setSearchParams]);
-
-  // Sync activeTab when URL search param changes (e.g. via sidebar clicks)
-  useEffect(() => {
-    const tabFromUrl = searchParams.get("tab") || "overview";
-    if (tabFromUrl !== activeTab) {
-      setActiveTab(tabFromUrl);
-    }
-  }, [searchParams]);
 
   return (
     <PageTransition>
@@ -45,7 +28,18 @@ const Dashboard = () => {
         <div className="flex">
           <DashboardSidebar />
           <main className="flex-1 p-4 md:p-6 space-y-6 md:ml-64">
-            <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+            <Tabs
+              value={activeTab}
+              onValueChange={(value) => {
+                // Update URL to sync tabs and sidebar
+                if (value === "overview") {
+                  setSearchParams({});
+                } else {
+                  setSearchParams({ tab: value });
+                }
+              }}
+              className="space-y-6"
+            >
               <TabsList className="grid grid-cols-2 sm:grid-cols-7 w-full max-w-4xl bg-card/50 backdrop-blur-sm border border-border/50">
                 {/* <TabsTrigger 
                   value="overview" 
