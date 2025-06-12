@@ -9,8 +9,15 @@ function getCacheKey(prompt: string): string {
 }
 
 // Response shape for generateContent endpoint
+// Response shape for generateContent endpoint
 interface GeminiResponse {
-  candidates: { content: { text: string } }[];
+  candidates: {
+    content: {
+      parts: { text: string }[];  // array of text segments
+      role: string;
+    };
+    // finishReason, avgLogprobs, etc. can be present
+  }[];
 }
 
 // Ask Gemini model for a response to the given prompt
@@ -48,7 +55,9 @@ export async function askGemini(prompt: string): Promise<string> {
   }
 
   const data = (await response.json()) as GeminiResponse;
-  const text = data.candidates?.[0]?.content.text.trim() || '';
+  // Extract and concatenate text parts from the first candidate
+  const parts = data.candidates?.[0]?.content.parts || [];
+  const text = parts.map(part => part.text).join('').trim();
 
   // Cache the response
   try {
