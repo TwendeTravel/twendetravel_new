@@ -18,7 +18,7 @@ async function searchAirport(code: string): Promise<{ skyId: string; entityId: s
   if (cachedAirport) {
     return { skyId: cachedAirport.skyId, entityId: cachedAirport.entityId };
   }
-  const url = `https://${API_HOST}/api/v1/flights/searchAirports?query=${encodeURIComponent(code)}`;
+  const url = `https://${API_HOST}/api/v1/flights/searchAirport?query=${encodeURIComponent(code)}`;
   const res = await fetch(url, {
     headers: {
       'X-RapidAPI-Key': API_KEY,
