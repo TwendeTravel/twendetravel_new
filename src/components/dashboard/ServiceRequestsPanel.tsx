@@ -102,7 +102,7 @@ export default function ServiceRequestsPanel({ extended = false }: ServiceReques
           
           <div className="mt-3 grid grid-cols-2 gap-2 text-sm">
             <div>
-              <span className="text-gray-500">Service:</span> {request.service_type.replace('_', ' ')}
+              <span className="text-gray-500">Service:</span> {request.service_type?.replace('_', ' ') ?? ''}
             </div>
             <div>
               <span className="text-gray-500">Budget:</span> ${request.budget.toLocaleString()}
