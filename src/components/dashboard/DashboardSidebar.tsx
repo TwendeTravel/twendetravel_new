@@ -64,7 +64,8 @@ const DashboardSidebar = () => {
         <SidebarLink to="/destination" icon={<Map size={18} />} label="Destinations" />
         <SidebarLink to="/trip" icon={<Calendar size={18} />} label="My Trips" />
         <SidebarLink to="/chat" icon={<MessageSquare size={18} />} label="Messages" />
-        <SidebarLink to="/flights" icon={<Plane size={18} />} label="Flights" />
+        {/* Flights tab within dashboard */}
+        <SidebarLink to="/dashboard?tab=flights" icon={<Plane size={18} />} label="Flights" />
         
         {/* Admin specific links */}
         {!isLoading && isAdmin && (

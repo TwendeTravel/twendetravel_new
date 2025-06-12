@@ -29,7 +29,27 @@ export async function getFlightItinerary(
   date: string
 ): Promise<Itinerary> {
   const legsParam = [{ destination, origin, date }];
-  const path = `/api/v1/flights/getFlightDetails?legs=${encodeURIComponent(
+  // First, initiate a search to get sessionId and itineraryId
+  const searchPath = `/api/v2/flights/searchFlights?legs=${encodeURIComponent(
+    JSON.stringify(legsParam)
+  )}&adults=1&currency=USD&locale=en-US&market=en-US&cabinClass=economy&countryCode=US`;
+  const searchRes = await fetch(`https://${API_HOST}${searchPath}`, {
+    headers: {
+      'X-RapidAPI-Key': API_KEY,
+      'X-RapidAPI-Host': API_HOST
+    }
+  });
+  const searchJson = await searchRes.json();
+  if (!searchJson.status) {
+    throw new Error('Error initiating flight search: ' + JSON.stringify(searchJson.message));
+  }
+  const sessionId: string = searchJson.data.context.sessionId;
+  const itineraryId: string = searchJson.data.id;
+
+  // Then fetch detailed flight information
+  const detailsPath = `/api/v1/flights/getFlightDetails?sessionId=${encodeURIComponent(
+    sessionId
+  )}&itineraryId=${encodeURIComponent(itineraryId)}&legs=${encodeURIComponent(
     JSON.stringify(legsParam)
   )}&adults=1&currency=USD&locale=en-US&market=en-US&cabinClass=economy&countryCode=US`;
 
@@ -51,7 +71,7 @@ export async function getFlightItinerary(
   }
 
   // Fetch new data from API
-  const res = await fetch(`https://${API_HOST}${path}`, {
+  const res = await fetch(`https://${API_HOST}${detailsPath}`, {
     headers: {
       'X-RapidAPI-Key': API_KEY,
       'X-RapidAPI-Host': API_HOST

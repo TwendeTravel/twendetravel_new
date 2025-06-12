@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -13,6 +12,7 @@ import RecentActivity from "@/components/dashboard/RecentActivity";
 import CountryNewsWidget from "@/components/dashboard/CountryNewsWidget";
 import ServiceRequestsPanel from "@/components/dashboard/ServiceRequestsPanel";
 import PageTransition from "@/components/PageTransition";
+import FlightSearch from "@/pages/FlightSearch";
 
 const Dashboard = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -37,7 +37,7 @@ const Dashboard = () => {
           <DashboardSidebar />
           <main className="flex-1 p-4 md:p-6 space-y-6 md:ml-64">
             <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-              <TabsList className="grid grid-cols-2 sm:grid-cols-6 w-full max-w-4xl bg-card/50 backdrop-blur-sm border border-border/50">
+              <TabsList className="grid grid-cols-2 sm:grid-cols-7 w-full max-w-4xl bg-card/50 backdrop-blur-sm border border-border/50">
                 <TabsTrigger 
                   value="overview" 
                   className="text-muted-foreground data-[state=active]:bg-primary/20 data-[state=active]:text-foreground"
@@ -49,6 +49,12 @@ const Dashboard = () => {
                   className="text-muted-foreground data-[state=active]:bg-primary/20 data-[state=active]:text-foreground"
                 >
                   My Trips
+                </TabsTrigger>
+                <TabsTrigger 
+                  value="flights" 
+                  className="text-muted-foreground data-[state=active]:bg-primary/20 data-[state=active]:text-foreground"
+                >
+                  Flights
                 </TabsTrigger>
                 <TabsTrigger 
                   value="requests" 
@@ -150,6 +156,10 @@ const Dashboard = () => {
                     <UpcomingTrips extended={true} />
                   </CardContent>
                 </Card>
+              </TabsContent>
+
+              <TabsContent value="flights">
+                <FlightSearch />
               </TabsContent>
 
               <TabsContent value="requests">
