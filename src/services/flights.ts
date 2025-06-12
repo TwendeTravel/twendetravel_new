@@ -126,12 +126,33 @@ export async function getFlightItinerary(
       'X-RapidAPI-Host': API_HOST
     }
   });
-  const json = await res.json();
-  if (!json.status) {
-    // Include API error details
-    throw new Error('Error fetching flights: ' + JSON.stringify(json.message));
+  const detailsJson = await res.json();
+  if (!detailsJson.status) {
+    throw new Error('Error fetching flights: ' + JSON.stringify(detailsJson.message));
   }
-  const itinerary: Itinerary = json.data.itinerary;
+  // Determine if itinerary is returned or we need to fetch complete results
+  let itinerary: Itinerary;
+  if (detailsJson.data.itinerary) {
+    itinerary = detailsJson.data.itinerary;
+  } else if (detailsJson.data.bookingSessionId) {
+    // Fetch complete itinerary
+    const completeUrl = `https://${API_HOST}/api/v1/flights/getFlightDetailsComplete?bookingSessionId=${encodeURIComponent(
+      detailsJson.data.bookingSessionId
+    )}`;
+    const completeRes = await fetch(completeUrl, {
+      headers: {
+        'X-RapidAPI-Key': API_KEY,
+        'X-RapidAPI-Host': API_HOST
+      }
+    });
+    const completeJson = await completeRes.json();
+    if (!completeJson.status || !completeJson.data.itinerary) {
+      throw new Error('Error completing flight details: ' + JSON.stringify(completeJson.message || completeJson));
+    }
+    itinerary = completeJson.data.itinerary;
+  } else {
+    throw new Error('Unexpected response format from getFlightDetails');
+  }
 
   // Cache search and results in Supabase under user
   await supabase.from('flight_searches').insert({
