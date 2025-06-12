@@ -31,8 +31,16 @@ const INITIAL_MESSAGES: Message[] = [
 ];
 
 const TravelAssistant = () => {
+  const storageKey = 'travel_assistant_messages';
   const [input, setInput] = useState("");
-  const [messages, setMessages] = useState<Message[]>(INITIAL_MESSAGES);
+  const [messages, setMessages] = useState<Message[]>(() => {
+    try {
+      const stored = localStorage.getItem(storageKey);
+      return stored ? JSON.parse(stored) as Message[] : INITIAL_MESSAGES;
+    } catch {
+      return INITIAL_MESSAGES;
+    }
+  });
   const [isTyping, setIsTyping] = useState(false);
   const endOfMessagesRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
@@ -69,7 +77,11 @@ const TravelAssistant = () => {
     });
   };
   
+  // Persist messages and scroll into view on change
   useEffect(() => {
+    try {
+      localStorage.setItem(storageKey, JSON.stringify(messages));
+    } catch {}
     endOfMessagesRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
