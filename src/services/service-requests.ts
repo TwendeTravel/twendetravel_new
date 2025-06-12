@@ -38,6 +38,26 @@ export const serviceRequestService = {
       .single()
     if (error) throw error
     return data
+  },
+  /**
+   * Fetch all service requests for the currently signed-in user.
+   */
+  async getUserRequests() {
+    // get current session & user
+    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+    if (sessionError) throw sessionError;
+    const user = session?.user;
+    if (!user) throw new Error('Not authenticated');
+    // query user-specific requests
+    const { data, error } = await supabase
+      .from('service_requests')
+      .select('*')
+      .eq('user_id', user.id);
+    if (error) {
+      toast({ variant: 'destructive', title: 'Error', description: error.message });
+      throw error;
+    }
+    return data || [];
   }
 }
 
