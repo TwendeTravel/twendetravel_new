@@ -101,7 +101,7 @@ export default function ServiceRequestsPanel({ extended = false }: ServiceReques
         <div key={request.id} className="bg-card/80 backdrop-blur-sm border border-border/50 rounded-lg p-4">
           <div className="flex justify-between items-start mb-2">
             <div className="flex-1">
-              <h3 className="text-base font-semibold">{request.destination}</h3>
+              <h3 className="text-base font-semibold">From {request.origin} to {request.destination}</h3>
               <div className="text-sm text-gray-500 flex items-center mt-1">
                 <Calendar className="h-3.5 w-3.5 mr-1" />
                 {formatDate(request.start_date)} - {formatDate(request.end_date)}
