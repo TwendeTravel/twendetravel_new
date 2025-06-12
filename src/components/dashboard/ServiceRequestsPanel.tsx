@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Calendar, FileText, Plus } from "lucide-react";
 import { Link } from "react-router-dom";
 import { serviceRequestService, ServiceRequestItem } from "@/services/service-requests";
+import type { Service } from "@/services/service-requests";
 import { toast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 
@@ -26,6 +27,7 @@ const getStatusColor = (status: string) => {
 export default function ServiceRequestsPanel({ extended = false }: ServiceRequestsPanelProps) {
   const [requests, setRequests] = useState<ServiceRequest[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [services, setServices] = useState<Service[]>([]);
 
   useEffect(() => {
     const fetchRequests = async () => {
@@ -46,6 +48,16 @@ export default function ServiceRequestsPanel({ extended = false }: ServiceReques
     };
 
     fetchRequests();
+  }, []);
+
+  // Load all service definitions for display
+  useEffect(() => {
+    serviceRequestService.getServices()
+      .then((data) => setServices(data))
+      .catch((err) => {
+        console.error("Failed to load service definitions:", err);
+        toast({ title: "Error", description: "Failed to load services", variant: "destructive" });
+      });
   }, []);
 
   const formatDate = (dateString: string) => {
@@ -102,7 +114,17 @@ export default function ServiceRequestsPanel({ extended = false }: ServiceReques
           
           <div className="mt-3 grid grid-cols-2 gap-2 text-sm">
             <div>
-              <span className="text-gray-500">Service:</span> {request.service_type?.replace('_', ' ') ?? ''}
+              <span className="text-gray-500">Service:</span>
+              <div className="ml-2 space-y-1">
+                {request.items.map(({ service_id, qty }) => {
+                  const svc = services.find((s) => s.id === String(service_id));
+                  return (
+                    <div key={service_id}>
+                      {svc?.name ?? 'Unknown Service'} × {qty}
+                    </div>
+                  );
+                })}
+              </div>
             </div>
             <div>
               <span className="text-gray-500">Budget:</span> ${request.budget.toLocaleString()}
