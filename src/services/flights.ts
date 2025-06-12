@@ -109,7 +109,7 @@ export async function getFlightItinerary(
     .eq('user_id', userId)
     .order('searched_at', { ascending: false })
     .limit(1)
-    .single();
+    .maybeSingle();
   if (cached?.itinerary) {
     return cached.itinerary as Itinerary;
   }
