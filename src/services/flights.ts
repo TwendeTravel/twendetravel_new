@@ -1,7 +1,45 @@
 import { supabase } from '@/lib/supabaseClient';
 
 const API_HOST = 'sky-scrapper.p.rapidapi.com';
+// Supabase table for airport caching
+const AIRPORT_TABLE = 'airport_cache';
 const API_KEY = import.meta.env.VITE_RAPIDAPI_KEY as string;
+
+/**
+ * Search airport by IATA code to get skyId and entityId
+ */
+async function searchAirport(code: string): Promise<{ skyId: string; entityId: string }> {
+  // Check persistent cache in Supabase
+  const { data: cachedAirport, error: cacheErr } = await supabase
+    .from(AIRPORT_TABLE)
+    .select('skyId, entityId')
+    .eq('code', code)
+    .single();
+  if (cachedAirport) {
+    return { skyId: cachedAirport.skyId, entityId: cachedAirport.entityId };
+  }
+  const url = `https://${API_HOST}/api/v1/flights/searchAirports?query=${encodeURIComponent(code)}`;
+  const res = await fetch(url, {
+    headers: {
+      'X-RapidAPI-Key': API_KEY,
+      'X-RapidAPI-Host': API_HOST,
+    },
+  });
+  const json = await res.json();
+  if (!json.status || !json.data || json.data.length === 0) {
+    throw new Error(`Airport not found for code: ${code}`);
+  }
+  const airport = json.data[0];
+  const result = { skyId: airport.skyId || airport.id, entityId: airport.entityId };
+  // Persist cache in Supabase
+  await supabase.from(AIRPORT_TABLE).insert({
+    code,
+    skyId: result.skyId,
+    entityId: result.entityId,
+    fetched_at: new Date().toISOString(),
+  });
+  return result;
+}
 
 export interface AgentOption {
   id: string;
@@ -28,16 +66,22 @@ export async function getFlightItinerary(
   destination: string,
   date: string
 ): Promise<Itinerary> {
-  const legsParam = [{ destination, origin, date }];
-  // First, initiate a search to get sessionId and itineraryId
-  const searchPath = `/api/v2/flights/searchFlights?legs=${encodeURIComponent(
-    JSON.stringify(legsParam)
+  // Lookup origin/destination sky and entity IDs
+  const org = await searchAirport(origin);
+  const dest = await searchAirport(destination);
+  // Initiate flight search to get sessionId and itineraryId
+  const searchUrl = `https://${API_HOST}/api/v2/flights/searchFlights?originSkyId=${encodeURIComponent(
+    org.skyId
+  )}&destinationSkyId=${encodeURIComponent(dest.skyId)}&originEntityId=${encodeURIComponent(
+    org.entityId
+  )}&destinationEntityId=${encodeURIComponent(dest.entityId)}&date=${encodeURIComponent(
+    date
   )}&adults=1&currency=USD&locale=en-US&market=en-US&cabinClass=economy&countryCode=US`;
-  const searchRes = await fetch(`https://${API_HOST}${searchPath}`, {
+  const searchRes = await fetch(searchUrl, {
     headers: {
       'X-RapidAPI-Key': API_KEY,
-      'X-RapidAPI-Host': API_HOST
-    }
+      'X-RapidAPI-Host': API_HOST,
+    },
   });
   const searchJson = await searchRes.json();
   if (!searchJson.status) {
@@ -46,11 +90,11 @@ export async function getFlightItinerary(
   const sessionId: string = searchJson.data.context.sessionId;
   const itineraryId: string = searchJson.data.id;
 
-  // Then fetch detailed flight information
-  const detailsPath = `/api/v1/flights/getFlightDetails?sessionId=${encodeURIComponent(
+  // Fetch detailed flight information
+  const detailsUrl = `https://${API_HOST}/api/v1/flights/getFlightDetails?sessionId=${encodeURIComponent(
     sessionId
   )}&itineraryId=${encodeURIComponent(itineraryId)}&legs=${encodeURIComponent(
-    JSON.stringify(legsParam)
+    JSON.stringify([{ origin, destination, date }])
   )}&adults=1&currency=USD&locale=en-US&market=en-US&cabinClass=economy&countryCode=US`;
 
   // Check cache in Supabase for current user
@@ -71,7 +115,7 @@ export async function getFlightItinerary(
   }
 
   // Fetch new data from API
-  const res = await fetch(`https://${API_HOST}${detailsPath}`, {
+  const res = await fetch(detailsUrl, {
     headers: {
       'X-RapidAPI-Key': API_KEY,
       'X-RapidAPI-Host': API_HOST
@@ -79,7 +123,8 @@ export async function getFlightItinerary(
   });
   const json = await res.json();
   if (!json.status) {
-    throw new Error('Error fetching flights');
+    // Include API error details
+    throw new Error('Error fetching flights: ' + JSON.stringify(json.message));
   }
   const itinerary: Itinerary = json.data.itinerary;
 
