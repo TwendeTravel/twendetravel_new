@@ -1,4 +1,4 @@
-import { NavLink } from "react-router-dom";
+import { NavLink, useLocation } from "react-router-dom";
 import { useTheme } from "@/components/ThemeProvider";
 import { useRole } from "@/hooks/useRole";
 import { cn } from "@/lib/utils";
@@ -22,22 +22,27 @@ interface SidebarLinkProps {
   icon: React.ReactNode;
   label: string;
   end?: boolean;
+  matchSearch?: (search: string) => boolean;
 }
 
-const SidebarLink = ({ to, icon, label, end = false }: SidebarLinkProps) => {
+const SidebarLink = ({ to, icon, label, end = false, matchSearch }: SidebarLinkProps) => {
   const { theme } = useTheme();
+  const location = useLocation();
   
   return (
     <NavLink
       to={to}
       end={end}
-      className={({ isActive }) => cn(
-        "flex items-center gap-2 px-3 py-2.5 rounded-lg transition-colors",
-        "hover:bg-gray-100 dark:hover:bg-gray-800",
-        isActive 
-          ? "bg-twende-teal/10 text-twende-teal dark:bg-twende-skyblue/10 dark:text-twende-skyblue font-medium" 
-          : "text-gray-700 dark:text-gray-300"
-      )}
+      className={({ isActive }) => {
+        const active = matchSearch ? matchSearch(location.search) : isActive;
+        return cn(
+          "flex items-center gap-2 px-3 py-2.5 rounded-lg transition-colors",
+          "hover:bg-gray-100 dark:hover:bg-gray-800",
+          active
+            ? "bg-twende-teal/10 text-twende-teal dark:bg-twende-skyblue/10 dark:text-twende-skyblue font-medium"
+            : "text-gray-700 dark:text-gray-300"
+        );
+      }}
     >
       {icon}
       <span className="text-sm">{label}</span>
@@ -53,20 +58,26 @@ const DashboardSidebar = () => {
       <nav className="p-4 space-y-1">
         <SidebarLink to="/dashboard" icon={<Home size={18} />} label="Dashboard" end />
         
-        {/* Link to Dashboard Services tab */}
+        {/* Request Service link */}
         <SidebarLink
-          to="/dashboard?tab=services"
+          to="/dashboard?tab=requests"
           icon={<FileText size={18} />}
-          label="Services"
-          end={false}
+          label="Request Service"
+          end
+          matchSearch={search => new URLSearchParams(search).get('tab') === 'requests'}
         />
-        
+
         {/* Common links for all users */}
         <SidebarLink to="/destination" icon={<Map size={18} />} label="Destinations" />
         <SidebarLink to="/trip" icon={<Calendar size={18} />} label="My Trips" />
         <SidebarLink to="/chat" icon={<MessageSquare size={18} />} label="Messages" />
         {/* Flights tab within dashboard */}
-        <SidebarLink to="/dashboard?tab=flights" icon={<Plane size={18} />} label="Flights" />
+        <SidebarLink
+          to="/dashboard?tab=flights"
+          icon={<Plane size={18} />}
+          label="Flights"
+          matchSearch={search => new URLSearchParams(search).get('tab') === 'flights'}
+        />
         
         {/* Admin specific links */}
         {!isLoading && isAdmin && (

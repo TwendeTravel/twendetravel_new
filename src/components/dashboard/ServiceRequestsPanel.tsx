@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Calendar, FileText, Plus } from "lucide-react";
 import { Link } from "react-router-dom";
-import { serviceRequestService, ServiceRequest } from "@/services/service-requests";
+import { serviceRequestService, ServiceRequestItem } from "@/services/service-requests";
 import { toast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 
