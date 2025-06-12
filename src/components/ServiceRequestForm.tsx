@@ -1,233 +1,122 @@
+import React, { useEffect, useState } from 'react';
+import { useAuth } from '@/contexts/AuthContext';
+import { useToast } from '@/hooks/use-toast';
+import { useNavigate } from 'react-router-dom';
+import { serviceRequestService, Service, ServiceRequestItem } from '@/services/service-requests';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Button } from '@/components/ui/button';
 
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
-import * as z from "zod";
-import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { serviceRequestService } from "@/services/service-requests";
-import { toast } from "@/hooks/use-toast";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-
-const formSchema = z.object({
-  destination: z.string().min(2, "Destination must be at least 2 characters"),
-  start_date: z.string().min(1, "Start date is required"),
-  end_date: z.string().min(1, "End date is required"),
-  budget: z.string().min(1, "Budget is required"),
-  service_type: z.string().min(1, "Service type is required"),
-  accommodation_preference: z.string().optional(),
-  transportation_preference: z.string().optional(),
-  special_requirements: z.string().optional(),
-});
+interface ServiceWithState extends Service {
+  selected: boolean;
+  qty: number;
+}
 
 export function ServiceRequestForm() {
-  const form = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema),
-    defaultValues: {
-      destination: "",
-      start_date: "",
-      end_date: "",
-      budget: "",
-      service_type: "",
-      accommodation_preference: "",
-      transportation_preference: "",
-      special_requirements: "",
-    },
-  });
+  const { user } = useAuth();
+  const { toast } = useToast();
+  const navigate = useNavigate();
 
-  async function onSubmit(values: z.infer<typeof formSchema>) {
-    try {
-      await serviceRequestService.createServiceRequest({
-        destination: values.destination,
-        start_date: values.start_date,
-        end_date: values.end_date,
-        budget: parseFloat(values.budget),
-        service_type: values.service_type,
-        accommodation_preference: values.accommodation_preference || undefined,
-        transportation_preference: values.transportation_preference || undefined,
-        special_requirements: values.special_requirements || undefined,
-      });
-      
-      toast({
-        title: "Service request submitted",
-        description: "We'll review your request and get back to you soon.",
-      });
-      
-      form.reset();
-    } catch (error) {
-      console.error("Error submitting service request:", error);
+  const [services, setServices] = useState<ServiceWithState[]>([]);
+  const [budget, setBudget] = useState<number>(0);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    serviceRequestService.getServices()
+      .then(data => setServices(data.map(s => ({ ...s, selected: false, qty: 1 }))))
+      .catch(err => toast({ variant: 'destructive', title: 'Error', description: err.message }));
+  }, [toast]);
+
+  const toggleSelection = (idx: number) => {
+    setServices(prev => {
+      const next = [...prev];
+      next[idx].selected = !next[idx].selected;
+      return next;
+    });
+  };
+
+  const updateQty = (idx: number, qty: number) => {
+    setServices(prev => {
+      const next = [...prev];
+      next[idx].qty = qty;
+      return next;
+    });
+  };
+
+  const items: ServiceRequestItem[] = services
+    .filter(s => s.selected)
+    .map(s => ({ service_id: s.id, qty: s.qty }));
+
+  const totalPrice = services
+    .filter(s => s.selected)
+    .reduce((sum, s) => sum + s.rate * s.qty, 0);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!user) {
+      toast({ variant: 'destructive', title: 'Not logged in', description: 'Please log in.' });
+      return;
     }
-  }
+    if (items.length === 0) {
+      toast({ variant: 'destructive', title: 'No services', description: 'Select at least one service.' });
+      return;
+    }
+    if (budget < totalPrice) {
+      toast({ variant: 'destructive', title: 'Budget too low', description: `Minimum $${totalPrice}.` });
+      return;
+    }
+    setLoading(true);
+    try {
+      await serviceRequestService.createRequest(user.id, items, budget, totalPrice);
+      toast({ title: 'Request submitted', description: 'We will follow up shortly.' });
+      navigate('/dashboard?tab=requests');
+    } catch (err: any) {
+      toast({ variant: 'destructive', title: 'Error', description: err.message });
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
-    <Card className="w-full max-w-2xl mx-auto p-6">
-      <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-          <FormField
-            control={form.control}
-            name="destination"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Destination</FormLabel>
-                <FormControl>
-                  <Input placeholder="Where do you want to go?" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
+    <form onSubmit={handleSubmit} className="space-y-6">
+      <div className="grid grid-cols-1 gap-4">
+        {services.map((s, idx) => (
+          <div key={s.id} className="flex items-center space-x-4">
+            <Checkbox
+              checked={s.selected}
+              onCheckedChange={() => toggleSelection(idx)}
+              id={`svc-${s.id}`}
+            />
+            <label htmlFor={`svc-${s.id}`} className="flex-1">
+              <div className="font-medium">{s.name}</div>
+              <div className="text-sm text-muted-foreground">${s.rate.toFixed(2)}</div>
+            </label>
+            {s.selected && (
+              <input
+                type="number"
+                min={1}
+                value={s.qty}
+                onChange={e => updateQty(idx, parseInt(e.target.value) || 1)}
+                className="input-field w-20"
+              />
             )}
-          />
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <FormField
-              control={form.control}
-              name="start_date"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Start Date</FormLabel>
-                  <FormControl>
-                    <Input type="date" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="end_date"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>End Date</FormLabel>
-                  <FormControl>
-                    <Input type="date" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
           </div>
-
-          <FormField
-            control={form.control}
-            name="budget"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Budget (USD)</FormLabel>
-                <FormControl>
-                  <Input type="number" placeholder="Enter your budget" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name="service_type"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Service Type</FormLabel>
-                <Select onValueChange={field.onChange} defaultValue={field.value}>
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select a service type" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    <SelectItem value="full_package">Full Travel Package</SelectItem>
-                    <SelectItem value="accommodation">Accommodation Only</SelectItem>
-                    <SelectItem value="transportation">Transportation Only</SelectItem>
-                    <SelectItem value="activities">Activities & Tours</SelectItem>
-                  </SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name="accommodation_preference"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Accommodation Preference</FormLabel>
-                <Select onValueChange={field.onChange} defaultValue={field.value}>
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select accommodation preference" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    <SelectItem value="luxury">Luxury</SelectItem>
-                    <SelectItem value="mid_range">Mid Range</SelectItem>
-                    <SelectItem value="budget">Budget</SelectItem>
-                    <SelectItem value="apartment">Apartment/Villa</SelectItem>
-                  </SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name="transportation_preference"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Transportation Preference</FormLabel>
-                <Select onValueChange={field.onChange} defaultValue={field.value}>
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select transportation preference" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    <SelectItem value="private_car">Private Car</SelectItem>
-                    <SelectItem value="public_transport">Public Transport</SelectItem>
-                    <SelectItem value="rental">Car Rental</SelectItem>
-                  </SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name="special_requirements"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Special Requirements</FormLabel>
-                <FormControl>
-                  <Textarea 
-                    placeholder="Any special requirements or preferences?"
-                    className="resize-none"
-                    {...field}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <Button type="submit" className="w-full">Submit Request</Button>
-        </form>
-      </Form>
-    </Card>
+        ))}
+      </div>
+      <div>
+        <label className="font-medium">Budget ($):</label>
+        <input
+          type="number"
+          min={0}
+          value={budget}
+          onChange={e => setBudget(parseFloat(e.target.value) || 0)}
+          className="input-field w-32"
+          required
+        />
+      </div>
+      <div className="font-semibold">Total: ${totalPrice.toFixed(2)}</div>
+      <Button type="submit" disabled={loading}>
+        {loading ? 'Submitting…' : 'Submit'}
+      </Button>
+    </form>
   );
 }

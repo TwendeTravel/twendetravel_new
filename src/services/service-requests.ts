@@ -23,5 +23,31 @@ export const serviceRequestService = {
     }
     return data
   },
-  // …etc…
+  async getServices() {
+    const { data, error } = await supabase
+      .from('services')
+      .select('id, name, rate')
+    if (error) throw error
+    return data || []
+  },
+  async createRequest(userId: string, items: ServiceRequestItem[], budget: number, totalPrice: number) {
+    const { data, error } = await supabase
+      .from('service_requests')
+      .insert({ user_id: userId, items, budget, total_price: totalPrice, status: 'pending' })
+      .select()
+      .single()
+    if (error) throw error
+    return data
+  }
+}
+
+export interface Service {
+  id: string
+  name: string
+  rate: number
+}
+
+export interface ServiceRequestItem {
+  service_id: string
+  qty: number
 }
