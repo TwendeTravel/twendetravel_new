@@ -42,17 +42,26 @@ export const serviceRequestService = {
   /**
    * Fetch all service requests for the currently signed-in user.
    */
-  async getUserRequests() {
+  /**
+   * Fetch a page of service requests for the currently signed-in user.
+   * @param limit Number of items to fetch per page
+   * @param offset Offset (zero-based) for pagination
+   */
+  async getUserRequests(limit?: number, offset?: number) {
     // get current session & user
     const { data: { session }, error: sessionError } = await supabase.auth.getSession();
     if (sessionError) throw sessionError;
     const user = session?.user;
     if (!user) throw new Error('Not authenticated');
     // query user-specific requests
-    const { data, error } = await supabase
+    let query = supabase
       .from('service_requests')
       .select('*')
       .eq('user_id', user.id);
+    if (typeof limit === 'number' && typeof offset === 'number') {
+      query = query.range(offset, offset + limit - 1);
+    }
+    const { data, error } = await query;
     if (error) {
       toast({ variant: 'destructive', title: 'Error', description: error.message });
       throw error;

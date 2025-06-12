@@ -117,7 +117,7 @@ export default function ServiceRequestsPanel({ extended = false }: ServiceReques
               <span className="text-gray-500">Service:</span>
               <div className="ml-2 space-y-1">
                 {request.items.map(({ service_id, qty }) => {
-                  const svc = services.find((s) => s.id === String(service_id));
+                  const svc = services.find((s) => s.id === service_id);
                   return (
                     <div key={service_id}>
                       {svc?.name ?? 'Unknown Service'} × {qty}
