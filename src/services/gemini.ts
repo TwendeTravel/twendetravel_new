@@ -26,18 +26,20 @@ export async function askGemini(prompt: string): Promise<string> {
   }
 
   // Online: call Gemini API
-  const url = 'https://gemini.googleapis.com/v1/models/gemini-1.0:generateText';
+  // Use Google's Generative Language API endpoint with API key
+  // Try stable v1 endpoint for Generative Language API
+  // Use beta2 endpoint for Generative Language API
+  const endpoint = `https://generativelanguage.googleapis.com/v1beta2/models/text-bison-001:generateText?key=${API_KEY}`;
   const requestBody = {
     prompt: {
       text: prompt
     }
   };
 
-  const response = await fetch(url, {
+  const response = await fetch(endpoint, {
     method: 'POST',
     headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${API_KEY}`
+      'Content-Type': 'application/json'
     },
     body: JSON.stringify(requestBody)
   });

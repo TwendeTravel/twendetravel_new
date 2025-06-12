@@ -99,7 +99,12 @@ const DashboardSidebar = () => {
             Resources
           </div>
         </div>
-        <SidebarLink to="/assistant" icon={<BookOpen size={18} />} label="Travel Assistant" />
+        <SidebarLink
+          to="/dashboard?tab=assistant"
+          icon={<BookOpen size={18} />}
+          label="Travel Assistant"
+          matchSearch={search => new URLSearchParams(search).get('tab') === 'assistant'}
+        />
         <SidebarLink to="/profile" icon={<User size={18} />} label="Profile Settings" />
       </nav>
     </aside>

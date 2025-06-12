@@ -13,6 +13,7 @@ import CountryNewsWidget from "@/components/dashboard/CountryNewsWidget";
 import ServiceRequestsPanel from "@/components/dashboard/ServiceRequestsPanel";
 import PageTransition from "@/components/PageTransition";
 import FlightSearch from "@/pages/FlightSearch";
+import TravelAssistant from "@/pages/TravelAssistant";
 import { ServiceRequestForm } from '@/components/ServiceRequestForm';
 
 const Dashboard = () => {
@@ -40,7 +41,7 @@ const Dashboard = () => {
               }}
               className="space-y-6"
             >
-              <TabsList className="grid grid-cols-2 sm:grid-cols-7 w-full max-w-4xl bg-card/50 backdrop-blur-sm border border-border/50">
+              <TabsList className="grid grid-cols-2 sm:grid-cols-8 w-full max-w-4xl bg-card/50 backdrop-blur-sm border border-border/50">
                 {/* <TabsTrigger 
                   value="overview" 
                   className="text-muted-foreground data-[state=active]:bg-primary/20 data-[state=active]:text-foreground"
@@ -88,6 +89,12 @@ const Dashboard = () => {
                   className="text-muted-foreground data-[state=active]:bg-primary/20 data-[state=active]:text-foreground"
                 >
                   Settings
+                </TabsTrigger>
+                <TabsTrigger
+                  value="assistant"
+                  className="text-muted-foreground data-[state=active]:bg-primary/20 data-[state=active]:text-foreground"
+                >
+                  Travel Assistant
                 </TabsTrigger>
               </TabsList>
               
@@ -241,6 +248,17 @@ const Dashboard = () => {
                   </CardHeader>
                   <CardContent>
                     <p className="text-muted-foreground">Settings form will go here</p>
+                  </CardContent>
+                </Card>
+              </TabsContent>
+              <TabsContent value="assistant" className="space-y-6">
+                <Card className="bg-card/50 backdrop-blur-sm border-border/50 shadow-lg">
+                  <CardHeader>
+                    <CardTitle className="text-foreground">Travel Assistant</CardTitle>
+                    <CardDescription className="text-muted-foreground">Ask travel questions and get AI-guided responses</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <TravelAssistant />
                   </CardContent>
                 </Card>
               </TabsContent>
