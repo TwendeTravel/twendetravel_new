@@ -8,8 +8,9 @@ function getCacheKey(prompt: string): string {
   return CACHE_PREFIX + btoa(prompt);
 }
 
+// Response shape for generateContent endpoint
 interface GeminiResponse {
-  candidates: { output: string }[];
+  candidates: { content: { text: string } }[];
 }
 
 // Ask Gemini model for a response to the given prompt
@@ -25,15 +26,12 @@ export async function askGemini(prompt: string): Promise<string> {
     }
   }
 
-  // Online: call Gemini API
-  // Use Google's Generative Language API endpoint with API key
-  // Try stable v1 endpoint for Generative Language API
-  // Use beta2 endpoint for Generative Language API
-  const endpoint = `https://generativelanguage.googleapis.com/v1beta2/models/text-bison-001:generateText?key=${API_KEY}`;
+  // Online: call Gemini 2.0 Flash generateContent endpoint
+  const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${API_KEY}`;
   const requestBody = {
-    prompt: {
-      text: prompt
-    }
+    contents: [
+      { parts: [ { text: prompt } ] }
+    ]
   };
 
   const response = await fetch(endpoint, {
@@ -50,7 +48,7 @@ export async function askGemini(prompt: string): Promise<string> {
   }
 
   const data = (await response.json()) as GeminiResponse;
-  const text = data.candidates?.[0]?.output?.trim() || '';
+  const text = data.candidates?.[0]?.content.text.trim() || '';
 
   // Cache the response
   try {
