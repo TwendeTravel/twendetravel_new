@@ -37,10 +37,10 @@ export async function askGemini(prompt: string): Promise<string> {
 
   // Online: call Gemini 2.0 Flash generateContent endpoint
   const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${API_KEY}`;
+  // Combine system prompt and user query into a single content block (no role field required)
   const requestBody = {
     contents: [
-      { parts: [ { text: SYSTEM_PROMPT } ] },
-      { parts: [ { text: prompt } ] }
+      { parts: [ { text: SYSTEM_PROMPT + '\n' + prompt } ] }
     ]
   };
 
