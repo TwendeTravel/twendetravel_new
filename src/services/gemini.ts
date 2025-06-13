@@ -2,6 +2,8 @@
 
 const API_KEY = import.meta.env.VITE_GEMINI_API_KEY as string;
 const CACHE_PREFIX = 'travel_assistant_cache_';
+// System instruction to guide Gemini as a travel assistant
+const SYSTEM_PROMPT = `You are Twende Travel Assistant, a helpful AI knowledgeable about travel worldwide. Provide detailed travel advice, destination info, hotel and BnB recommendations, user ratings and comments, in a conversational style.`;
 
 // Function to generate a cache key based on the user prompt
 function getCacheKey(prompt: string): string {
@@ -37,6 +39,7 @@ export async function askGemini(prompt: string): Promise<string> {
   const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${API_KEY}`;
   const requestBody = {
     contents: [
+      { parts: [ { text: SYSTEM_PROMPT } ] },
       { parts: [ { text: prompt } ] }
     ]
   };
