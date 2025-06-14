@@ -15,7 +15,28 @@ export default defineConfig(({ mode }) => ({
       registerType: "autoUpdate",
       devOptions: { enabled: true },       // ← enable virtual module in dev
       includeAssets: ["favicon.ico", "robots.txt", "placeholder.svg"],
-      workbox: { maximumFileSizeToCacheInBytes: 5 * 1024 * 1024 },
+      workbox: {
+        maximumFileSizeToCacheInBytes: 5 * 1024 * 1024,
+        // Cache Mapbox API and tile requests for offline usage
+        runtimeCaching: [
+          {
+            urlPattern: /^https:\/\/api\.mapbox\.com\/.*/i,
+            handler: 'CacheFirst',
+            options: {
+              cacheName: 'mapbox-api-cache',
+              expiration: { maxEntries: 50, maxAgeSeconds: 30 * 24 * 60 * 60 },
+            },
+          },
+          {
+            urlPattern: /^https:\/\/[a-z0-9]+\.tiles\.mapbox\.com\/.*/i,
+            handler: 'CacheFirst',
+            options: {
+              cacheName: 'mapbox-tiles-cache',
+              expiration: { maxEntries: 1000, maxAgeSeconds: 30 * 24 * 60 * 60 },
+            },
+          },
+        ],
+      },
       manifest: {
         name: "Twende Travel",
         short_name: "TwendeTravel",

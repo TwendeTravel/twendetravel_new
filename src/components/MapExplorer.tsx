@@ -1,13 +1,9 @@
-
 import React, { useEffect, useRef, useState } from 'react';
-import mapboxgl from 'mapbox-gl';
-import 'mapbox-gl/dist/mapbox-gl.css';
+import maplibregl from 'maplibre-gl';
+import 'maplibre-gl/dist/maplibre-gl.css';
 import { MapPin } from 'lucide-react';
 
-// Temporarily using a placeholder token - in production this should be handled securely
-// Users should replace this with their own Mapbox token
-const MAPBOX_TOKEN = 'REPLACE_WITH_YOUR_MAPBOX_TOKEN';
-
+// Interface for destination data
 interface Destination {
   id: number;
   name: string;
@@ -16,6 +12,7 @@ interface Destination {
   description: string;
 }
 
+// Sample destination data
 const destinations: Destination[] = [
   {
     id: 1,
@@ -63,30 +60,27 @@ const destinations: Destination[] = [
 
 const MapExplorer = () => {
   const mapContainer = useRef<HTMLDivElement>(null);
-  const map = useRef<mapboxgl.Map | null>(null);
+  const map = useRef<maplibregl.Map | null>(null);
   const [selectedDestination, setSelectedDestination] = useState<Destination | null>(null);
-  const [mapboxToken, setMapboxToken] = useState<string>(MAPBOX_TOKEN);
-  const [showTokenInput, setShowTokenInput] = useState<boolean>(MAPBOX_TOKEN === 'REPLACE_WITH_YOUR_MAPBOX_TOKEN');
+  // HUD state for coordinates and zoom
+  const [mapState, setMapState] = useState<{ lng: number; lat: number; zoom: number }>({ lng: 18.5, lat: 1.5, zoom: 2.8 });
 
   // Initialize map
   useEffect(() => {
-    if (!mapContainer.current || !mapboxToken || mapboxToken === 'REPLACE_WITH_YOUR_MAPBOX_TOKEN') return;
+    if (!mapContainer.current) return;
 
-    // Set Mapbox token
-    mapboxgl.accessToken = mapboxToken;
-    
-    // Create map instance
-    map.current = new mapboxgl.Map({
+    // Create MapLibre map with demo style (no token required)
+    map.current = new maplibregl.Map({
       container: mapContainer.current,
-      style: 'mapbox://styles/mapbox/light-v11',
+      style: 'https://demotiles.maplibre.org/style.json',
       center: [18.5, 1.5], // Centered on Africa
       zoom: 2.8,
       projection: 'globe',
       pitch: 40,
     });
-    
+
     // Add navigation controls
-    map.current.addControl(new mapboxgl.NavigationControl(), 'top-right');
+    map.current.addControl(new maplibregl.NavigationControl(), 'top-right');
     
     // Add markers for destinations
     destinations.forEach((destination) => {
@@ -104,17 +98,11 @@ const MapExplorer = () => {
       // Add marker click event
       markerEl.addEventListener('click', () => {
         setSelectedDestination(destination);
-        map.current?.flyTo({
-          center: destination.coordinates,
-          zoom: 8,
-          duration: 2000,
-        });
+        map.current?.flyTo({ center: destination.coordinates, zoom: 8, duration: 2000 });
       });
       
       // Add marker to map
-      new mapboxgl.Marker(markerEl)
-        .setLngLat(destination.coordinates)
-        .addTo(map.current);
+      new maplibregl.Marker(markerEl).setLngLat(destination.coordinates).addTo(map.current!);
     });
     
     // Add atmosphere and fog for globe effect
@@ -124,23 +112,27 @@ const MapExplorer = () => {
         'high-color': 'rgb(200, 200, 225)',
         'horizon-blend': 0.2,
       });
+      // Add DEM source and enable 3D terrain
+      map.current?.addSource('dem', { type: 'raster-dem', url: 'mapbox://mapbox.mapbox-terrain-dem-v1', tileSize: 512, maxzoom: 14 });
+      map.current?.setTerrain({ source: 'dem', exaggeration: 1.5 });
+      map.current?.addLayer({ id: 'sky', type: 'sky', paint: { 'sky-type': 'atmosphere', 'sky-atmosphere-sun': [0.0, 0.0], 'sky-atmosphere-sun-intensity': 15 } });
+    });
+    // Update HUD on map move
+    map.current.on('move', () => {
+      const center = map.current?.getCenter();
+      const zoom = map.current?.getZoom();
+      if (center && zoom != null) {
+        setMapState({
+          lng: +center.lng.toFixed(4),
+          lat: +center.lat.toFixed(4),
+          zoom: +zoom.toFixed(2),
+        });
+      }
     });
     
     // Cleanup on unmount
-    return () => {
-      map.current?.remove();
-    };
-  }, [mapboxToken]);
-  
-  // Handle token submission
-  const handleTokenSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    const input = (document.getElementById('mapbox-token') as HTMLInputElement)?.value;
-    if (input) {
-      setMapboxToken(input);
-      setShowTokenInput(false);
-    }
-  };
+    return () => map.current?.remove();
+  }, []);
 
   return (
     <section id="map-explorer" className="py-20 bg-background">
@@ -150,42 +142,17 @@ const MapExplorer = () => {
           Discover our curated destinations in Ghana and Kenya on the interactive map
         </p>
         
-        {/* Mapbox Token Input Form */}
-        {showTokenInput && (
-          <div className="max-w-xl mx-auto mb-10 p-6 bg-gray-50 dark:bg-gray-800/50 rounded-lg shadow-sm dark:shadow-none dark:border dark:border-gray-700/50 backdrop-blur-sm">
-            <h3 className="text-lg font-semibold mb-3 dark:text-gray-200">Enter your Mapbox Access Token</h3>
-            <p className="text-gray-600 text-sm mb-4 dark:text-gray-400">
-              To use the interactive map, please enter your Mapbox public access token. 
-              You can get one by signing up at <a href="https://mapbox.com/" target="_blank" rel="noopener noreferrer" className="text-twende-teal dark:text-twende-skyblue underline">mapbox.com</a>.
-            </p>
-            <form onSubmit={handleTokenSubmit} className="flex flex-col sm:flex-row gap-3">
-              <input
-                id="mapbox-token"
-                type="text"
-                placeholder="Enter your Mapbox token"
-                className="input-field dark:bg-gray-900 dark:border-gray-700 dark:text-gray-200 dark:placeholder:text-gray-500"
-                required
-              />
-              <button type="submit" className="btn-primary dark:bg-twende-skyblue dark:text-black dark:hover:bg-twende-skyblue/90">
-                Set Token
-              </button>
-            </form>
-          </div>
-        )}
-        
+        {/* Map container with 3D terrain */}
         <div className="grid md:grid-cols-3 gap-6 items-start">
-          {/* Map Container */}
           <div className="md:col-span-2 bg-gray-100 dark:bg-gray-800/30 rounded-xl overflow-hidden shadow-lg dark:shadow-none dark:border dark:border-gray-700/50 h-[600px] relative">
-            {!showTokenInput ? (
+            <>
               <div ref={mapContainer} className="w-full h-full" />
-            ) : (
-              <div className="w-full h-full flex items-center justify-center bg-gray-100 dark:bg-gray-800/30">
-                <div className="text-center">
-                  <MapPin className="w-16 h-16 text-gray-300 dark:text-gray-700 mx-auto mb-4" />
-                  <p className="text-gray-500 dark:text-gray-400">Please enter your Mapbox token to view the map</p>
-                </div>
+              <div className="absolute top-4 left-4 bg-white bg-opacity-80 p-2 rounded text-sm text-gray-700 pointer-events-none">
+                <div>Lat: {mapState.lat}</div>
+                <div>Lng: {mapState.lng}</div>
+                <div>Zoom: {mapState.zoom}</div>
               </div>
-            )}
+            </>
           </div>
           
           {/* Destinations List */}

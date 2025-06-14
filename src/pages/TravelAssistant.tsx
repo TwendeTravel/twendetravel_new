@@ -8,6 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Link } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { askGemini } from '@/services/gemini';
+import ReactMarkdown from 'react-markdown';
 
 const SAMPLE_SUGGESTIONS = [
   "What are the best beaches in Ghana?",
@@ -122,7 +123,9 @@ const TravelAssistant = () => {
                       )}
                       <div className="flex-1">
                         <div className="prose prose-sm dark:prose-invert">
-                          {message.content}
+                          <ReactMarkdown>
+                            {message.content}
+                          </ReactMarkdown>
                         </div>
                       </div>
                       {message.role === "user" && (
@@ -194,10 +197,7 @@ const TravelAssistant = () => {
                     <Image className="h-4 w-4 text-muted-foreground" />
                   </Button>
                   <Button type="button" variant="ghost" size="icon" className="h-7 w-7 rounded-full">
-                    <Mic className="h-4 w-4 text-muted-foreground" />
-                  </Button>
-                </div>
-              </div>
+                    <Mic className="
               <Button type="submit" className="rounded-full h-10 w-10 p-2 flex items-center justify-center">
                 <Send className="h-5 w-5" />
               </Button>
