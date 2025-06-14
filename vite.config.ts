@@ -17,21 +17,13 @@ export default defineConfig(({ mode }) => ({
       includeAssets: ["favicon.ico", "robots.txt", "placeholder.svg"],
       workbox: {
         maximumFileSizeToCacheInBytes: 5 * 1024 * 1024,
-        // Cache Mapbox API and tile requests for offline usage
+        // Cache MapLibre demo tiles for offline usage
         runtimeCaching: [
           {
-            urlPattern: /^https:\/\/api\.mapbox\.com\/.*/i,
+            urlPattern: /^https:\/\/demotiles\.maplibre\.org\/.*/i,
             handler: 'CacheFirst',
             options: {
-              cacheName: 'mapbox-api-cache',
-              expiration: { maxEntries: 50, maxAgeSeconds: 30 * 24 * 60 * 60 },
-            },
-          },
-          {
-            urlPattern: /^https:\/\/[a-z0-9]+\.tiles\.mapbox\.com\/.*/i,
-            handler: 'CacheFirst',
-            options: {
-              cacheName: 'mapbox-tiles-cache',
+              cacheName: 'maplibre-tiles-cache',
               expiration: { maxEntries: 1000, maxAgeSeconds: 30 * 24 * 60 * 60 },
             },
           },
