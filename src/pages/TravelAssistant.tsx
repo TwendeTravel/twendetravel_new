@@ -197,10 +197,13 @@ const TravelAssistant = () => {
                     <Image className="h-4 w-4 text-muted-foreground" />
                   </Button>
                   <Button type="button" variant="ghost" size="icon" className="h-7 w-7 rounded-full">
-                    <Mic className="
-              <Button type="submit" className="rounded-full h-10 w-10 p-2 flex items-center justify-center">
-                <Send className="h-5 w-5" />
-              </Button>
+                    <Mic className="h-4 w-4 text-muted-foreground" />
+                  </Button>
+                  <Button type="submit" className="rounded-full h-10 w-10 p-2 flex items-center justify-center">
+                    <Send className="h-5 w-5" />
+                  </Button>
+                </div> {/* close toolbar div */}
+              </div> {/* close input wrapper */}
             </form>
           </div>
         </div>
