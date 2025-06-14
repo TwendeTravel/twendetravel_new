@@ -15,6 +15,7 @@ import PageTransition from "@/components/PageTransition";
 import FlightSearch from "@/pages/FlightSearch";
 import TravelAssistant from "@/pages/TravelAssistant";
 import { ServiceRequestForm } from '@/components/ServiceRequestForm';
+import Chat from './Chat';
 
 const Dashboard = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -95,6 +96,12 @@ const Dashboard = () => {
                   className="text-muted-foreground data-[state=active]:bg-primary/20 data-[state=active]:text-foreground"
                 >
                   Travel Assistant
+                </TabsTrigger>
+                <TabsTrigger
+                  value="messages"
+                  className="text-muted-foreground data-[state=active]:bg-primary/20 data-[state=active]:text-foreground"
+                >
+                  Messages
                 </TabsTrigger>
               </TabsList>
               
@@ -261,6 +268,9 @@ const Dashboard = () => {
                     <TravelAssistant />
                   </CardContent>
                 </Card>
+              </TabsContent>
+              <TabsContent value="messages">
+                <Chat />
               </TabsContent>
             </Tabs>
           </main>

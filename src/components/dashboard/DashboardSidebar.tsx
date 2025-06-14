@@ -70,7 +70,12 @@ const DashboardSidebar = () => {
         {/* Common links for all users */}
         <SidebarLink to="/destination" icon={<Map size={18} />} label="Destinations" />
         <SidebarLink to="/trip" icon={<Calendar size={18} />} label="My Trips" />
-        <SidebarLink to="/chat" icon={<MessageSquare size={18} />} label="Messages" />
+        <SidebarLink
+          to="/dashboard?tab=messages"
+          icon={<MessageSquare size={18} />}
+          label="Messages"
+          matchSearch={search => new URLSearchParams(search).get('tab') === 'messages'}
+        />
         {/* Flights tab within dashboard */}
         <SidebarLink
           to="/dashboard?tab=flights"
