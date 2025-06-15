@@ -29,3 +29,34 @@ export const permissionService = {
     return data;
   },
 };
+
+export const roleService = {
+  // Expose the raw permission fetch/set if needed
+  getUserPermission: permissionService.getUserPermission,
+  setUserPermission: permissionService.setUserPermission,
+
+  /**
+   * Fetch all user permission records and map to { user_id, permission_level, role, created_at }
+   */
+  async getAllUserRoles() {
+    const { data, error } = await supabase
+      .from('user_permissions')
+      .select('user_id, permission_level, created_at');
+    if (error) throw error;
+    return (data ?? []).map((rec) => ({
+      user_id: rec.user_id,
+      permission_level: rec.permission_level,
+      role: rec.permission_level === 1 ? 'admin' : 'traveller',
+      created_at: rec.created_at
+    }));
+  },
+
+  /**
+   * Update a user's permission_level based on a role string ('admin' or 'traveller')
+   */
+  async updateUserRole(userId: string, newRole: 'admin' | 'traveller') {
+    const level = newRole === 'admin' ? 1 : 0;
+    await permissionService.setUserPermission(userId, level);
+    return { user_id: userId, permission_level: level, role: newRole };
+  }
+};
