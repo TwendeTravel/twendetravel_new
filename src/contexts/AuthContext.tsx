@@ -43,6 +43,12 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       const { data: { session } } = await supabase.auth.getSession();
       if (session?.user) {
         const u = session.user;
+        // Clear any outdated 'role' metadata (to avoid DB-level SET ROLE errors)
+        const md = { ...u.user_metadata };
+        if (md.role !== undefined) {
+          delete md.role;
+          supabase.auth.updateUser({ data: md }).catch(console.error);
+        }
         setUser({ id: u.id, email: u.email!, full_name: u.user_metadata.full_name });
       }
       setIsLoading(false);
@@ -50,6 +56,12 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     const { data: listener } = supabase.auth.onAuthStateChange((_, session) => {
       if (session?.user) {
         const u = session.user;
+        // Clear outdated 'role' metadata
+        const md2 = { ...u.user_metadata };
+        if (md2.role !== undefined) {
+          delete md2.role;
+          supabase.auth.updateUser({ data: md2 }).catch(console.error);
+        }
         setUser({ id: u.id, email: u.email!, full_name: u.user_metadata.full_name });
       } else {
         setUser(null);

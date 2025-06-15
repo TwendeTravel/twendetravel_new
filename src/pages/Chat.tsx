@@ -61,7 +61,7 @@ export default function Chat() {
 
   useEffect(() => {
     const loadConversations = async () => {
-      if (!user || roleLoading) return;
+      if (!user) return;
       setIsLoading(true);
 
       try {
