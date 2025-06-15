@@ -20,7 +20,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { format } from "date-fns";
 import { toast } from "@/components/ui/use-toast";
 import { supabase } from '@/lib/supabaseClient';
-import { profileService, Profile } from '@/services/profiles';
 
 interface Conversation {
   id: string;
@@ -50,7 +49,7 @@ interface Conversation {
 
 export default function Chat() {
   const { user } = useAuth();
-  const { isAdmin } = useRole();
+  const { isAdmin, isLoading: roleLoading } = useRole();
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [filteredConversations, setFilteredConversations] = useState<Conversation[]>([]);
   const [selectedConversation, setSelectedConversation] = useState<string | null>(null);
@@ -59,11 +58,10 @@ export default function Chat() {
   const [activeTab, setActiveTab] = useState("all");
   const [statusFilter, setStatusFilter] = useState<string | null>(null);
   const [priorityFilter, setPriorityFilter] = useState<string | null>(null);
-  const [travelers, setTravelers] = useState<Profile[]>([]);
 
   useEffect(() => {
     const loadConversations = async () => {
-      if (!user) return;
+      if (!user || roleLoading) return;
       setIsLoading(true);
 
       try {
@@ -123,7 +121,7 @@ export default function Chat() {
     return () => {
       channel.unsubscribe();
     };
-  }, [user, isAdmin, selectedConversation]);
+  }, [user, isAdmin, roleLoading, selectedConversation]);
 
   useEffect(() => {
     let filtered = [...conversations];
@@ -179,23 +177,6 @@ export default function Chat() {
     }
   };
 
-  // Admin creating a conversation with a selected traveler
-  const startChatWithTraveler = async (travelerId: string) => {
-    try {
-      const { data, error } = await supabase
-        .from('conversations')
-        .insert([{ traveler_id: travelerId, admin_id: user?.id, title: 'Support Chat', status: 'active', priority: 'normal', category: 'general' }])
-        .select()
-        .single();
-      if (error) throw error;
-      setSelectedConversation(data.id);
-      toast({ title: 'Chat started', description: `You are connected with traveler` });
-    } catch (err) {
-      console.error('Error starting chat:', err);
-      toast({ title: 'Error', description: 'Could not start chat', variant: 'destructive' });
-    }
-  };
-
   const updateConversationStatus = async (id: string, status: string) => {
     try {
       const { error } = await supabase
@@ -219,30 +200,8 @@ export default function Chat() {
     }
   };
 
-  // Fetch traveler list for admins
-  useEffect(() => {
-    if (isAdmin) {
-      profileService.listTravelers().then(setTravelers).catch(console.error);
-    }
-  }, [isAdmin]);
-
   return (
     <div className="container mx-auto py-6">
-      {isAdmin && (
-        <div className="mb-4">
-          <label className="block mb-2">Start Chat with Traveler:</label>
-          <select
-            className="border px-3 py-1 rounded"
-            onChange={(e) => startChatWithTraveler(e.target.value)}
-            defaultValue=""
-          >
-            <option value="" disabled>Select traveler...</option>
-            {travelers.map((t) => (
-              <option key={t.id} value={t.id}>{t.email}</option>
-            ))}
-          </select>
-        </div>
-      )}
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold">Conversations</h1>
         {!isAdmin && (
