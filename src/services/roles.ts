@@ -1,42 +1,29 @@
-const API_URL = 'https://twendetravel.infinityfreeapp.com/api';
+import { supabase } from '@/lib/supabaseClient';
 
-export interface UserRole {
+export interface RoleRecord {
   user_id: string;
-  role: string;
-  created_at: string;
+  role: number;  // 0 = user, 1 = admin
 }
 
 export const roleService = {
-  async getCurrentUserRole(): Promise<UserRole> {
-    const token = localStorage.getItem('token');
-    const response = await fetch(`${API_URL}/roles/current`, {
-      headers: {
-        'Authorization': `Bearer ${token}`,
-      },
-    });
-    
-    if (!response.ok) {
-      throw new Error('Failed to fetch user role');
-    }
-    
-    return response.json();
+  /** Fetch the current user's role record */
+  async getCurrentUserRole(userId: string): Promise<RoleRecord> {
+    const { data, error } = await supabase
+      .from<RoleRecord>('roles')
+      .select('user_id, role')
+      .eq('user_id', userId)
+      .single();
+    if (error) throw error;
+    return data as RoleRecord;
   },
-
-  async createUserRole(userId: string, role: string): Promise<UserRole> {
-    const token = localStorage.getItem('token');
-    const response = await fetch(`${API_URL}/roles`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ user_id: userId, role }),
-    });
-    
-    if (!response.ok) {
-      throw new Error('Failed to create user role');
-    }
-    
-    return response.json();
+  /** Assign a role to a user (0 = user, 1 = admin) */
+  async setUserRole(userId: string, role: number) {
+    const { data, error } = await supabase
+      .from<RoleRecord>('roles')
+      .upsert({ user_id: userId, role })
+      .select()
+      .single();
+    if (error) throw error;
+    return data as RoleRecord;
   },
 };

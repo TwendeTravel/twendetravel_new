@@ -1,6 +1,19 @@
 // filepath: src/services/messages.ts
 import { supabase } from '@/lib/supabaseClient'
 
+/**
+ * Chat message record from `messages` table, including sender relation
+ */
+export interface ChatMessage {
+  id: string;
+  conversation_id: string;
+  sender_id: string;
+  text: string;
+  read: boolean;
+  created_at: string;
+  sender?: { id: string; email: string };
+}
+
 export const messageService = {
   async list(conversationId: string) {
     const { data, error } = await supabase

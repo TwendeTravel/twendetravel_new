@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useRole } from "@/hooks/useRole";
-import { chatService, ChatConversation } from "@/services/chat";
+import { chatService } from "@/services/chat";
 import { ChatWindow } from "@/components/chat/ChatWindow";
 import { Card } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -20,6 +20,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { format } from "date-fns";
 import { toast } from "@/components/ui/use-toast";
 import { supabase } from '@/lib/supabaseClient';
+import { profileService, Profile } from '@/services/profiles';
 
 interface Conversation {
   id: string;
@@ -58,6 +59,7 @@ export default function Chat() {
   const [activeTab, setActiveTab] = useState("all");
   const [statusFilter, setStatusFilter] = useState<string | null>(null);
   const [priorityFilter, setPriorityFilter] = useState<string | null>(null);
+  const [travelers, setTravelers] = useState<Profile[]>([]);
 
   useEffect(() => {
     const loadConversations = async () => {
@@ -76,8 +78,10 @@ export default function Chat() {
           .order('updated_at', { ascending: false });
 
         if (isAdmin) {
-          query = query.eq('admin_id', user.id);
+          // Admins see conversations assigned to them or unassigned
+          query = query.or(`admin_id.eq.${user.id},admin_id.is.null`);
         } else {
+          // Travelers only see their own conversations
           query = query.eq('traveler_id', user.id);
         }
 
@@ -110,16 +114,14 @@ export default function Chat() {
     const channel = supabase
       .channel('public:conversations')
       .on('postgres_changes', {
-        event: '*',
-        schema: 'public',
-        table: 'conversations'
-      }, (payload) => {
+        event: '*', schema: 'public', table: 'conversations'
+      }, () => {
         loadConversations();
       })
       .subscribe();
 
     return () => {
-      supabase.removeChannel(channel);
+      channel.unsubscribe();
     };
   }, [user, isAdmin, selectedConversation]);
 
@@ -152,39 +154,45 @@ export default function Chat() {
     setFilteredConversations(filtered);
   }, [searchTerm, statusFilter, priorityFilter, activeTab, conversations]);
 
+  // Create new conversation (for traveler)
   const createNewConversation = async () => {
     if (!user) return;
-    
     try {
       const { data, error } = await supabase
         .from('conversations')
         .insert({
-          traveler_id: isAdmin ? null : user.id,
-          admin_id: isAdmin ? user.id : null,
-          title: isAdmin ? "New Support Conversation" : "Travel Assistance Request",
-          status: "active",
-          priority: "normal",
-          category: "general"
+          traveler_id: user.id,
+          admin_id: null,
+          title: 'Travel Assistance Request',
+          status: 'active',
+          priority: 'normal',
+          category: 'general'
         })
         .select()
         .single();
-        
       if (error) throw error;
-      
-      if (data) {
-        setSelectedConversation(data.id);
-        toast({
-          title: "Conversation created",
-          description: "You can now start chatting"
-        });
-      }
+      setSelectedConversation(data.id);
+      toast({ title: 'Conversation created', description: 'You can now start chatting' });
     } catch (err) {
-      console.error("Error creating conversation:", err);
-      toast({
-        title: "Error creating conversation",
-        description: "Please try again later",
-        variant: "destructive"
-      });
+      console.error('Error creating conversation:', err);
+      toast({ title: 'Error creating conversation', description: 'Please try again later', variant: 'destructive' });
+    }
+  };
+
+  // Admin creating a conversation with a selected traveler
+  const startChatWithTraveler = async (travelerId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('conversations')
+        .insert([{ traveler_id: travelerId, admin_id: user?.id, title: 'Support Chat', status: 'active', priority: 'normal', category: 'general' }])
+        .select()
+        .single();
+      if (error) throw error;
+      setSelectedConversation(data.id);
+      toast({ title: 'Chat started', description: `You are connected with traveler` });
+    } catch (err) {
+      console.error('Error starting chat:', err);
+      toast({ title: 'Error', description: 'Could not start chat', variant: 'destructive' });
     }
   };
 
@@ -211,14 +219,38 @@ export default function Chat() {
     }
   };
 
+  // Fetch traveler list for admins
+  useEffect(() => {
+    if (isAdmin) {
+      profileService.listTravelers().then(setTravelers).catch(console.error);
+    }
+  }, [isAdmin]);
+
   return (
     <div className="container mx-auto py-6">
+      {isAdmin && (
+        <div className="mb-4">
+          <label className="block mb-2">Start Chat with Traveler:</label>
+          <select
+            className="border px-3 py-1 rounded"
+            onChange={(e) => startChatWithTraveler(e.target.value)}
+            defaultValue=""
+          >
+            <option value="" disabled>Select traveler...</option>
+            {travelers.map((t) => (
+              <option key={t.id} value={t.id}>{t.email}</option>
+            ))}
+          </select>
+        </div>
+      )}
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold">Conversations</h1>
-        <Button onClick={createNewConversation}>
-          <Plus size={16} className="mr-2" />
-          New Conversation
-        </Button>
+        {!isAdmin && (
+          <Button onClick={createNewConversation}>
+            <Plus size={16} className="mr-2" />
+            New Conversation
+          </Button>
+        )}
       </div>
       
       <div className="grid grid-cols-12 gap-6">

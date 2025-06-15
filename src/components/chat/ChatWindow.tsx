@@ -1,9 +1,9 @@
-
 import { useEffect, useRef, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
-import { chatService, ChatMessage as ChatMessageType } from "@/services/chat";
-import { messageService } from "@/services/messages";
+import { chatService } from "@/services/chat";
+import { messageService, ChatMessage as ChatMessageType } from "@/services/messages";
 import { ChatMessage } from "./ChatMessage";
+import { supabase } from '@/lib/supabaseClient';
 import { ChatInput } from "./ChatInput";
 import { Card } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";

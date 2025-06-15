@@ -1,31 +1,31 @@
-
 import { useEffect, useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { roleService, UserRole } from '@/services/roles';
+import { roleService, RoleRecord } from '@/services/roles';
 
+/**
+ * Hook to determine the current user's role based on the `roles` table.
+ * `role` column: 0 = regular user (traveler), 1 = admin
+ */
 export function useRole() {
   const { user } = useAuth();
-  const [role, setRole] = useState<UserRole | null>(null);
+  const [isAdmin, setIsAdmin] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     async function fetchRole() {
       if (user) {
-        const userRole = await roleService.getCurrentUserRole();
-        setRole(userRole);
-      } else {
-        setRole(null);
+        try {
+          const record: RoleRecord = await roleService.getCurrentUserRole(user.id);
+          setIsAdmin(record.role === 1);
+        } catch (err) {
+          console.error('Failed to fetch user role:', err);
+          setIsAdmin(false);
+        }
       }
       setIsLoading(false);
     }
-
     fetchRole();
   }, [user]);
 
-  return {
-    role,
-    isLoading,
-    isAdmin: role?.role === 'admin',
-    isTraveller: role?.role === 'traveller',
-  };
+  return { isAdmin, isTraveller: !isAdmin, isLoading };
 }
