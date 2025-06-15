@@ -41,14 +41,13 @@ export const roleService = {
   async getAllUserRoles() {
     const { data, error } = await supabase
       .from('user_permissions')
-      .select('user_id, permission_level, created_at');
+      .select('user_id, permission_level');
     if (error) throw error;
     return (data ?? []).map((rec) => ({
       user_id: rec.user_id,
       permission_level: rec.permission_level,
-      role: rec.permission_level === 1 ? 'admin' : 'traveller',
-      created_at: rec.created_at
-    }));
+      role: rec.permission_level === 1 ? 'admin' : 'traveller'
+        }));
   },
 
   /**
