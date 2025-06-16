@@ -42,11 +42,14 @@ export const serviceRequestService = {
     (async () => {
       try {
         const { conversationService } = await import('@/services/conversations');
-        const { chatService } = await import('@/services/chat');
+        const { messageService } = await import('@/services/messages');
         // create a new conversation as 'Twende Travel' (admin_id null)
         const conv = await conversationService.create({ title: `Request #${request.id}`, admin_id: null });
         const text = `New service request #${request.id}: ${description}. Origin: ${origin}, Destination: ${destination}, Budget: ${budget}.`;
-        await chatService.sendMessage(conv.id, text);
+        await messageService.send({ conversation_id: conv.id, content: text });
+        // Send follow-up prompt
+        const followUp = `Please follow up on this request.`;
+        await messageService.send({ conversation_id: conv.id, content: followUp });
       } catch (err) {
         console.error('Error auto-sending request notification:', err);
       }
