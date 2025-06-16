@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { toast } from '@/hooks/use-toast';
 import { supabase } from '@/lib/supabaseClient';
+import { permissionService } from '@/services/roles';
 
 // User type with full name stored in metadata
 type User = {
@@ -110,6 +111,8 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       // auto-logged in if session present
       setUser({ id: u.id, email: u.email!, full_name });
       toast({ title: 'Sign up successful', description: 'Welcome!' });
+      // create default permission record in twende_permissions
+      permissionService.setUserPermission(u.id, 0).catch((err) => console.error('Permission seeding error:', err));
     } else {
       // email confirmation required
       toast({ title: 'Check your email', description: 'Please confirm your address before logging in.' });

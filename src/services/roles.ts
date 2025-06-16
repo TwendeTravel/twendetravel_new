@@ -1,8 +1,9 @@
 import { supabase } from '@/lib/supabaseClient';
 
 export interface PermissionRecord {
-  user_id: string;
-  permission_level: number;  // 0 = user, 1 = admin
+  id?: string;
+  twende_user: string;
+  permission: number;  // 0 = user, 1 = admin
 }
 
 export const permissionService = {
@@ -11,18 +12,20 @@ export const permissionService = {
    */
   async getUserPermission(userId: string): Promise<PermissionRecord> {
     const { data, error } = await supabase
-      .from('user_permissions')
-      .select('user_id, permission_level')
-      .eq('user_id', userId)
+      .from('twende_permissions')
+      .select('id, twende_user, permission')
+      .eq('twende_user', userId)
       .maybeSingle();
     if (error) throw error;
-    return data ?? { user_id: userId, permission_level: 0 };
+    return (
+      data ?? { twende_user: userId, permission: 0 }
+    );
   },
   /** Assign permission level to a user (0 = traveler, 1 = admin) */
-  async setUserPermission(userId: string, permission_level: number): Promise<PermissionRecord> {
+  async setUserPermission(userId: string, permission: number): Promise<PermissionRecord> {
     const { data, error } = await supabase
-      .from('user_permissions')
-      .upsert({ user_id: userId, permission_level })
+      .from('twende_permissions')
+      .upsert({ twende_user: userId, permission })
       .select()
       .single();
     if (error) throw error;
@@ -40,14 +43,15 @@ export const roleService = {
    */
   async getAllUserRoles() {
     const { data, error } = await supabase
-      .from('user_permissions')
-      .select('user_id, permission_level');
+      .from('twende_permissions')
+      .select('id, twende_user, permission');
     if (error) throw error;
     return (data ?? []).map((rec) => ({
-      user_id: rec.user_id,
-      permission_level: rec.permission_level,
-      role: rec.permission_level === 1 ? 'admin' : 'traveller'
-        }));
+      user_id: rec.twende_user,
+      permission: rec.permission,
+      role: rec.permission === 1 ? 'admin' : 'traveller',
+      // no created_at on new table
+    }));
   },
 
   /**
@@ -56,6 +60,6 @@ export const roleService = {
   async updateUserRole(userId: string, newRole: 'admin' | 'traveller') {
     const level = newRole === 'admin' ? 1 : 0;
     await permissionService.setUserPermission(userId, level);
-    return { user_id: userId, permission_level: level, role: newRole };
+    return { twende_user: userId, permission: level, role: newRole };
   }
 };
