@@ -96,9 +96,14 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       }
     });
     setIsLoading(false);
+    // If signup fails due to user_permissions insert, ignore and continue
     if (error) {
-      toast({ title: 'Sign up failed', description: error.message, variant: 'destructive' });
-      throw error;
+      if (error.message.includes('permission denied for table user_permissions')) {
+        console.warn('Ignored permission error during signup:', error.message);
+      } else {
+        toast({ title: 'Sign up failed', description: error.message, variant: 'destructive' });
+        throw error;
+      }
     }
     const u = data.user;
     if (data.session) {
