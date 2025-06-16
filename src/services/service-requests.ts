@@ -45,11 +45,16 @@ export const serviceRequestService = {
         const { messageService } = await import('@/services/messages');
         // create a new conversation as 'Twende Travel' (admin_id null)
         const conv = await conversationService.create({ title: `Request #${request.id}`, admin_id: null });
+        console.log('Auto-notify: conversation created', conv.id);
         const text = `New service request #${request.id}: ${description}. Origin: ${origin}, Destination: ${destination}, Budget: ${budget}.`;
-        await messageService.send({ conversation_id: conv.id, content: text });
-        // Send follow-up prompt
-        const followUp = `Please follow up on this request.`;
-        await messageService.send({ conversation_id: conv.id, content: followUp });
+        // Insert message with sender_id (the requester)
+        const { data: msg, error: msgErr } = await supabase
+          .from('messages')
+          .insert([{ conversation_id: conv.id, sender_id: userId, text }])
+          .select()
+          .single();
+        if (msgErr) throw msgErr;
+        console.log('Auto-notify: message sent', msg.id);
       } catch (err) {
         console.error('Error auto-sending request notification:', err);
       }
