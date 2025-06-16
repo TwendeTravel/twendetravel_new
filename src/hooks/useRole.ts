@@ -24,8 +24,8 @@ export function useRole() {
       }
       try {
         const rec: PermissionRecord = await permissionService.getUserPermission(user.id);
-        setIsAdmin(rec.permission_level === 1);
-        setIsTraveller(rec.permission_level === 0);
+        setIsAdmin(rec.permission === 1);
+        setIsTraveller(rec.permission === 0);
       } catch (err) {
         console.error('Error fetching permission:', err);
         setIsAdmin(false);

@@ -51,6 +51,13 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
           supabase.auth.updateUser({ data: md }).catch(console.error);
         }
         setUser({ id: u.id, email: u.email!, full_name: u.user_metadata.full_name });
+        // Seed default permission if missing
+        permissionService.getUserPermission(u.id).then((rec) => {
+          if (rec.id === undefined) {
+            permissionService.setUserPermission(u.id, 0)
+              .catch(err => console.error('Permission seeding error:', err));
+          }
+        }).catch(console.error);
       }
       setIsLoading(false);
     })();
@@ -64,6 +71,13 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
           supabase.auth.updateUser({ data: md2 }).catch(console.error);
         }
         setUser({ id: u.id, email: u.email!, full_name: u.user_metadata.full_name });
+        // Seed default permission if missing
+        permissionService.getUserPermission(u.id).then((rec) => {
+          if (rec.id === undefined) {
+            permissionService.setUserPermission(u.id, 0)
+              .catch(err => console.error('Permission seeding error:', err));
+          }
+        }).catch(console.error);
       } else {
         setUser(null);
       }
