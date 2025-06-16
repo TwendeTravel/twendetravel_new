@@ -65,35 +65,17 @@ export default function Chat() {
       setIsLoading(true);
 
       try {
-        let query = supabase
+        // Load all conversations for debugging
+        const { data, error } = await supabase
           .from('conversations')
-          .select(`
-            *,
-            admin:admin_id(*),
-            traveler:traveler_id(*),
-            related_trip:related_trip_id(id, destination_id(name, country))
-          `)
+          .select('id, title, traveler_id, admin_id, status, created_at, updated_at')
           .order('updated_at', { ascending: false });
-
-        if (isAdmin) {
-          // Admins see conversations assigned to them or unassigned
-          query = query.or(`admin_id.eq.${user.id},admin_id.is.null`);
-        } else {
-          // Travelers only see their own conversations
-          query = query.eq('traveler_id', user.id);
-        }
-
-        const { data, error } = await query;
-
         if (error) throw error;
-
-        if (data) {
-          const enhancedData = data as unknown as Conversation[];
-          setConversations(enhancedData);
-          setFilteredConversations(enhancedData);
-          if (enhancedData.length > 0 && !selectedConversation) {
-            setSelectedConversation(enhancedData[0].id);
-          }
+        const enhancedData = data as Conversation[];
+        setConversations(enhancedData);
+        setFilteredConversations(enhancedData);
+        if (enhancedData.length > 0 && !selectedConversation) {
+          setSelectedConversation(enhancedData[0].id);
         }
       } catch (err) {
         console.error("Error fetching conversations:", err);
@@ -314,9 +296,9 @@ export default function Chat() {
                   
                   <div className="flex items-center text-xs text-muted-foreground mb-1">
                     <User size={12} className="mr-1" />
-                    {isAdmin ? 
-                      `Traveler: ${conversation.traveler?.email || 'Unknown'}` : 
-                      `Admin: ${conversation.admin?.email || 'Unassigned'}`}
+                    {isAdmin ?
+                      `Traveler ID: ${conversation.traveler_id}` :
+                      `Admin ID: ${conversation.admin_id || 'Unassigned'}`}
                   </div>
                   
                   {conversation.related_trip && (
