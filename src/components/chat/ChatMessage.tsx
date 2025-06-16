@@ -1,5 +1,4 @@
-
-import { ChatMessage as ChatMessageType } from "@/services/chat";
+import { ChatMessage as ChatMessageType } from "@/services/messages";
 import { useAuth } from "@/contexts/AuthContext";
 import { cn } from "@/lib/utils";
 import { CheckCircle2, Circle } from "lucide-react";
@@ -22,14 +21,18 @@ export function ChatMessage({ message }: ChatMessageProps) {
         "max-w-[80%] rounded-lg px-4 py-2",
         isOwnMessage ? "bg-primary text-primary-foreground" : "bg-muted"
       )}>
-        <p className="text-sm">{message.content}</p>
+        <p className="text-sm">{message.text}</p>
+        {/* Show sender name or you */}
+        <div className="text-xs opacity-50 mt-1">
+          {isOwnMessage ? 'You' : `From: ${message.sender?.email || message.sender_id}`}
+        </div>
         <div className="flex items-center justify-end gap-1 mt-1">
           <span className="text-xs opacity-70">
             {format(new Date(message.created_at || ""), "HH:mm")}
           </span>
           {isOwnMessage && (
             <span className="text-xs">
-              {message.status === 'read' ? (
+              {message.read ? (
                 <CheckCircle2 className="h-3 w-3 text-green-500" />
               ) : (
                 <Circle className="h-3 w-3 opacity-70" />

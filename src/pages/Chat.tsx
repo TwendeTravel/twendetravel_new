@@ -177,6 +177,33 @@ export default function Chat() {
     }
   };
 
+  // Admin: start chat with any user
+  const createAdminChat = async () => {
+    if (!user) return;
+    const travelerId = prompt('Enter traveler user ID to chat with:');
+    if (!travelerId) return;
+    try {
+      const { data, error } = await supabase
+        .from('conversations')
+        .insert({
+          traveler_id: travelerId,
+          admin_id: user.id,
+          title: `Chat with ${travelerId}`,
+          status: 'active',
+          priority: 'normal',
+          category: 'general'
+        })
+        .select()
+        .single();
+      if (error) throw error;
+      setSelectedConversation(data.id);
+      toast({ title: 'Conversation created', description: 'You can now start chatting' });
+    } catch (err) {
+      console.error('Error creating admin chat:', err);
+      toast({ title: 'Error', description: 'Could not start chat', variant: 'destructive' });
+    }
+  };
+
   const updateConversationStatus = async (id: string, status: string) => {
     try {
       const { error } = await supabase
@@ -204,10 +231,15 @@ export default function Chat() {
     <div className="container mx-auto py-6">
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold">Conversations</h1>
-        {!isAdmin && (
+        {!isAdmin ? (
           <Button onClick={createNewConversation}>
             <Plus size={16} className="mr-2" />
             New Conversation
+          </Button>
+        ) : (
+          <Button onClick={createAdminChat}>
+            <Plus size={16} className="mr-2" />
+            New Chat
           </Button>
         )}
       </div>

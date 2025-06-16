@@ -35,9 +35,23 @@ export const serviceRequestService = {
       .from('service_requests')
       .insert({ user_id: userId, origin, destination, description, items, budget, total_price: totalPrice, status: 'pending' })
       .select()
-      .single()
-    if (error) throw error
-    return data
+      .single();
+    if (error) throw error;
+    const request = data;
+    // Automatically notify Twende Travel (no specific admin) via chat
+    (async () => {
+      try {
+        const { conversationService } = await import('@/services/conversations');
+        const { chatService } = await import('@/services/chat');
+        // create a new conversation as 'Twende Travel' (admin_id null)
+        const conv = await conversationService.create({ title: `Request #${request.id}`, admin_id: null });
+        const text = `New service request #${request.id}: ${description}. Origin: ${origin}, Destination: ${destination}, Budget: ${budget}.`;
+        await chatService.sendMessage(conv.id, text);
+      } catch (err) {
+        console.error('Error auto-sending request notification:', err);
+      }
+    })();
+    return request;
   },
   /**
    * Fetch all service requests for the currently signed-in user.
