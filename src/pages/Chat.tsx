@@ -138,21 +138,26 @@ export default function Chat() {
   const createNewConversation = async () => {
     if (!user) return;
     try {
-      const { data, error } = await supabase
+      // reuse existing traveler–Twende Travel thread if present
+      const { data: existing, error: findErr } = await supabase
         .from('conversations')
-        .insert({
-          traveler_id: user.id,
-          admin_id: null,
-          title: 'Travel Assistance Request',
-          status: 'active',
-          priority: 'normal',
-          category: 'general'
-        })
-        .select()
-        .single();
-      if (error) throw error;
-      setSelectedConversation(data.id);
-      toast({ title: 'Conversation created', description: 'You can now start chatting' });
+        .select('id')
+        .eq('traveler_id', user.id)
+        .eq('admin_id', null)
+        .maybeSingle();
+      if (findErr) throw findErr;
+      let convId = existing?.id;
+      if (!convId) {
+        const { data: newConv, error: createErr } = await supabase
+          .from('conversations')
+          .insert([{ traveler_id: user.id, admin_id: null, title: 'Travel Assistance Request', status: 'active', priority: 'normal', category: 'general' }])
+          .select('id')
+          .single();
+        if (createErr) throw createErr;
+        convId = newConv.id;
+        toast({ title: 'Conversation created', description: 'You can now start chatting' });
+      }
+      setSelectedConversation(convId);
     } catch (err) {
       console.error('Error creating conversation:', err);
       toast({ title: 'Error creating conversation', description: 'Please try again later', variant: 'destructive' });
