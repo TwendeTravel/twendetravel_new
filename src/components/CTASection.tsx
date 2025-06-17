@@ -1,10 +1,10 @@
 
 import { ArrowRight } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 
 const CTASection = () => {
-  const navigate = useNavigate();
+  // const navigate = useNavigate();
   return (
     <section className="py-20 bg-ghana-pattern bg-cover bg-center relative">
       <div className="absolute inset-0 bg-gradient-to-r from-twende-teal/90 to-twende-teal/70 dark:from-twende-skyblue/80 dark:to-twende-teal/60"></div>
@@ -65,12 +65,9 @@ const CTASection = () => {
           transition={{ duration: 0.6, delay: 0.4 }}
           viewport={{ once: true }}
         >
-        <motion.button 
-          type="button"
-          onClick={() => navigate(`/chat?message=${encodeURIComponent('I would like help planning my next trip')}`)}
+          <Link
+            to={`/chat?message=${encodeURIComponent('I would like help planning my next trip')}`}
             className="bg-white text-twende-teal hover:bg-gray-100 transition-colors duration-300 font-bold py-3 px-8 rounded-lg flex items-center justify-center hover:shadow-lg group dark:bg-gray-900 dark:text-twende-skyblue dark:hover:bg-gray-800"
-            whileHover={{ scale: 1.03 }}
-            whileTap={{ scale: 0.97 }}
           >
             Plan Your Trip
             <motion.span
@@ -80,17 +77,14 @@ const CTASection = () => {
             >
               <ArrowRight className="h-5 w-5" />
             </motion.span>
-          </motion.button>
+          </Link>
           
-        <motion.button 
-          type="button"
-          onClick={() => navigate(`/chat?message=${encodeURIComponent('Hello, I need assistance')}`)}
-            className="bg-transparent text-white border-2 border-white hover:bg-white/10 transition-colors duration-300 font-bold py-3 px-8 rounded-lg hover:shadow-lg"
-            whileHover={{ scale: 1.03 }}
-            whileTap={{ scale: 0.97 }}
-          >
-            Contact Us
-          </motion.button>
+        <Link
+          to={`/chat?message=${encodeURIComponent('Hello, I need assistance')}`}
+          className="bg-transparent text-white border-2 border-white hover:bg-white/10 transition-colors duration-300 font-bold py-3 px-8 rounded-lg hover:shadow-lg"
+        >
+          Contact Us
+        </Link>
         </motion.div>
       </div>
     </section>

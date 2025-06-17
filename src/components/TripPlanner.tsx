@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '@/contexts/AuthContext';
 import { MapPin, Calendar, Users, Briefcase, CreditCard, Heart } from 'lucide-react';
 
 type TravelPurpose = 'leisure' | 'business' | 'family' | 'medical';
@@ -12,10 +13,15 @@ const TripPlanner = () => {
   const [budget, setBudget] = useState('mid');
 
   const navigate = useNavigate();
+  const { user } = useAuth();
   
   const handleCreatePlan = () => {
-    const planMessage = `I would like a custom trip plan: purpose=${purpose}, destination=${destination}, dates=${dates}, travelers=${travelers}, budget=${budget}`;
-    navigate(`/chat?message=${encodeURIComponent(planMessage)}`);
+    if (user) {
+      navigate('/service-request');
+    } else {
+      const planMessage = `I would like a custom trip plan: purpose=${purpose}, destination=${destination}, dates=${dates}, travelers=${travelers}, budget=${budget}`;
+      navigate(`/chat?message=${encodeURIComponent(planMessage)}`);
+    }
   };
   
   return (
