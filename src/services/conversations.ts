@@ -1,6 +1,6 @@
-
 import { toast } from "@/components/ui/use-toast";
 import type { Database } from "@/integrations/supabase/types";
+import { supabase } from '@/lib/supabaseClient';
 
 export type Conversation = Database['public']['Tables']['conversations']['Row'];
 type ConversationInsert = Database['public']['Tables']['conversations']['Insert'];
@@ -55,8 +55,7 @@ export const conversationService = {
       .single();
     if (insertError) throw insertError;
     return newConv as Conversation;
-  }
-  
+  },
   subscribeToMyConversations(callback: (conversations: Conversation[]) => void) {
     return supabase
       .channel('my-conversations')
