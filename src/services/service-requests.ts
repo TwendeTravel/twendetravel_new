@@ -41,29 +41,22 @@ export const serviceRequestService = {
     // Notify Twende Travel in a single shared chat thread
     (async () => {
       try {
-        // find or create a conversation between this user and Twende Travel
+        const { conversationService } = await import('@/services/conversations');
+        const { chatService } = await import('@/services/chat');
+        // find existing traveler–Twende Travel conversation
         const { data: existing, error: findErr } = await supabase
           .from('conversations')
           .select('id')
           .eq('traveler_id', userId)
-          .eq('admin_id', null)
+          .is('admin_id', null)
           .maybeSingle();
         if (findErr) throw findErr;
-        let convId = existing?.id;
-        if (!convId) {
-          const { data: newConv, error: createErr } = await supabase
-            .from('conversations')
-            .insert([{ traveler_id: userId, admin_id: null, title: `Chat with Twende Travel`, status: 'active', priority: 'normal', category: 'general' }])
-            .select('id')
-            .single();
-          if (createErr) throw createErr;
-          convId = newConv.id;
-        }
-        // send generic notification message
-        const { error: msgErr } = await supabase
-          .from('messages')
-          .insert([{ conversation_id: convId, sender_id: userId, text: "I've requested a service, please check it out and revert." }]);
-        if (msgErr) throw msgErr;
+        // use existing or create new conversation
+        const conv = existing?.id
+          ? existing
+          : await conversationService.create({ title: 'Chat with Twende Travel', admin_id: null, status: 'active' });
+        // send notification message once per service request
+        await chatService.sendMessage(conv.id, "I've requested a service, please check it out and revert.");
       } catch (err) {
         console.error('Error auto-sending request notification:', err);
       }
