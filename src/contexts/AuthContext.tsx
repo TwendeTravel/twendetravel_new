@@ -57,7 +57,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       }
       setIsLoading(false);
     })();
-    const { data: listener } = supabase.auth.onAuthStateChange((_, session) => {
+    const { data: listener } = supabase.auth.onAuthStateChange(async (_, session) => {
       if (session?.user) {
         const u = session.user;
         // Remove any 'role' metadata key
