@@ -26,9 +26,14 @@ export const messageService = {
   },
   // Send a new message
   async send({ conversation_id, content }: { conversation_id: string; content: string }) {
+    // Include sender_id for message
+    const { data: sessionData, error: sessErr } = await supabase.auth.getSession();
+    if (sessErr) throw sessErr;
+    const userId = sessionData.session?.user.id;
+    if (!userId) throw new Error('User not authenticated');
     const { data, error } = await supabase
       .from('messages')
-      .insert([{ conversation_id, text: content }])
+      .insert([{ conversation_id, text: content, sender_id: userId }])
       .select()
       .single();
     if (error) throw error;
