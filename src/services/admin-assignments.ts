@@ -1,5 +1,6 @@
 
 import { toast } from "@/components/ui/use-toast";
+import { supabase } from '@/lib/supabaseClient';
 
 export type AdminAssignment = {
   id: string;
