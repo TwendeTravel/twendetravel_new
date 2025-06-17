@@ -48,6 +48,13 @@ interface Conversation {
 }
 
 export default function Chat() {
+  const { isAdmin, isLoading: roleLoading } = useRole();
+  const navigate = useNavigate();
+  useEffect(() => {
+    if (!roleLoading && isAdmin) {
+      navigate('/admin');
+    }
+  }, [isAdmin, roleLoading, navigate]);
   const { user } = useAuth();
   const { isAdmin, isLoading: roleLoading } = useRole();
   const [conversations, setConversations] = useState<Conversation[]>([]);
@@ -60,6 +67,8 @@ export default function Chat() {
   const [statusFilter, setStatusFilter] = useState<string | null>(null);
   const [priorityFilter, setPriorityFilter] = useState<string | null>(null);
 
+  const [travellers, setTravellers] = useState<{ id: string; email: string }[]>([]);
+  const [selectedTraveller, setSelectedTraveller] = useState<string | null>(null);
   useEffect(() => {
     const loadConversations = async () => {
       if (!user) return;
@@ -67,13 +76,16 @@ export default function Chat() {
 
       try {
         // Load all conversations for debugging
-        const { data, error } = await supabase
-          .from('conversations')
-          .select('id, title, traveler_id, admin_id, status, created_at, updated_at')
-          .order('updated_at', { ascending: false });
+      const { data, error } = await supabase
+        .from('conversations')
+        .select(`
+          id, title, traveler_id, admin_id, status, created_at, updated_at,
+          traveler:traveler_id(email), admin:admin_id(email)
+        `)
+        .order('updated_at', { ascending: false });
         if (error) throw error;
         const enhancedData = data as Conversation[];
-        setConversations(enhancedData);
+      setConversations(enhancedData);
         setFilteredConversations(enhancedData);
         if (enhancedData.length > 0 && !selectedConversation) {
           setSelectedConversation(enhancedData[0].id);
@@ -91,6 +103,19 @@ export default function Chat() {
     };
 
     loadConversations();
+    // Load travellers list for admin chat
+    if (user && isAdmin) {
+      supabase
+        .from('twende_permissions')
+        .select('twende_user, user:twende_user(email)')
+        .eq('permission', 0)
+        .then(({ data, error }) => {
+          if (!error && data) {
+            const list = data.map(rec => ({ id: rec.twende_user, email: rec.user.email }));
+            setTravellers(list);
+          }
+        });
+    }
 
     const channel = supabase
       .channel('public:conversations')

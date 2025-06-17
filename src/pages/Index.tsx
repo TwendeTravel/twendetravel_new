@@ -21,6 +21,7 @@ import PageTransition from '@/components/PageTransition';
 
 const Index = () => {
   const { user } = useAuth();
+  const { isAdmin, isLoading: roleLoading } = useRole();
   const navigate = useNavigate();
   
   useEffect(() => {
@@ -39,8 +40,13 @@ const Index = () => {
       window.history.replaceState({}, document.title, newUrl);
     }
     
-    // If user is already logged in, they might want to go to their dashboard
-    if (user) {
+    // If user is already logged in, handle admin vs traveler redirect
+    if (user && !roleLoading) {
+      if (isAdmin) {
+        navigate('/admin');
+        return;
+      }
+      // Traveler
       const timer = setTimeout(() => {
         toast({
           title: "Already logged in",
@@ -58,7 +64,12 @@ const Index = () => {
 
       return () => clearTimeout(timer);
     }
-  }, [user, navigate]);
+  }, [user, isAdmin, roleLoading, navigate]);
+  
+  if (!roleLoading && isAdmin) {
+    // Admin should not see traveler homepage
+    return null;
+  }
 
   return (
     <PageTransition>

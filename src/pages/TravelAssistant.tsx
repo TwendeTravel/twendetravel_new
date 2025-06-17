@@ -1,4 +1,6 @@
 import { useState, useRef, useEffect } from "react";
+import { useRole } from "@/hooks/useRole";
+import { useNavigate } from "react-router-dom";
 import { Send, User, Bot, ArrowLeft, ThumbsUp, ThumbsDown, Copy, Paperclip, Image, Mic } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -33,7 +35,14 @@ const INITIAL_MESSAGES: Message[] = [
 
 const TravelAssistant = () => {
   const navigate = useNavigate();
-  const storageKey = 'travel_assistant_messages';
+  const { isAdmin, isLoading: roleLoading } = useRole();
+  const navigate = useNavigate();
+  useEffect(() => {
+    if (!roleLoading && isAdmin) {
+      navigate('/admin');
+    }
+  }, [isAdmin, roleLoading, navigate]);
+  if (!roleLoading && isAdmin) return null;
   const [input, setInput] = useState("");
   const [messages, setMessages] = useState<Message[]>(() => {
     try {

@@ -95,6 +95,7 @@ const DashboardSidebar = () => {
             <SidebarLink to="/admin" icon={<Shield size={18} />} label="Admin Dashboard" end />
             <SidebarLink to="/admin/users" icon={<Users size={18} />} label="User Management" />
             <SidebarLink to="/admin/travel-management" icon={<Globe size={18} />} label="Travel Management" />
+            <SidebarLink to="/admin/service-requests" icon={<FileText size={18} />} label="Service Requests" />
           </>
         )}
         

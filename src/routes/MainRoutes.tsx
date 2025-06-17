@@ -17,6 +17,7 @@ import CountryNews from "../pages/CountryNews";
 import AdminDashboard from "../pages/AdminDashboard";
 import AdminUsers from "../pages/AdminUsers";
 import AdminTravelManagement from "../pages/AdminTravelManagement";
+import AdminServiceRequests from "@/pages/AdminServiceRequests";
 import Chat from "../pages/Chat";
 import ServiceRequest from "@/pages/ServiceRequest";
 import FlightSearch from "@/pages/FlightSearch";
@@ -108,6 +109,16 @@ export default function MainRoutes() {
           element={
             <AuthGuard>
               <CountryNews />
+            </AuthGuard>
+          } 
+        />
+        <Route 
+          path="/admin/service-requests"
+          element={
+            <AuthGuard>
+              <AdminRoute>
+                <AdminServiceRequests />
+              </AdminRoute>
             </AuthGuard>
           } 
         />
