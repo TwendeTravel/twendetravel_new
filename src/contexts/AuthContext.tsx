@@ -44,8 +44,13 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       const { data: { session } } = await supabase.auth.getSession();
       if (session?.user) {
       const u = session.user;
-      // Remove any 'role' metadata key so it isn't included in the session JWT
-      await supabase.auth.updateUser({ data: { role: null } }).catch(console.error);
+      // Clear any outdated 'role' metadata (to avoid DB-level SET ROLE errors)
+      const md = { ...u.user_metadata };
+      if (md.role !== undefined) {
+        delete md.role;
+        // await metadata update before further DB operations
+        await supabase.auth.updateUser({ data: md }).catch(console.error);
+      }
       setUser({ id: u.id, email: u.email!, full_name: u.user_metadata.full_name });
       // Seed default permission if missing, after metadata cleared
       permissionService.getUserPermission(u.id).then((rec) => {
@@ -57,19 +62,25 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       }
       setIsLoading(false);
     })();
-    const { data: listener } = supabase.auth.onAuthStateChange(async (_, session) => {
+    const { data: listener } = supabase.auth.onAuthStateChange((_, session) => {
       if (session?.user) {
         const u = session.user;
-        // Remove any 'role' metadata key
-        await supabase.auth.updateUser({ data: { role: null } }).catch(console.error);
-        setUser({ id: u.id, email: u.email!, full_name: u.user_metadata.full_name });
-        // Seed default permission if missing
-        permissionService.getUserPermission(u.id).then((rec) => {
-          if (rec.id === undefined) {
-            permissionService.setUserPermission(u.id, 0)
-              .catch(err => console.error('Permission seeding error:', err));
+        // Clear outdated 'role' metadata then seed permission
+        const md2 = { ...u.user_metadata };
+        const setup = async () => {
+          if (md2.role !== undefined) {
+            delete md2.role;
+            await supabase.auth.updateUser({ data: md2 }).catch(console.error);
           }
-        }).catch(console.error);
+          setUser({ id: u.id, email: u.email!, full_name: u.user_metadata.full_name });
+          try {
+            const rec = await permissionService.getUserPermission(u.id);
+            if (rec.id === undefined) {
+              await permissionService.setUserPermission(u.id, 0);
+            }
+          } catch(e) { console.error(e); }
+        };
+        setup();
       } else {
         setUser(null);
       }
