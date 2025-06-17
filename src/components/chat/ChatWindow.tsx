@@ -22,24 +22,6 @@ interface ConversationData {
   traveler_id: string;
   title: string;
   status: string | null;
-  related_trip_id?: string | null;
-  admin?: {
-    id: string;
-    email: string;
-  } | null;
-  traveler?: {
-    id: string;
-    email: string;
-  } | null;
-  related_trip?: {
-    id: string;
-    start_date: string;
-    end_date: string;
-    destination?: {
-      name: string;
-      country: string;
-    } | null;
-  } | null;
 }
 
 export function ChatWindow({ conversationId }: ChatWindowProps) {
@@ -61,16 +43,10 @@ export function ChatWindow({ conversationId }: ChatWindowProps) {
     const loadMessages = async () => {
       setIsLoadingConversation(true);
       try {
-        // Fix the query to use proper table relationships
+        // Fetch conversation without nested joins
         const { data: conversationData, error: convError } = await supabase
           .from('conversations')
-          .select(`
-            *,
-            admin:admin_id(*),
-            traveler:traveler_id(*),
-            related_trip:related_trip_id(id, start_date, end_date, 
-              destination:destination_id(name, country))
-          `)
+          .select('id, title, traveler_id, admin_id, status')
           .eq('id', conversationId)
           .single();
           
@@ -83,17 +59,9 @@ export function ChatWindow({ conversationId }: ChatWindowProps) {
         // Set participant info based on user role
         if (user) {
           if (typedConversation.traveler_id === user.id) {
-            setParticipantInfo({
-              name: typedConversation.admin?.email || "Admin",
-              role: "Admin",
-              isOnline: false // We would need a presence system to track this accurately
-            });
+            setParticipantInfo({ name: 'Twende Travel', role: 'Admin' });
           } else {
-            setParticipantInfo({
-              name: typedConversation.traveler?.email || "Traveler",
-              role: "Traveler",
-              isOnline: false
-            });
+            setParticipantInfo({ name: `Traveler: ${typedConversation.traveler_id}`, role: 'Traveler' });
           }
         }
         
@@ -243,19 +211,7 @@ export function ChatWindow({ conversationId }: ChatWindowProps) {
             </div>
           </div>
           
-          {conversation.related_trip && (
-            <div className="flex flex-col items-end">
-              <Badge variant="secondary" className="mb-1 flex items-center">
-                <Info size={12} className="mr-1" />
-                {conversation.related_trip.destination?.name}, {conversation.related_trip.destination?.country}
-              </Badge>
-              <div className="text-xs text-muted-foreground flex items-center">
-                <Calendar size={12} className="mr-1" />
-                {format(new Date(conversation.related_trip.start_date), "MMM d")} - 
-                {format(new Date(conversation.related_trip.end_date), "MMM d, yyyy")}
-              </div>
-            </div>
-          )}
+          {/* no related_trip info available */}
         </div>
       )}
 
