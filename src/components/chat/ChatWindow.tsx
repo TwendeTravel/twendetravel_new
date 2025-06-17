@@ -14,6 +14,7 @@ import { format } from "date-fns";
 
 interface ChatWindowProps {
   conversationId: string;
+  initialMessage?: string;
 }
 
 interface ConversationData {
@@ -24,7 +25,7 @@ interface ConversationData {
   status: string | null;
 }
 
-export function ChatWindow({ conversationId }: ChatWindowProps) {
+export function ChatWindow({ conversationId, initialMessage }: ChatWindowProps) {
   const { user } = useAuth();
   const [messages, setMessages] = useState<ChatMessageType[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -246,6 +247,7 @@ export function ChatWindow({ conversationId }: ChatWindowProps) {
         onSend={handleSendMessage}
         onTyping={handleTyping} 
         isLoading={isLoading} 
+        initialMessage={initialMessage}
       />
     </Card>
   );

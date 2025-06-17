@@ -53,6 +53,7 @@ export default function Chat() {
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [filteredConversations, setFilteredConversations] = useState<Conversation[]>([]);
   const [selectedConversation, setSelectedConversation] = useState<string | null>(null);
+  const [initialMessage, setInitialMessage] = useState<string | undefined>(undefined);
   const [searchTerm, setSearchTerm] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("all");
@@ -133,6 +134,13 @@ export default function Chat() {
     
     setFilteredConversations(filtered);
   }, [searchTerm, statusFilter, priorityFilter, activeTab, conversations]);
+  
+  // Extract initial message from URL
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const msg = params.get('message') || undefined;
+    setInitialMessage(msg);
+  }, []);
 
   // Create new conversation (for traveler)
   const createNewConversation = async () => {
@@ -337,9 +345,9 @@ export default function Chat() {
         </Card>
         
         <div className="col-span-12 md:col-span-8">
-          {selectedConversation ? (
+            {selectedConversation ? (
             <div className="flex flex-col h-[700px]">
-              <ChatWindow conversationId={selectedConversation} />
+              <ChatWindow conversationId={selectedConversation} initialMessage={initialMessage} />
               
               {isAdmin && (
                 <Card className="mt-4 p-4">

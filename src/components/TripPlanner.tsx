@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { MapPin, Calendar, Users, Briefcase, CreditCard, Heart } from 'lucide-react';
 
 type TravelPurpose = 'leisure' | 'business' | 'family' | 'medical';
@@ -10,6 +11,13 @@ const TripPlanner = () => {
   const [travelers, setTravelers] = useState('1');
   const [budget, setBudget] = useState('mid');
 
+  const navigate = useNavigate();
+  
+  const handleCreatePlan = () => {
+    const planMessage = `I would like a custom trip plan: purpose=${purpose}, destination=${destination}, dates=${dates}, travelers=${travelers}, budget=${budget}`;
+    navigate(`/chat?message=${encodeURIComponent(planMessage)}`);
+  };
+  
   return (
     <section id="plan" className="py-20 bg-twende-beige dark:bg-gray-900/50 relative overflow-hidden">
       {/* Decorative Pattern */}
@@ -130,7 +138,11 @@ const TripPlanner = () => {
               </div>
 
               {/* Submit Button */}
-              <button className="w-full mt-6 py-3 bg-twende-teal hover:bg-twende-teal/90 dark:bg-twende-skyblue dark:hover:bg-twende-skyblue/90 text-white dark:text-black font-semibold rounded-lg transition-colors">
+              <button
+                type="button"
+                onClick={handleCreatePlan}
+                className="w-full mt-6 py-3 bg-twende-teal hover:bg-twende-teal/90 dark:bg-twende-skyblue dark:hover:bg-twende-skyblue/90 text-white dark:text-black font-semibold rounded-lg transition-colors"
+              >
                 Create My Custom Plan
               </button>
               

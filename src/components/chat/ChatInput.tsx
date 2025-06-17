@@ -8,11 +8,18 @@ interface ChatInputProps {
   onSend: (message: string) => void;
   onTyping?: () => void;
   isLoading?: boolean;
+  initialMessage?: string;
 }
 
-export function ChatInput({ onSend, onTyping, isLoading }: ChatInputProps) {
-  const [message, setMessage] = useState("");
+export function ChatInput({ onSend, onTyping, isLoading, initialMessage }: ChatInputProps) {
+  const [message, setMessage] = useState(initialMessage || "");
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  
+  useEffect(() => {
+    if (initialMessage) {
+      setMessage(initialMessage);
+    }
+  }, [initialMessage]);
 
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();

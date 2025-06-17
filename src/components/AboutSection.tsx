@@ -1,7 +1,9 @@
 
 import { Award, Users, Globe } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 const AboutSection = () => {
+  const navigate = useNavigate();
   return (
     <section id="about" className="py-20 bg-background dark:bg-gray-900/50">
       <div className="container mx-auto px-4">
@@ -66,12 +68,13 @@ const AboutSection = () => {
             </div>
             
             {/* CTA Button */}
-            <a 
-              href="#plan" 
+            <button
+              type="button"
+              onClick={() => navigate(`/chat?message=${encodeURIComponent('I would like help planning my trip')}`)}
               className="btn-primary dark:bg-twende-skyblue dark:text-black dark:hover:bg-twende-skyblue/90"
             >
               Start Your Journey with Us
-            </a>
+            </button>
           </div>
         </div>
       </div>

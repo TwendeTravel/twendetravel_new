@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { askGemini } from '@/services/gemini';
 import ReactMarkdown from 'react-markdown';
@@ -32,6 +32,7 @@ const INITIAL_MESSAGES: Message[] = [
 ];
 
 const TravelAssistant = () => {
+  const navigate = useNavigate();
   const storageKey = 'travel_assistant_messages';
   const [input, setInput] = useState("");
   const [messages, setMessages] = useState<Message[]>(() => {
@@ -229,10 +230,13 @@ const TravelAssistant = () => {
             <p className="text-sm mb-4 text-primary-foreground/90">
               Let our travel experts create a custom itinerary just for you.
             </p>
-            <Button variant="secondary" size="sm" className="w-full" asChild>
-              <Link to="/dashboard">
-                Plan My Trip
-              </Link>
+            <Button
+              variant="secondary"
+              size="sm"
+              className="w-full"
+              onClick={() => navigate(`/chat?message=${encodeURIComponent('I would like a personalized trip plan')}`)}
+            >
+              Plan My Trip
             </Button>
           </div>
           

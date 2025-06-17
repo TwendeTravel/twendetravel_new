@@ -1,5 +1,6 @@
 
 import { Mail, Phone, MapPin, Send } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import {
   Form,
   FormField,
@@ -24,12 +25,10 @@ const ContactSection = () => {
     }
   });
 
+  const navigate = useNavigate();
   const onSubmit = (data: any) => {
-    toast({
-      title: "Message Sent",
-      description: "Thank you for reaching out. We'll get back to you soon!",
-    });
-    form.reset();
+    const msg = data.message;
+    navigate(`/chat?message=${encodeURIComponent(msg)}`);
   };
 
   return (
