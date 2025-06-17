@@ -43,33 +43,25 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     (async () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (session?.user) {
-        const u = session.user;
-        // Clear any outdated 'role' metadata (to avoid DB-level SET ROLE errors)
-        const md = { ...u.user_metadata };
-        if (md.role !== undefined) {
-          delete md.role;
-          supabase.auth.updateUser({ data: md }).catch(console.error);
+      const u = session.user;
+      // Remove any 'role' metadata key so it isn't included in the session JWT
+      await supabase.auth.updateUser({ data: { role: null } }).catch(console.error);
+      setUser({ id: u.id, email: u.email!, full_name: u.user_metadata.full_name });
+      // Seed default permission if missing, after metadata cleared
+      permissionService.getUserPermission(u.id).then((rec) => {
+        if (rec.id === undefined) {
+          permissionService.setUserPermission(u.id, 0)
+            .catch(err => console.error('Permission seeding error:', err));
         }
-        setUser({ id: u.id, email: u.email!, full_name: u.user_metadata.full_name });
-        // Seed default permission if missing
-        permissionService.getUserPermission(u.id).then((rec) => {
-          if (rec.id === undefined) {
-            permissionService.setUserPermission(u.id, 0)
-              .catch(err => console.error('Permission seeding error:', err));
-          }
-        }).catch(console.error);
+      }).catch(console.error);
       }
       setIsLoading(false);
     })();
     const { data: listener } = supabase.auth.onAuthStateChange((_, session) => {
       if (session?.user) {
         const u = session.user;
-        // Clear outdated 'role' metadata
-        const md2 = { ...u.user_metadata };
-        if (md2.role !== undefined) {
-          delete md2.role;
-          supabase.auth.updateUser({ data: md2 }).catch(console.error);
-        }
+        // Remove any 'role' metadata key
+        await supabase.auth.updateUser({ data: { role: null } }).catch(console.error);
         setUser({ id: u.id, email: u.email!, full_name: u.user_metadata.full_name });
         // Seed default permission if missing
         permissionService.getUserPermission(u.id).then((rec) => {
@@ -90,13 +82,23 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
   const login = async (email: string, password: string) => {
     setIsLoading(true);
-    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+    const { data: signInData, error } = await supabase.auth.signInWithPassword({ email, password });
     setIsLoading(false);
     if (error) {
       toast({ title: 'Login failed', description: error.message, variant: 'destructive' });
       throw error;
     }
-    const u = data.user;
+    const session = signInData.session;
+    const u = signInData.user;
+    // Remove any custom 'role' metadata by updating only full_name
+    await supabase.auth.updateUser({ data: { full_name: u.user_metadata.full_name } }).catch(console.error);
+    // Refresh session tokens to get JWT without old role claim
+    if (session) {
+      await supabase.auth.setSession({
+        access_token: session.access_token,
+        refresh_token: session.refresh_token
+      });
+    }
     setUser({ id: u.id, email: u.email!, full_name: u.user_metadata.full_name });
   };
 
