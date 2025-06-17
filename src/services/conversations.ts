@@ -32,6 +32,30 @@ export const conversationService = {
 
     return data;
   },
+  /**
+   * Find or create the shared traveler–Twende Travel conversation for a user.
+   */
+  async getOrCreateSupportConversation(travelerId: string) {
+    // Try find existing support thread (admin_id null)
+    const { data, error } = await supabase
+      .from('conversations')
+      .select('*')
+      .eq('traveler_id', travelerId)
+      .is('admin_id', null)
+      .maybeSingle();
+    if (error) throw error;
+    if (data) {
+      return data as Conversation;
+    }
+    // Create new support conversation
+    const { data: newConv, error: insertError } = await supabase
+      .from('conversations')
+      .insert({ traveler_id: travelerId, admin_id: null, title: 'Travel Support', status: 'active' })
+      .select()
+      .single();
+    if (insertError) throw insertError;
+    return newConv as Conversation;
+  }
   
   subscribeToMyConversations(callback: (conversations: Conversation[]) => void) {
     return supabase

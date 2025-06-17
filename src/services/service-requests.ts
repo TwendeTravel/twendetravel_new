@@ -1,6 +1,8 @@
 // filepath: src/services/service-requests.ts
 import { supabase } from '@/lib/supabaseClient'
 import { toast } from '@/components/ui/use-toast'
+import { conversationService } from '@/services/conversations';
+import { chatService } from '@/services/chat';
 
 export const serviceRequestService = {
   async getAll() {
@@ -38,27 +40,13 @@ export const serviceRequestService = {
       .single();
     if (error) throw error;
     const request = data;
-    // Notify Twende Travel in a single shared chat thread
+    // Notify Twende Travel via shared support conversation
     (async () => {
       try {
-        const { conversationService } = await import('@/services/conversations');
-        const { chatService } = await import('@/services/chat');
-        // find existing traveler–Twende Travel conversation
-        const { data: existing, error: findErr } = await supabase
-          .from('conversations')
-          .select('id')
-          .eq('traveler_id', userId)
-          .is('admin_id', null)
-          .maybeSingle();
-        if (findErr) throw findErr;
-        // use existing or create new conversation
-        const conv = existing?.id
-          ? existing
-          : await conversationService.create({ title: 'Chat with Twende Travel', admin_id: null, status: 'active' });
-        // send notification message once per service request
+        const conv = await conversationService.getOrCreateSupportConversation(userId);
         await chatService.sendMessage(conv.id, "I've requested a service, please check it out and revert.");
       } catch (err) {
-        console.error('Error auto-sending request notification:', err);
+        console.error('Error auto-sending service request notification:', err);
       }
     })();
     return request;
