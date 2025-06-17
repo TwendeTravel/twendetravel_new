@@ -155,13 +155,17 @@ export function ChatWindow({ conversationId, initialMessage }: ChatWindowProps) 
 
   const handleSendMessage = async (content: string) => {
     if (!user) return;
-    
     setIsLoading(true);
     try {
-      await messageService.send({
-        content,
-        conversation_id: conversationId,
-      });
+      // Send the message
+      await messageService.send({ content, conversation_id: conversationId });
+      // Refresh full message list to include new message
+      const updated = await chatService.getMessages(conversationId);
+      setMessages(updated);
+      // Scroll to the bottom to show the new message
+      scrollRef.current?.scrollIntoView({ behavior: 'smooth' });
+    } catch (err) {
+      console.error('Error sending message:', err);
     } finally {
       setIsLoading(false);
     }
