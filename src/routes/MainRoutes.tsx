@@ -1,3 +1,157 @@
+import AdminDestinations from "../pages/AdminDestinations";
+import AdminTrips from "../pages/AdminTrips";
+import AdminItineraries from "../pages/AdminItineraries";
+import AdminExperiences from "../pages/AdminExperiences";
+import AdminFlights from "../pages/AdminFlights";
+import AdminReviews from "../pages/AdminReviews";
+import AdminAnalytics from "../pages/AdminAnalytics";
+import AdminNotifications from "../pages/AdminNotifications";
+import AdminAuditLogs from "../pages/AdminAuditLogs";
+import AdminBulkActions from "../pages/AdminBulkActions";
+import AdminSettings from "../pages/AdminSettings";
+import AdminChatManagement from "../pages/AdminChatManagement";
+import AdminDocuments from "../pages/AdminDocuments";
+import AdminSavedDestinations from "../pages/AdminSavedDestinations";
+        <Route 
+          path="/admin/destinations" 
+          element={
+            <AuthGuard>
+              <AdminRoute>
+                <AdminDestinations />
+              </AdminRoute>
+            </AuthGuard>
+          } 
+        />
+        <Route 
+          path="/admin/trips" 
+          element={
+            <AuthGuard>
+              <AdminRoute>
+                <AdminTrips />
+              </AdminRoute>
+            </AuthGuard>
+          } 
+        />
+        <Route 
+          path="/admin/itineraries" 
+          element={
+            <AuthGuard>
+              <AdminRoute>
+                <AdminItineraries />
+              </AdminRoute>
+            </AuthGuard>
+          } 
+        />
+        <Route 
+          path="/admin/experiences" 
+          element={
+            <AuthGuard>
+              <AdminRoute>
+                <AdminExperiences />
+              </AdminRoute>
+            </AuthGuard>
+          } 
+        />
+        <Route 
+          path="/admin/flights" 
+          element={
+            <AuthGuard>
+              <AdminRoute>
+                <AdminFlights />
+              </AdminRoute>
+            </AuthGuard>
+          } 
+        />
+        <Route 
+          path="/admin/reviews" 
+          element={
+            <AuthGuard>
+              <AdminRoute>
+                <AdminReviews />
+              </AdminRoute>
+            </AuthGuard>
+          } 
+        />
+        <Route 
+          path="/admin/analytics" 
+          element={
+            <AuthGuard>
+              <AdminRoute>
+                <AdminAnalytics />
+              </AdminRoute>
+            </AuthGuard>
+          } 
+        />
+        <Route 
+          path="/admin/notifications" 
+          element={
+            <AuthGuard>
+              <AdminRoute>
+                <AdminNotifications />
+              </AdminRoute>
+            </AuthGuard>
+          } 
+        />
+        <Route 
+          path="/admin/audit-logs" 
+          element={
+            <AuthGuard>
+              <AdminRoute>
+                <AdminAuditLogs />
+              </AdminRoute>
+            </AuthGuard>
+          } 
+        />
+        <Route 
+          path="/admin/bulk-actions" 
+          element={
+            <AuthGuard>
+              <AdminRoute>
+                <AdminBulkActions />
+              </AdminRoute>
+            </AuthGuard>
+          } 
+        />
+        <Route 
+          path="/admin/settings" 
+          element={
+            <AuthGuard>
+              <AdminRoute>
+                <AdminSettings />
+              </AdminRoute>
+            </AuthGuard>
+          } 
+        />
+        <Route 
+          path="/admin/chat-management" 
+          element={
+            <AuthGuard>
+              <AdminRoute>
+                <AdminChatManagement />
+              </AdminRoute>
+            </AuthGuard>
+          } 
+        />
+        <Route 
+          path="/admin/documents" 
+          element={
+            <AuthGuard>
+              <AdminRoute>
+                <AdminDocuments />
+              </AdminRoute>
+            </AuthGuard>
+          } 
+        />
+        <Route 
+          path="/admin/saved-destinations" 
+          element={
+            <AuthGuard>
+              <AdminRoute>
+                <AdminSavedDestinations />
+              </AdminRoute>
+            </AuthGuard>
+          } 
+        />
 import { AnimatePresence } from "framer-motion";
 import { Routes, Route, useLocation } from "react-router-dom";
 import AuthGuard from '../guards/AuthGuard';
@@ -147,6 +301,147 @@ export default function MainRoutes() {
           } 
         />
         
+        {/* Admin new pages */}
+        <Route 
+          path="/admin/destinations" 
+          element={
+            <AuthGuard>
+              <AdminRoute>
+                <AdminDestinations />
+              </AdminRoute>
+            </AuthGuard>
+          } 
+        />
+        <Route 
+          path="/admin/trips" 
+          element={
+            <AuthGuard>
+              <AdminRoute>
+                <AdminTrips />
+              </AdminRoute>
+            </AuthGuard>
+          } 
+        />
+        <Route 
+          path="/admin/itineraries" 
+          element={
+            <AuthGuard>
+              <AdminRoute>
+                <AdminItineraries />
+              </AdminRoute>
+            </AuthGuard>
+          } 
+        />
+        <Route 
+          path="/admin/experiences" 
+          element={
+            <AuthGuard>
+              <AdminRoute>
+                <AdminExperiences />
+              </AdminRoute>
+            </AuthGuard>
+          } 
+        />
+        <Route 
+          path="/admin/flights" 
+          element={
+            <AuthGuard>
+              <AdminRoute>
+                <AdminFlights />
+              </AdminRoute>
+            </AuthGuard>
+          } 
+        />
+        <Route 
+          path="/admin/reviews" 
+          element={
+            <AuthGuard>
+              <AdminRoute>
+                <AdminReviews />
+              </AdminRoute>
+            </AuthGuard>
+          } 
+        />
+        <Route 
+          path="/admin/analytics" 
+          element={
+            <AuthGuard>
+              <AdminRoute>
+                <AdminAnalytics />
+              </AdminRoute>
+            </AuthGuard>
+          } 
+        />
+        <Route 
+          path="/admin/notifications" 
+          element={
+            <AuthGuard>
+              <AdminRoute>
+                <AdminNotifications />
+              </AdminRoute>
+            </AuthGuard>
+          } 
+        />
+        <Route 
+          path="/admin/audit-logs" 
+          element={
+            <AuthGuard>
+              <AdminRoute>
+                <AdminAuditLogs />
+              </AdminRoute>
+            </AuthGuard>
+          } 
+        />
+        <Route 
+          path="/admin/bulk-actions" 
+          element={
+            <AuthGuard>
+              <AdminRoute>
+                <AdminBulkActions />
+              </AdminRoute>
+            </AuthGuard>
+          } 
+        />
+        <Route 
+          path="/admin/settings" 
+          element={
+            <AuthGuard>
+              <AdminRoute>
+                <AdminSettings />
+              </AdminRoute>
+            </AuthGuard>
+          } 
+        />
+        <Route 
+          path="/admin/chat-management" 
+          element={
+            <AuthGuard>
+              <AdminRoute>
+                <AdminChatManagement />
+              </AdminRoute>
+            </AuthGuard>
+          } 
+        />
+        <Route 
+          path="/admin/documents" 
+          element={
+            <AuthGuard>
+              <AdminRoute>
+                <AdminDocuments />
+              </AdminRoute>
+            </AuthGuard>
+          } 
+        />
+        <Route 
+          path="/admin/saved-destinations" 
+          element={
+            <AuthGuard>
+              <AdminRoute>
+                <AdminSavedDestinations />
+              </AdminRoute>
+            </AuthGuard>
+          } 
+        />
         {/* Catch-all route */}
         <Route path="*" element={<NotFound />} />
       </Routes>

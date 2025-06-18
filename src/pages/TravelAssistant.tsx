@@ -1,13 +1,12 @@
 import { useState, useRef, useEffect } from "react";
 import { useRole } from "@/hooks/useRole";
-import { useNavigate } from "react-router-dom";
 import { Send, User, Bot, ArrowLeft, ThumbsUp, ThumbsDown, Copy, Paperclip, Image, Mic } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { askGemini } from '@/services/gemini';
 import ReactMarkdown from 'react-markdown';
@@ -34,9 +33,9 @@ const INITIAL_MESSAGES: Message[] = [
 ];
 
 const TravelAssistant = () => {
+  const storageKey = "twende_travel_assistant_messages";
   const navigate = useNavigate();
   const { isAdmin, isLoading: roleLoading } = useRole();
-  const navigate = useNavigate();
   useEffect(() => {
     if (!roleLoading && isAdmin) {
       navigate('/admin');
