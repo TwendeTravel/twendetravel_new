@@ -1,17 +1,13 @@
 // filepath: src/services/chat.ts
 import { supabase } from '@/lib/supabaseClient'
+import { messageService } from './messages'
 import { toast } from '@/components/ui/use-toast'
 
 export const chatService = {
   // Fetch all messages for a conversation
   async getMessages(conversationId: string) {
-    const { data, error } = await supabase
-      .from('messages')
-      .select('*')
-      .eq('conversation_id', conversationId)
-      .order('created_at', { ascending: true });
-    if (error) throw error;
-    return data;
+    // use messageService to include sender email
+    return await messageService.list(conversationId);
   },
   async getConversation(id: string) {
     const { data, error } = await supabase

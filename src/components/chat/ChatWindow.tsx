@@ -91,28 +91,14 @@ export function ChatWindow({ conversationId, initialMessage }: ChatWindowProps) 
     }
 
     // Set up real-time subscription for messages
-    const messageSubscription = messageService.subscribeToNewMessages(conversationId, (newMessage) => {
-      setMessages((prev) => {
-        // Check if message already exists to avoid duplicates
-        if (prev.some(msg => msg.id === newMessage.id)) {
-          return prev;
-        }
-        return [...prev, newMessage];
-      });
-      
-      // If message is from the other participant, mark it as read
-      if (newMessage.sender_id !== user?.id) {
-        messageService.markAsRead(newMessage.id);
+    const messageSubscription = messageService.subscribeToNewMessages(
+      conversationId,
+      async () => {
+        // Re-fetch full message list (includes sender emails)
+        const updated = await chatService.getMessages(conversationId);
+        setMessages(updated);
       }
-      
-      // Clear typing indicator when a message is received
-      if (newMessage.sender_id !== user?.id) {
-        setIsTyping(false);
-        if (typingTimeoutRef.current) {
-          clearTimeout(typingTimeoutRef.current);
-        }
-      }
-    });
+    );
     
     // Set up real-time subscription for conversation updates
     const conversationSubscription = chatService.subscribeToConversationUpdates(conversationId, 
