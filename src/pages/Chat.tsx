@@ -56,7 +56,6 @@ export default function Chat() {
     }
   }, [isAdmin, roleLoading, navigate]);
   const { user } = useAuth();
-  const { isAdmin, isLoading: roleLoading } = useRole();
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [filteredConversations, setFilteredConversations] = useState<Conversation[]>([]);
   const [selectedConversation, setSelectedConversation] = useState<string | null>(null);
