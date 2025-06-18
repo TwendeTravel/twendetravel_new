@@ -86,10 +86,10 @@ export default function Chat() {
       const userIds = Array.from(new Set(
         convs.flatMap(c => [c.traveler_id, c.admin_id]).filter(id => id)
       ));
-      // fetch user emails
+      // fetch user emails via view
       const { data: users, error: usersErr } = await supabase
-        .from('auth.users')
-        .select('id, email')
+        .from('user_emails_view')
+        .select('*')
         .in('id', userIds as string[]);
       if (usersErr) console.error('Error fetching user emails:', usersErr);
       // map emails
