@@ -16,13 +16,29 @@ export interface ChatMessage {
 
 export const messageService = {
   async list(conversationId: string) {
-    const { data, error } = await supabase
+    // Fetch raw messages
+    const { data: msgs, error: msgErr } = await supabase
       .from('messages')
       .select('*')
       .eq('conversation_id', conversationId)
-      .order('created_at', { ascending: true })
-    if (error) throw error
-    return data
+      .order('created_at', { ascending: true });
+    if (msgErr) throw msgErr;
+    // Collect unique sender IDs
+    const senderIds = Array.from(new Set(msgs.map(m => m.sender_id)));
+    // Fetch sender emails via view
+    const { data: users, error: usersErr } = await supabase
+      .from('user_emails_view')
+      .select('id, email')
+      .in('id', senderIds as string[]);
+    if (usersErr) console.error('Error fetching sender emails:', usersErr);
+    // Attach sender info to messages
+    return msgs.map(m => ({
+      ...m,
+      sender: {
+        id: m.sender_id,
+        email: users?.find(u => u.id === m.sender_id)?.email || ''
+      }
+    }));
   },
   // Send a new message
   async send({ conversation_id, content }: { conversation_id: string; content: string }) {
