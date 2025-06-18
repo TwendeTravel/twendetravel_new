@@ -76,12 +76,28 @@ export default function Chat() {
 
       try {
         // Load all conversations for debugging
-      const { data, error } = await supabase
+      // fetch basic conversation records
+      const { data: convs, error: convErr } = await supabase
         .from('conversations')
-        .select('id, title, status, created_at, updated_at, traveler:traveler_id(email), admin:admin_id(email)')
+        .select('id, title, traveler_id, admin_id, status, created_at, updated_at')
         .order('updated_at', { ascending: false });
-        if (error) throw error;
-        const enhancedData = data as Conversation[];
+      if (convErr) throw convErr;
+      // gather unique user IDs
+      const userIds = Array.from(new Set(
+        convs.flatMap(c => [c.traveler_id, c.admin_id]).filter(id => id)
+      ));
+      // fetch user emails
+      const { data: users, error: usersErr } = await supabase
+        .from('users')
+        .select('id, email')
+        .in('id', userIds as string[]);
+      if (usersErr) console.error('Error fetching user emails:', usersErr);
+      // map emails
+      const enhancedData: Conversation[] = convs.map(c => ({
+        ...c,
+        traveler: c.traveler_id ? { email: users?.find(u => u.id === c.traveler_id)?.email || '' } : null,
+        admin:    c.admin_id    ? { email: users?.find(u => u.id === c.admin_id)?.email    || '' } : null
+      }));
       setConversations(enhancedData);
         setFilteredConversations(enhancedData);
         if (enhancedData.length > 0 && !selectedConversation) {
