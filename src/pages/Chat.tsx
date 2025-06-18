@@ -78,10 +78,7 @@ export default function Chat() {
         // Load all conversations for debugging
       const { data, error } = await supabase
         .from('conversations')
-        .select(`
-          id, title, traveler_id, admin_id, status, created_at, updated_at,
-          traveler:traveler_id(email), admin:admin_id(email)
-        `)
+        .select('id, title, status, created_at, updated_at, traveler:traveler_id(email), admin:admin_id(email)')
         .order('updated_at', { ascending: false });
         if (error) throw error;
         const enhancedData = data as Conversation[];
