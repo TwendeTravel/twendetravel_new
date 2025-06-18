@@ -1,7 +1,7 @@
-
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
+import { useRole } from '@/hooks/useRole';
 import { toast } from '@/hooks/use-toast';
 import Header from '../components/Header';
 import Hero from '../components/Hero';

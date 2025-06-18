@@ -20,6 +20,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { format } from "date-fns";
 import { toast } from "@/components/ui/use-toast";
 import { supabase } from '@/lib/supabaseClient';
+import { useNavigate } from 'react-router-dom';
 
 interface Conversation {
   id: string;
