@@ -62,7 +62,17 @@ export function ChatWindow({ conversationId, initialMessage }: ChatWindowProps) 
           if (typedConversation.traveler_id === user.id) {
             setParticipantInfo({ name: 'Twende Travel', role: 'Admin' });
           } else {
-            setParticipantInfo({ name: `Traveler: ${typedConversation.traveler_id}`, role: 'Traveler' });
+            // Try to fetch traveler name/email from conversation object if available
+            const travelerName = (typedConversation as any)?.traveler?.name;
+            const travelerEmail = (typedConversation as any)?.traveler?.email;
+            setParticipantInfo({
+              name: travelerName
+                ? `Traveler: ${travelerName} (${travelerEmail})`
+                : travelerEmail
+                  ? `Traveler: ${travelerEmail}`
+                  : `Traveler: ${typedConversation.traveler_id}`,
+              role: 'Traveler'
+            });
           }
         }
         

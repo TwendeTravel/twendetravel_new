@@ -257,10 +257,50 @@ export default function Chat() {
             New Conversation
           </Button>
         ) : (
-          <Button onClick={createAdminChat}>
-            <Plus size={16} className="mr-2" />
-            New Chat
-          </Button>
+          <div className="flex items-center space-x-2">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="sm">
+                  {selectedTraveller
+                    ? travellers.find(t => t.id === selectedTraveller)?.email
+                    : 'Select Traveler'}
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent>
+                {travellers.map(traveller => (
+                  <DropdownMenuItem key={traveller.id} onClick={() => setSelectedTraveller(traveller.id)}>
+                    {traveller.email}
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+            <Button onClick={async () => {
+              if (!selectedTraveller) return;
+              try {
+                const { data, error } = await supabase
+                  .from('conversations')
+                  .insert({
+                    traveler_id: selectedTraveller,
+                    admin_id: user.id,
+                    title: `Chat with ${travellers.find(t => t.id === selectedTraveller)?.email || selectedTraveller}`,
+                    status: 'active',
+                    priority: 'normal',
+                    category: 'general'
+                  })
+                  .select()
+                  .single();
+                if (error) throw error;
+                setSelectedConversation(data.id);
+                toast({ title: 'Conversation created', description: 'You can now start chatting' });
+              } catch (err) {
+                console.error('Error creating admin chat:', err);
+                toast({ title: 'Error', description: 'Could not start chat', variant: 'destructive' });
+              }
+            }} disabled={!selectedTraveller}>
+              <Plus size={16} className="mr-2" />
+              New Chat
+            </Button>
+          </div>
         )}
       </div>
       
@@ -334,9 +374,9 @@ export default function Chat() {
                   
                   <div className="flex items-center text-xs text-muted-foreground mb-1">
                     <User size={12} className="mr-1" />
-                    {isAdmin ?
-                      `Traveler ID: ${conversation.traveler_id}` :
-                      `Admin ID: ${conversation.admin_id || 'Unassigned'}`}
+                    {isAdmin
+                      ? `Traveler: ${conversation.traveler?.email || conversation.traveler_id}`
+                      : `Admin ID: ${conversation.admin_id || 'Unassigned'}`}
                   </div>
                   
                   {conversation.related_trip && (
