@@ -88,7 +88,7 @@ export default function Chat() {
       ));
       // fetch user emails
       const { data: users, error: usersErr } = await supabase
-        .from('users')
+        .from('auth.users')
         .select('id, email')
         .in('id', userIds as string[]);
       if (usersErr) console.error('Error fetching user emails:', usersErr);
