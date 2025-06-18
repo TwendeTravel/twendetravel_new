@@ -28,16 +28,16 @@ export const messageService = {
     // Fetch sender emails via view
     const { data: users, error: usersErr } = await supabase
       .from('user_emails_view')
-      // view fields: user_id and email
-      .select('user_id, email')
-      .in('user_id', senderIds as string[]);
+      // view fields: id and email
+      .select('id, email')
+      .in('id', senderIds as string[]);
     if (usersErr) console.error('Error fetching sender emails:', usersErr);
     // Attach sender info to messages
     return msgs.map(m => ({
       ...m,
       sender: {
         id: m.sender_id,
-        email: users?.find(u => u.user_id === m.sender_id)?.email || ''
+        email: users?.find(u => u.id === m.sender_id)?.email || ''
       }
     }));
   },
