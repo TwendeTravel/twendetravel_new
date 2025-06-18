@@ -7,8 +7,8 @@ interface DestinationCardProps {
   country: string;
   image: string;
   rating: number;
-  price: string;
-  popular: string;
+  // price prop removed, use dynamic pricing when available
+  popular: string[];
   delay?: number;
 }
 
@@ -75,16 +75,12 @@ const DestinationCard = ({
             <span className="ml-1 text-sm font-semibold text-gray-700 dark:text-gray-300">{rating}</span>
           </div>
           
-          {/* Price */}
-          <div>
-            <span className="text-sm text-gray-500 dark:text-gray-400">From</span>
-            <span className="ml-1 text-lg font-bold text-twende-teal dark:text-twende-skyblue">{price}</span>
-          </div>
+        {/* Price display removed; implement dynamic pricing if needed */}
         </div>
         
         {/* Popular For */}
         <p className="text-sm text-gray-600 truncate dark:text-gray-400">
-          <span className="font-medium dark:text-gray-300">Popular for:</span> {popular}
+          <span className="font-medium dark:text-gray-300">Popular for:</span> {popular.join(', ')}
         </p>
       </div>
     </div>
