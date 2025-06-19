@@ -26,6 +26,7 @@ interface CountryNewsWidgetProps {
 const CountryNewsWidget = ({ country = "ghana", limit = 2 }: CountryNewsWidgetProps) => {
   const [loading, setLoading] = useState(true);
   const [news, setNews] = useState<any[]>([]);
+  const [searchTerm, setSearchTerm] = useState('');
   
   // Format country name for routing
   const countrySlug = country.toLowerCase().replace(/\s+/g, '-');
@@ -36,32 +37,44 @@ const CountryNewsWidget = ({ country = "ghana", limit = 2 }: CountryNewsWidgetPr
   useEffect(() => {
     const fetchNewsData = async () => {
       setLoading(true);
-      // Try fetching cached news from Supabase
       let articles: any[] | null = null;
-      try {
-        const { data: cacheRow, error: cacheErr } = await supabase
-          .from('news_cache')
-          .select('data, updated_at')
-          .eq('country', country)
-          .single();
-        if (!cacheErr && cacheRow) {
-          const age = Date.now() - new Date(cacheRow.updated_at).getTime();
-          if (age < CACHE_TTL) {
-            articles = cacheRow.data;
-          }
-        }
-      } catch (err) {
-        console.error('Error reading news cache:', err);
-      }
-      // If no valid cache, fetch fresh and update Supabase
-      if (!articles) {
+
+      // Only use cache when not searching
+      if (!searchTerm.trim()) {
         try {
-          const query = encodeURIComponent(`travel ${displayCountryName}`);
-          const countryCode = COUNTRY_CODES[country.toLowerCase()];
-          // Build GNews search URL
-          let url = `https://gnews.io/api/v4/search?q=${query}&lang=en`;
+          const { data: cacheRow, error: cacheErr } = await supabase
+            .from('news_cache')
+            .select('data, updated_at')
+            .eq('country', country)
+            .single();
+          if (!cacheErr && cacheRow) {
+            const age = Date.now() - new Date(cacheRow.updated_at).getTime();
+            if (age < CACHE_TTL) {
+              articles = cacheRow.data;
+            }
+          }
+        } catch (err) {
+          console.error('Error reading news cache:', err);
+        }
+      }
+
+      // Fetch fresh if no valid cache or searching
+      try {
+        const countryCode = COUNTRY_CODES[country.toLowerCase()];
+        let url = '';
+
+        if (searchTerm.trim()) {
+          const query = encodeURIComponent(`travel ${displayCountryName} ${searchTerm}`);
+          url = `https://gnews.io/api/v4/search?q=${query}&lang=en`;
           if (countryCode) url += `&country=${countryCode}`;
-          url += `&max=${limit}&apikey=${GNEWS_API_KEY}`;
+        } else {
+          url = `https://gnews.io/api/v4/top-headlines?lang=en&topic=travel`;
+          if (countryCode) url += `&country=${countryCode}`;
+        }
+
+        url += `&max=${limit}&apikey=${GNEWS_API_KEY}`;
+
+        if (!articles) {
           const resp = await fetch(url);
           const json = await resp.json();
           articles = (json.articles ?? []).map((a: any) => ({
@@ -69,23 +82,27 @@ const CountryNewsWidget = ({ country = "ghana", limit = 2 }: CountryNewsWidgetPr
             title: a.title,
             summary: a.description,
             date: new Date(a.publishedAt).toLocaleDateString(),
-            url: a.url
+            url: a.url,
           }));
-          // Upsert to Supabase cache
+        }
+
+        // Cache default headlines
+        if (!searchTerm.trim()) {
           const { error: upsertErr } = await supabase
             .from('news_cache')
             .upsert({ country, data: articles });
           if (upsertErr) console.error('Error updating news cache:', upsertErr);
-        } catch (err) {
-          console.error('Error fetching GNews:', err);
         }
+      } catch (err) {
+        console.error('Error fetching GNews:', err);
       }
+
       setNews(articles || []);
       setLoading(false);
     };
 
     fetchNewsData();
-  }, [country, limit]);
+  }, [country, limit, searchTerm]);
 
   // Animation variants
   const containerVariants = {
@@ -121,6 +138,16 @@ const CountryNewsWidget = ({ country = "ghana", limit = 2 }: CountryNewsWidgetPr
         <CardDescription>Latest travel updates</CardDescription>
       </CardHeader>
       <CardContent>
+        {/* Search box for travel news */}
+        <div className="p-4">
+          <input
+            type="text"
+            placeholder="Search travel news..."
+            value={searchTerm}
+            onChange={e => setSearchTerm(e.target.value)}
+            className="w-full px-3 py-2 border rounded-lg"
+          />
+        </div>
         {loading ? (
           <div className="space-y-4">
             {[1, 2].map(i => (
