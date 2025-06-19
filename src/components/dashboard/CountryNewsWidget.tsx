@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
@@ -6,57 +5,23 @@ import { Globe, Newspaper, Clock, ArrowRight } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { supabase } from '@/lib/supabaseClient';
+// GNews API key from env
+const GNEWS_API_KEY = import.meta.env.VITE_GNEWS_API_KEY;
+const CACHE_TTL = 24 * 60 * 60 * 1000; // 24h cache
+
+// Map country names to GNews country codes
+const COUNTRY_CODES: Record<string,string> = {
+  ghana: 'gh',
+  kenya: 'ke',
+  'south africa': 'za'
+};
 
 interface CountryNewsWidgetProps {
   country?: string;
   limit?: number;
 }
 
-// Sample news data for the widget
-const sampleNewsData = {
-  "ghana": [
-    {
-      id: 1,
-      title: "Ghana celebrates 65 years of independence",
-      summary: "The West African nation marks its 65th independence anniversary.",
-      date: "2 days ago",
-    },
-    {
-      id: 2,
-      title: "New eco-tourism initiative launched in Ghana",
-      summary: "A sustainable tourism program aims to protect Ghana's forests.",
-      date: "1 week ago",
-    }
-  ],
-  "kenya": [
-    {
-      id: 1,
-      title: "Kenya hosts wildlife conservation conference",
-      summary: "Experts gather to discuss protecting endangered species.",
-      date: "5 days ago",
-    },
-    {
-      id: 2,
-      title: "Drought concerns ease after rainfall",
-      summary: "Recent precipitation brings relief to northern regions.",
-      date: "1 week ago",
-    }
-  ],
-  "south africa": [
-    {
-      id: 1,
-      title: "Cape Town named top cultural destination",
-      summary: "International recognition for the city's cultural offerings.",
-      date: "1 week ago",
-    },
-    {
-      id: 2,
-      title: "Mild winter predicted for coastal regions",
-      summary: "Warmer than average temperatures expected this season.",
-      date: "3 days ago",
-    }
-  ]
-};
 
 const CountryNewsWidget = ({ country = "ghana", limit = 2 }: CountryNewsWidgetProps) => {
   const [loading, setLoading] = useState(true);
@@ -69,21 +34,54 @@ const CountryNewsWidget = ({ country = "ghana", limit = 2 }: CountryNewsWidgetPr
   ).join(' ');
 
   useEffect(() => {
-    // Simulate API call with a delay
     const fetchNewsData = async () => {
       setLoading(true);
+      // Try fetching cached news from Supabase
+      let articles: any[] | null = null;
       try {
-        // In a real app, this would be an API call
-        setTimeout(() => {
-          const newsItems = sampleNewsData[country.toLowerCase() as keyof typeof sampleNewsData] || 
-                         sampleNewsData.ghana;
-          setNews(newsItems.slice(0, limit));
-          setLoading(false);
-        }, 1000);
-      } catch (error) {
-        console.error("Error fetching news:", error);
-        setLoading(false);
+        const { data: cacheRow, error: cacheErr } = await supabase
+          .from('news_cache')
+          .select('data, updated_at')
+          .eq('country', country)
+          .single();
+        if (!cacheErr && cacheRow) {
+          const age = Date.now() - new Date(cacheRow.updated_at).getTime();
+          if (age < CACHE_TTL) {
+            articles = cacheRow.data;
+          }
+        }
+      } catch (err) {
+        console.error('Error reading news cache:', err);
       }
+      // If no valid cache, fetch fresh and update Supabase
+      if (!articles) {
+        try {
+          const query = encodeURIComponent(`travel ${displayCountryName}`);
+          const countryCode = COUNTRY_CODES[country.toLowerCase()];
+          // Build GNews search URL
+          let url = `https://gnews.io/api/v4/search?q=${query}&lang=en`;
+          if (countryCode) url += `&country=${countryCode}`;
+          url += `&max=${limit}&apikey=${GNEWS_API_KEY}`;
+          const resp = await fetch(url);
+          const json = await resp.json();
+          articles = (json.articles ?? []).map((a: any) => ({
+            id: a.url,
+            title: a.title,
+            summary: a.description,
+            date: new Date(a.publishedAt).toLocaleDateString(),
+            url: a.url
+          }));
+          // Upsert to Supabase cache
+          const { error: upsertErr } = await supabase
+            .from('news_cache')
+            .upsert({ country, data: articles });
+          if (upsertErr) console.error('Error updating news cache:', upsertErr);
+        } catch (err) {
+          console.error('Error fetching GNews:', err);
+        }
+      }
+      setNews(articles || []);
+      setLoading(false);
     };
 
     fetchNewsData();
