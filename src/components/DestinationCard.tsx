@@ -27,7 +27,7 @@ const DestinationCard = ({ id, name, country, image, rating, popular, delay = 0,
   return (
     <div
       className="card hover-lift overflow-hidden group animate-slide-up dark:bg-gray-800/50 dark:border dark:border-gray-700 backdrop-blur-sm"
-      onClick={() => navigate(`/service-request?destination=${encodeURIComponent(name)}`)}
+      onClick={() => navigate(`/destination/${id}`)}
       style={{ animationDelay: `${delay}ms` }}
     >
       {/* Image Container */}

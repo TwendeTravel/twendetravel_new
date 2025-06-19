@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useNavigate } from "react-router-dom";
 import { destinationService, type Destination } from '@/services/destinations';
 import { 
   Map, 
@@ -27,6 +27,7 @@ import { Separator } from "@/components/ui/separator";
 const DestinationInfo = () => {
   const { id } = useParams<{ id: string }>();
   const [destination, setDestination] = useState<Destination | null>(null);
+  const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(true);
   const [isFavorite, setIsFavorite] = useState(false);
 
@@ -106,6 +107,14 @@ const DestinationInfo = () => {
       {/* Description */}
       <div className="container mx-auto px-4 py-6">
         <p className="text-gray-700 dark:text-gray-300 mb-4">{destination.description}</p>
+        <div className="text-center mb-6">
+          <Button 
+            variant="primary"
+            onClick={() => navigate(`/dashboard?tab=services&destination=${encodeURIComponent(destination.name)}`)}
+          >
+            Request Services
+          </Button>
+        </div>
         {/* Additional details can be rendered here using destination coordinates, etc. */}
       </div>
       
