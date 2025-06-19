@@ -50,15 +50,17 @@ const CountryNewsWidget = ({ country = "ghana", limit = 2 }: CountryNewsWidgetPr
           if (!cacheErr && cacheRow) {
             const age = Date.now() - new Date(cacheRow.updated_at).getTime();
             if (age < CACHE_TTL) {
-              articles = cacheRow.data;
+              setNews(cacheRow.data);
+              setLoading(false);
+              return;
             }
           }
         } catch (err) {
           console.error('Error reading news cache:', err);
         }
       }
-
-      // Fetch fresh if no valid cache or searching
+      
+      // No valid cache or searching: fetch fresh
       try {
         const countryCode = COUNTRY_CODES[country.toLowerCase()];
         let url = '';
@@ -86,11 +88,14 @@ const CountryNewsWidget = ({ country = "ghana", limit = 2 }: CountryNewsWidgetPr
           }));
         }
 
-        // Cache default headlines
+        // Cache default headlines with onConflict
         if (!searchTerm.trim()) {
           const { error: upsertErr } = await supabase
             .from('news_cache')
-            .upsert({ country, data: articles });
+            .upsert(
+              { country, data: articles },
+              { onConflict: ['country'] }
+            );
           if (upsertErr) console.error('Error updating news cache:', upsertErr);
         }
       } catch (err) {
