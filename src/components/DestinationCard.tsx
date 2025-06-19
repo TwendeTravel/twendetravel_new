@@ -1,5 +1,5 @@
-
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Heart } from 'lucide-react';
 
 interface DestinationCardProps {
@@ -16,6 +16,7 @@ interface DestinationCardProps {
 
 const DestinationCard = ({ id, name, country, image, rating, popular, delay = 0, isSaved, onToggleSave }: DestinationCardProps) => {
   const [imageError, setImageError] = useState(false);
+  const navigate = useNavigate();
   const fallbackImage = "https://images.unsplash.com/photo-1469474968028-56623f02e42e?auto=format&fit=crop&w=800&q=80";
 
   const handleImageError = () => {
@@ -26,6 +27,7 @@ const DestinationCard = ({ id, name, country, image, rating, popular, delay = 0,
   return (
     <div
       className="card hover-lift overflow-hidden group animate-slide-up dark:bg-gray-800/50 dark:border dark:border-gray-700 backdrop-blur-sm"
+      onClick={() => navigate(`/service-request?destination=${encodeURIComponent(name)}`)}
       style={{ animationDelay: `${delay}ms` }}
     >
       {/* Image Container */}

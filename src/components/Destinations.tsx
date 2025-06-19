@@ -4,6 +4,7 @@ import { useSavedDestinations } from '@/hooks/useSavedDestinations';
 import { Loader } from './Loader';
 import { toast } from '@/components/ui/use-toast';
 import { destinationService, type Destination } from '@/services/destinations';
+import { useNavigate } from 'react-router-dom';
 
 const Destinations = () => {
   const [activeFilter, setActiveFilter] = useState('All');
@@ -42,6 +43,7 @@ const Destinations = () => {
 
   // load save state and handlers
   const { savedIds, save, unsave } = useSavedDestinations();
+  const navigate = useNavigate();
   return (
     <section id="destinations" className="py-20 bg-gray-50 dark:bg-gray-900/50">
       <div className="container mx-auto px-4">
@@ -119,7 +121,10 @@ const Destinations = () => {
         {/* View All Button */}
         {!isLoading && filteredDestinations.length > 0 && (
           <div className="text-center mt-12">
-            <button className="btn-primary dark:bg-twende-skyblue dark:text-black dark:hover:bg-twende-skyblue/90">
+            <button
+              onClick={() => navigate('/destinations')}
+              className="btn-primary dark:bg-twende-skyblue dark:text-black dark:hover:bg-twende-skyblue/90"
+            >
               Explore All Destinations
             </button>
           </div>

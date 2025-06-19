@@ -20,6 +20,7 @@ import AdminRoute from "../components/AdminRoute";
 // Pages
 import Index from "../pages/Index";
 import NotFound from "../pages/NotFound";
+import DestinationsPage from "../pages/Destinations";
 import Login from "../pages/Login";
 import Signup from "../pages/Signup";
 import Dashboard from "../pages/Dashboard";
@@ -46,6 +47,8 @@ export default function MainRoutes() {
         <Route path="/" element={<Index />} />
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
+        {/* Browse all destinations */}
+        <Route path="/destinations" element={<DestinationsPage />} />
         
         {/* Protected routes - all wrapped with AuthGuard */}
         <Route 

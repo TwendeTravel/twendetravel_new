@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
@@ -18,6 +19,7 @@ export function ServiceRequestForm() {
   const { user } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
+  const location = useLocation();
 
   const [services, setServices] = useState<ServiceWithState[]>([]);
   const [budget, setBudget] = useState<number>(0);
@@ -27,6 +29,15 @@ export function ServiceRequestForm() {
   const [origin, setOrigin] = useState<string>('');
   const [destinationInput, setDestinationInput] = useState<string>('');
   const [description, setDescription] = useState<string>('');
+
+  // Prefill destination from URL query param
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const dest = params.get('destination');
+    if (dest) {
+      setDestinationInput(dest);
+    }
+  }, [location.search]);
 
   useEffect(() => {
     serviceRequestService.getServices()
