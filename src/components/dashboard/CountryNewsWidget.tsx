@@ -67,20 +67,14 @@ const CountryNewsWidget = ({ country = "ghana", limit = 2 }: CountryNewsWidgetPr
         }
       }
       
-      // No valid cache or searching: fetch fresh
+      // No valid cache or on new search: fetch fresh search results
       try {
         const countryCode = COUNTRY_CODES[country.toLowerCase()];
-        let url = '';
-
-        if (searchTerm.trim()) {
-          const query = encodeURIComponent(`travel ${displayCountryName} ${searchTerm}`);
-          url = `https://gnews.io/api/v4/search?q=${query}&lang=en`;
-          if (countryCode) url += `&country=${countryCode}`;
-        } else {
-          url = `https://gnews.io/api/v4/top-headlines?lang=en&topic=travel`;
-          if (countryCode) url += `&country=${countryCode}`;
-        }
-
+        // Always use search endpoint: "travel CountryName [searchTerm]"
+        const baseQuery = `travel ${displayCountryName}` + (searchTerm.trim() ? ` ${searchTerm.trim()}` : '');
+        const encoded = encodeURIComponent(baseQuery);
+        let url = `https://gnews.io/api/v4/search?q=${encoded}&lang=en`;
+        if (countryCode) url += `&country=${countryCode}`;
         // Fetch CACHE_FETCH_COUNT for cache
         url += `&max=${CACHE_FETCH_COUNT}&apikey=${GNEWS_API_KEY}`;
 
