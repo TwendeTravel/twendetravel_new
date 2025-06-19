@@ -12,7 +12,6 @@ import {
 } from "lucide-react";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
 import PageTransition from "@/components/PageTransition";
 import DashboardHeader from "@/components/dashboard/DashboardHeader";
@@ -23,20 +22,11 @@ const GNEWS_API_KEY = import.meta.env.VITE_GNEWS_API_KEY;
 const CACHE_TTL = 24 * 60 * 60 * 1000;
 const COUNTRY_CODES: Record<string,string> = { ghana:'gh', kenya:'ke', 'south africa':'za' };
 
-// News categories with their corresponding icons
-const newsCategories = [
-  { id: "general", label: "General", icon: Newspaper },
-  { id: "weather", label: "Weather", icon: Sun },
-  { id: "safety", label: "Safety", icon: AlertTriangle },
-  { id: "cost", label: "Cost of Living", icon: DollarSign }
-];
-
 const CountryNews = () => {
   const { countryId } = useParams();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [articles, setArticles] = useState<any[]>([]);
-  const [selectedCategory, setSelectedCategory] = useState('general');
   const [countryInput, setCountryInput] = useState(countryId || '');
 
   const countryName = countryInput.toLowerCase();
@@ -45,46 +35,35 @@ const CountryNews = () => {
     .map(w => w.charAt(0).toUpperCase() + w.slice(1))
     .join(' ');
 
-  // Fetch articles when country or category changes
+  // Fetch articles with cache-first strategy
   useEffect(() => {
     const fetchArticles = async () => {
       setLoading(true);
-      let fetched: any[] = [];
-
-      // Attempt cache for general category
-      if (selectedCategory === 'general' && countryName) {
-        try {
-          const { data: cacheRow, error: cacheErr } = await supabase
-            .from('news_cache')
-            .select('data, updated_at')
-            .eq('country', countryName)
-            .single();
-          if (!cacheErr && cacheRow) {
-            const age = Date.now() - new Date(cacheRow.updated_at).getTime();
-            if (age < CACHE_TTL) {
-              setArticles(cacheRow.data);
-              setLoading(false);
-              return;
-            }
+      // Check cache
+      try {
+        const { data: cacheRow, error: cacheErr } = await supabase
+          .from('news_cache')
+          .select('data, updated_at')
+          .eq('country', countryName)
+          .single();
+        if (!cacheErr && cacheRow) {
+          const age = Date.now() - new Date(cacheRow.updated_at).getTime();
+          if (age < CACHE_TTL) {
+            setArticles(cacheRow.data);
+            setLoading(false);
+            return;
           }
-        } catch (err) {
-          console.error('Error reading news cache:', err);
         }
+      } catch (err) {
+        console.error('Error reading news cache:', err);
       }
-
+      // Fetch fresh from API
+      let fetched: any[] = [];
       try {
         const countryCode = COUNTRY_CODES[countryName];
-        let url: string;
-        if (selectedCategory === 'general') {
-          // use top-headlines for default
-          url = `https://gnews.io/api/v4/top-headlines?lang=en${countryCode ? `&country=${countryCode}` : ''}&topic=travel`;
-        } else {
-          // search for other categories
-          const query = encodeURIComponent(`travel ${displayCountryName} ${selectedCategory}`);
-          url = `https://gnews.io/api/v4/search?q=${query}&lang=en${countryCode ? `&country=${countryCode}` : ''}`;
-        }
-        url += `&max=10&apikey=${GNEWS_API_KEY}`;
-
+        let url = `https://gnews.io/api/v4/top-headlines?lang=en`;
+        if (countryCode) url += `&country=${countryCode}`;
+        url += `&topic=travel&max=20&apikey=${GNEWS_API_KEY}`;
         const res = await fetch(url);
         const json = await res.json();
         fetched = (json.articles || []).map((a: any) => ({
@@ -94,44 +73,22 @@ const CountryNews = () => {
           date: new Date(a.publishedAt).toLocaleDateString(),
           url: a.url
         }));
-
-        // Merge search results into cache for all categories
-        if (countryName) {
-          try {
-            const { data: cacheRow } = await supabase
-              .from('news_cache')
-              .select('data')
-              .eq('country', countryName)
-              .single();
-            const existing = (cacheRow?.data as any[]) || [];
-            const newOnes = fetched.filter(item => !existing.some(e => e.id === item.id));
-            if (newOnes.length) {
-              const merged = [...existing, ...newOnes];
-              await supabase
-                .from('news_cache')
-                .upsert({ country: countryName, data: merged }, { onConflict: ['country'] });
-            }
-          } catch (cacheErr) {
-            console.error('Error merging search cache:', cacheErr);
-          }
-        }
-
-        // Cache general headlines
-        if (selectedCategory === 'general') {
-          const { error: upsertErr } = await supabase
-            .from('news_cache')
-            .upsert({ country: countryName, data: fetched }, { onConflict: ['country'] });
-          if (upsertErr) console.error('Error updating news cache:', upsertErr);
-        }
       } catch (err) {
         console.error('Error fetching news:', err);
       }
-
       setArticles(fetched);
       setLoading(false);
+      // Upsert new cache
+      try {
+        await supabase
+          .from('news_cache')
+          .upsert({ country: countryName, data: fetched }, { onConflict: 'country' });
+      } catch (err) {
+        console.error('Error updating news cache:', err);
+      }
     };
     if (countryName) fetchArticles();
-  }, [countryName, selectedCategory]);
+  }, [countryName]);
 
   const handleBackClick = () => {
     navigate(-1); // Go back to previous page
@@ -176,18 +133,6 @@ const CountryNews = () => {
             <Button onClick={() => navigate(`/country-news/${countryInput.toLowerCase().replace(/\s+/g,'-')}`)}>
               Go
             </Button>
-          </div>
-
-          <div className="p-4">
-            <Tabs value={selectedCategory} onValueChange={setSelectedCategory}>
-              <TabsList>
-                {newsCategories.map(cat => (
-                  <TabsTrigger key={cat.id} value={cat.id}>
-                    <cat.icon className="inline-block w-4 h-4 mr-1" />{cat.label}
-                  </TabsTrigger>
-                ))}
-              </TabsList>
-            </Tabs>
           </div>
 
           <div className="p-4">

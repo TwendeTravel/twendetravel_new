@@ -50,7 +50,8 @@ const CountryNewsWidget = ({ country = "ghana", limit = 2 }: CountryNewsWidgetPr
           if (!cacheErr && cacheRow) {
             const age = Date.now() - new Date(cacheRow.updated_at).getTime();
             if (age < CACHE_TTL) {
-              setNews(cacheRow.data);
+              // Show only `limit` articles from cache
+              setNews((cacheRow.data as any[]).slice(0, limit));
               setLoading(false);
               return;
             }
