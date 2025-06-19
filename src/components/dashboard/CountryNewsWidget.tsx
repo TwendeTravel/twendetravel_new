@@ -9,8 +9,11 @@ import { supabase } from '@/lib/supabaseClient';
 // GNews API key from env
 const GNEWS_API_KEY = import.meta.env.VITE_GNEWS_API_KEY;
 const CACHE_TTL = 24 * 60 * 60 * 1000; // 24h cache
-// Number of articles to fetch/cache for widget
-const CACHE_FETCH_COUNT = 10;
+// Number of articles to fetch/cache per country
+const CACHE_FETCH_COUNT = 25;
+
+// Shuffle helper to pick random items
+const shuffleArray = <T,>(arr: T[]): T[] => arr.sort(() => Math.random() - 0.5);
 
 // Map country names to GNews country codes
 const COUNTRY_CODES: Record<string,string> = {
@@ -52,8 +55,9 @@ const CountryNewsWidget = ({ country = "ghana", limit = 2 }: CountryNewsWidgetPr
           if (!cacheErr && cacheRow) {
             const age = Date.now() - new Date(cacheRow.updated_at).getTime();
             if (age < CACHE_TTL) {
-              // Display only up to `limit`
-              setNews((cacheRow.data as any[]).slice(0, limit));
+              // Pick `limit` random articles from cache
+              const cached = cacheRow.data as any[];
+              setNews(shuffleArray(cached).slice(0, limit));
               setLoading(false);
               return;
             }
@@ -77,7 +81,7 @@ const CountryNewsWidget = ({ country = "ghana", limit = 2 }: CountryNewsWidgetPr
           if (countryCode) url += `&country=${countryCode}`;
         }
 
-        // Fetch more for caching
+        // Fetch CACHE_FETCH_COUNT for cache
         url += `&max=${CACHE_FETCH_COUNT}&apikey=${GNEWS_API_KEY}`;
 
         if (!articles) {
@@ -92,19 +96,19 @@ const CountryNewsWidget = ({ country = "ghana", limit = 2 }: CountryNewsWidgetPr
           }));
         }
 
-        // Cache default headlines with full set
+        // Cache default headlines
         if (!searchTerm.trim()) {
           const { error: upsertErr } = await supabase
             .from('news_cache')
-            .upsert({ country, data: articles }, { onConflict: ['country'] });
+            .upsert({ country, data: articles }, { onConflict: 'country' });
           if (upsertErr) console.error('Error updating news cache:', upsertErr);
         }
       } catch (err) {
         console.error('Error fetching GNews:', err);
       }
 
-      // Display only up to `limit`
-      setNews((articles || []).slice(0, limit));
+      // Display random `limit` articles from fresh set
+      setNews(shuffleArray(articles || []).slice(0, limit));
       setLoading(false);
     };
 
