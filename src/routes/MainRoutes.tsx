@@ -49,6 +49,7 @@ export default function MainRoutes() {
         <Route path="/signup" element={<Signup />} />
         {/* Browse all destinations */}
         <Route path="/destinations" element={<DestinationsPage />} />
+        <Route path="/destination" element={<DestinationsPage />} />
         
         {/* Protected routes - all wrapped with AuthGuard */}
         <Route 
