@@ -50,11 +50,41 @@ const CountryNews = () => {
     const fetchArticles = async () => {
       setLoading(true);
       let fetched: any[] = [];
+
+      // Attempt cache for general category
+      if (selectedCategory === 'general' && countryName) {
+        try {
+          const { data: cacheRow, error: cacheErr } = await supabase
+            .from('news_cache')
+            .select('data, updated_at')
+            .eq('country', countryName)
+            .single();
+          if (!cacheErr && cacheRow) {
+            const age = Date.now() - new Date(cacheRow.updated_at).getTime();
+            if (age < CACHE_TTL) {
+              setArticles(cacheRow.data);
+              setLoading(false);
+              return;
+            }
+          }
+        } catch (err) {
+          console.error('Error reading news cache:', err);
+        }
+      }
+
       try {
         const countryCode = COUNTRY_CODES[countryName];
-        let url = `https://gnews.io/api/v4/search?q=${encodeURIComponent(`travel ${displayCountryName}`)}`;
-        if (selectedCategory !== 'general') url += `+${selectedCategory}`;
-        url += `&lang=en${countryCode ? `&country=${countryCode}` : ''}&max=10&apikey=${GNEWS_API_KEY}`;
+        let url: string;
+        if (selectedCategory === 'general') {
+          // use top-headlines for default
+          url = `https://gnews.io/api/v4/top-headlines?lang=en${countryCode ? `&country=${countryCode}` : ''}&topic=travel`;
+        } else {
+          // search for other categories
+          const query = encodeURIComponent(`travel ${displayCountryName} ${selectedCategory}`);
+          url = `https://gnews.io/api/v4/search?q=${query}&lang=en${countryCode ? `&country=${countryCode}` : ''}`;
+        }
+        url += `&max=10&apikey=${GNEWS_API_KEY}`;
+
         const res = await fetch(url);
         const json = await res.json();
         fetched = (json.articles || []).map((a: any) => ({
@@ -64,9 +94,39 @@ const CountryNews = () => {
           date: new Date(a.publishedAt).toLocaleDateString(),
           url: a.url
         }));
+
+        // Merge search results into cache for all categories
+        if (countryName) {
+          try {
+            const { data: cacheRow } = await supabase
+              .from('news_cache')
+              .select('data')
+              .eq('country', countryName)
+              .single();
+            const existing = (cacheRow?.data as any[]) || [];
+            const newOnes = fetched.filter(item => !existing.some(e => e.id === item.id));
+            if (newOnes.length) {
+              const merged = [...existing, ...newOnes];
+              await supabase
+                .from('news_cache')
+                .upsert({ country: countryName, data: merged }, { onConflict: ['country'] });
+            }
+          } catch (cacheErr) {
+            console.error('Error merging search cache:', cacheErr);
+          }
+        }
+
+        // Cache general headlines
+        if (selectedCategory === 'general') {
+          const { error: upsertErr } = await supabase
+            .from('news_cache')
+            .upsert({ country: countryName, data: fetched }, { onConflict: ['country'] });
+          if (upsertErr) console.error('Error updating news cache:', upsertErr);
+        }
       } catch (err) {
         console.error('Error fetching news:', err);
       }
+
       setArticles(fetched);
       setLoading(false);
     };
