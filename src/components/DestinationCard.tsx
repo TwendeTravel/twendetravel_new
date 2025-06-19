@@ -1,28 +1,23 @@
 
 import { useState } from 'react';
 import { Heart } from 'lucide-react';
+import { useSavedDestinations } from '@/hooks/useSavedDestinations';
 
 interface DestinationCardProps {
+  id: string;
   name: string;
   country: string;
   image: string;
   rating: number;
-  // price prop removed, use dynamic pricing when available
   popular: string[];
   delay?: number;
 }
 
-const DestinationCard = ({
-  name,
-  country,
-  image,
-  rating,
-  price,
-  popular,
-  delay = 0
-}: DestinationCardProps) => {
+const DestinationCard = ({ id, name, country, image, rating, popular, delay = 0 }: DestinationCardProps) => {
   const [imageError, setImageError] = useState(false);
   const fallbackImage = "https://images.unsplash.com/photo-1469474968028-56623f02e42e?auto=format&fit=crop&w=800&q=80";
+  const { savedIds, save, unsave } = useSavedDestinations();
+  const isSaved = savedIds.includes(id);
 
   const handleImageError = () => {
     console.log(`Image failed to load: ${image}`);
@@ -46,8 +41,16 @@ const DestinationCard = ({
         {/* Overlay Gradient */}
         <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent opacity-80 group-hover:opacity-90 transition-opacity duration-300"></div>
         
-        {/* Like Button */}
-        <button className="absolute top-3 right-3 w-8 h-8 rounded-full bg-white/30 backdrop-blur-sm flex items-center justify-center hover:bg-white/50 transition-colors duration-300 dark:bg-black/40 dark:hover:bg-black/60">
+        {/* Save/Unsave Button */}
+        <button
+          onClick={e => { e.preventDefault(); e.stopPropagation(); isSaved ? unsave(id) : save(id); }}
+          className={
+            `absolute top-3 right-3 w-8 h-8 rounded-full flex items-center justify-center transition-colors duration-300 ` +
+            (isSaved
+              ? 'bg-red-600 hover:bg-red-700'
+              : 'bg-white/30 hover:bg-white/50 dark:bg-black/40 dark:hover:bg-black/60')
+          }
+        >
           <Heart className="w-4 h-4 text-white" />
         </button>
 

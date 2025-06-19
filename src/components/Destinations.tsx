@@ -90,11 +90,11 @@ const Destinations = () => {
                 {filteredDestinations.map((destination, index) => (
                   <DestinationCard
                     key={destination.id}
+                    id={destination.id}
                     name={destination.name}
                     country={destination.country}
                     image={destination.image}
                     rating={destination.rating}
-                    price={destination.price}
                     popular={destination.popular}
                     delay={index * 100}
                   />
