@@ -9,6 +9,8 @@ import { supabase } from '@/lib/supabaseClient';
 // GNews API key from env
 const GNEWS_API_KEY = import.meta.env.VITE_GNEWS_API_KEY;
 const CACHE_TTL = 24 * 60 * 60 * 1000; // 24h cache
+// Number of articles to fetch/cache for widget
+const CACHE_FETCH_COUNT = 10;
 
 // Map country names to GNews country codes
 const COUNTRY_CODES: Record<string,string> = {
@@ -50,7 +52,7 @@ const CountryNewsWidget = ({ country = "ghana", limit = 2 }: CountryNewsWidgetPr
           if (!cacheErr && cacheRow) {
             const age = Date.now() - new Date(cacheRow.updated_at).getTime();
             if (age < CACHE_TTL) {
-              // Show only `limit` articles from cache
+              // Display only up to `limit`
               setNews((cacheRow.data as any[]).slice(0, limit));
               setLoading(false);
               return;
@@ -75,7 +77,8 @@ const CountryNewsWidget = ({ country = "ghana", limit = 2 }: CountryNewsWidgetPr
           if (countryCode) url += `&country=${countryCode}`;
         }
 
-        url += `&max=${limit}&apikey=${GNEWS_API_KEY}`;
+        // Fetch more for caching
+        url += `&max=${CACHE_FETCH_COUNT}&apikey=${GNEWS_API_KEY}`;
 
         if (!articles) {
           const resp = await fetch(url);
@@ -89,21 +92,19 @@ const CountryNewsWidget = ({ country = "ghana", limit = 2 }: CountryNewsWidgetPr
           }));
         }
 
-        // Cache default headlines with onConflict
+        // Cache default headlines with full set
         if (!searchTerm.trim()) {
           const { error: upsertErr } = await supabase
             .from('news_cache')
-            .upsert(
-              { country, data: articles },
-              { onConflict: ['country'] }
-            );
+            .upsert({ country, data: articles }, { onConflict: ['country'] });
           if (upsertErr) console.error('Error updating news cache:', upsertErr);
         }
       } catch (err) {
         console.error('Error fetching GNews:', err);
       }
 
-      setNews(articles || []);
+      // Display only up to `limit`
+      setNews((articles || []).slice(0, limit));
       setLoading(false);
     };
 
