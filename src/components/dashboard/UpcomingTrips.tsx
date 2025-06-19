@@ -48,23 +48,18 @@ const UpcomingTrips = ({ extended = false }: UpcomingTripsProps) => {
     <div className="space-y-4">
       {trips.map((trip) => (
         <div key={trip.id} className="flex items-center gap-4 p-3 rounded-lg hover:bg-muted transition-colors">
-          <img
-            src={trip.image}
-            alt={trip.destination}
-            className="w-16 h-16 rounded-lg object-cover"
-          />
+          <MapPin className="w-8 h-8 text-twende-orange" />
           <div className="flex-1">
-            <h4 className="font-semibold text-foreground">{trip.destination}</h4>
+            <h4 className="font-semibold text-foreground">
+              {trip.origin} → {trip.destination}
+            </h4>
             <div className="flex items-center text-sm text-muted-foreground mt-1">
-              <CalendarClock className="h-3.5 w-3.5 mr-1" />
-              <span>{trip.startDate} - {trip.endDate}</span>
+              <CalendarClock className="h-4 w-4 mr-1" />
+              <span>{new Date(trip.start_date).toLocaleDateString()} - {new Date(trip.end_date).toLocaleDateString()}</span>
             </div>
             <div className="flex justify-between items-center mt-2">
-              <Badge
-                variant={trip.status === "Confirmed" ? "default" : "outline"}
-                className={trip.status === "Confirmed" ? "bg-green-500 hover:bg-green-600" : ""}
-              >
-                {trip.status}
+              <Badge variant="outline">
+                {trip.status.charAt(0).toUpperCase() + trip.status.slice(1)}
               </Badge>
               <Link to={`/trip/${trip.id}`}>
                 <Button variant="ghost" size="sm">View</Button>
@@ -79,19 +74,19 @@ const UpcomingTrips = ({ extended = false }: UpcomingTripsProps) => {
           <h3 className="font-semibold text-lg mt-8 mb-4 text-foreground">Past Trips</h3>
           {pastTrips.map((trip) => (
             <div key={trip.id} className="flex items-center gap-4 p-3 rounded-lg hover:bg-muted transition-colors opacity-80">
-              <img
-                src={trip.image}
-                alt={trip.destination}
-                className="w-16 h-16 rounded-lg object-cover"
-              />
+              <MapPin className="w-8 h-8 text-twende-orange" />
               <div className="flex-1">
-                <h4 className="font-semibold text-foreground">{trip.destination}</h4>
+                <h4 className="font-semibold text-foreground">
+                  {trip.origin} → {trip.destination}
+                </h4>
                 <div className="flex items-center text-sm text-muted-foreground mt-1">
-                  <CalendarClock className="h-3.5 w-3.5 mr-1" />
-                  <span>{trip.startDate} - {trip.endDate}</span>
+                  <CalendarClock className="h-4 w-4 mr-1" />
+                  <span>{new Date(trip.start_date).toLocaleDateString()} - {new Date(trip.end_date).toLocaleDateString()}</span>
                 </div>
                 <div className="flex justify-between items-center mt-2">
-                  <Badge variant="outline">{trip.status}</Badge>
+                  <Badge variant="outline">
+                    {trip.status.charAt(0).toUpperCase() + trip.status.slice(1)}
+                  </Badge>
                   <Link to={`/trip/${trip.id}`}>
                     <Button variant="ghost" size="sm">View</Button>
                   </Link>
