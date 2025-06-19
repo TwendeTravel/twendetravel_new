@@ -6,6 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { supabase } from '@/lib/supabaseClient';
+import placeholder from '@/assets/placeholder.svg';
 // GNews API key from env
 const GNEWS_API_KEY = import.meta.env.VITE_GNEWS_API_KEY;
 const CACHE_TTL = 24 * 60 * 60 * 1000; // 24h cache
@@ -87,6 +88,7 @@ const CountryNewsWidget = ({ country = "ghana", limit = 2 }: CountryNewsWidgetPr
             summary: a.description,
             date: new Date(a.publishedAt).toLocaleDateString(),
             url: a.url,
+            image: a.image
           }));
         }
 
@@ -150,22 +152,18 @@ const CountryNewsWidget = ({ country = "ghana", limit = 2 }: CountryNewsWidgetPr
             placeholder="Search travel news..."
             value={searchTerm}
             onChange={e => setSearchTerm(e.target.value)}
-            className="w-full px-3 py-2 border rounded-lg"
+            className="w-full px-3 py-2 border rounded-lg focus:ring focus:ring-twende-teal"
           />
         </div>
         {loading ? (
-          <div className="space-y-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {[1, 2].map(i => (
-              <div key={i} className="space-y-2">
-                <Skeleton className="h-5 w-4/5" />
-                <Skeleton className="h-4 w-3/5" />
-                <Skeleton className="h-3 w-1/4" />
-              </div>
+              <Skeleton key={i} className="h-40 w-full rounded-lg" />
             ))}
           </div>
         ) : (
           <motion.div 
-            className="space-y-4"
+            className="grid grid-cols-1 sm:grid-cols-2 gap-4"
             variants={containerVariants}
             initial="hidden"
             animate="show"
@@ -176,14 +174,28 @@ const CountryNewsWidget = ({ country = "ghana", limit = 2 }: CountryNewsWidgetPr
                 href={item.url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="block border-b border-gray-100 dark:border-gray-800 pb-3 last:border-0 last:pb-0"
                 variants={itemVariants}
+                className="relative block rounded-lg overflow-hidden shadow-lg hover:shadow-2xl transition-shadow bg-white dark:bg-gray-800"
               >
-                <h3 className="font-medium text-sm mb-1">{item.title}</h3>
-                <p className="text-gray-500 dark:text-gray-400 text-xs mb-1">{item.summary}</p>
-                <div className="flex items-center text-xs text-gray-400">
-                  <Clock className="h-3 w-3 mr-1" />
-                  {item.date}
+                {/* Background image */}
+                <div
+                  className="h-32 bg-center bg-cover"
+                  style={{ backgroundImage: `url(${item.image || placeholder})` }}
+                />
+                <div className="p-4">
+                  <h3 className="font-semibold text-base text-gray-900 dark:text-white line-clamp-2 mb-2">
+                    {item.title}
+                  </h3>
+                  <p className="text-gray-600 dark:text-gray-400 text-sm line-clamp-3 mb-3">
+                    {item.summary}
+                  </p>
+                  <div className="flex justify-between items-center text-xs text-gray-500 dark:text-gray-400">
+                    <div className="flex items-center">
+                      <Clock className="h-4 w-4 mr-1" />
+                      {item.date}
+                    </div>
+                    <ArrowRight className="h-4 w-4 text-twende-orange" />
+                  </div>
                 </div>
               </motion.a>
             ))}
