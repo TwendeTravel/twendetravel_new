@@ -1,7 +1,6 @@
 
 import { useState } from 'react';
 import { Heart } from 'lucide-react';
-import { useSavedDestinations } from '@/hooks/useSavedDestinations';
 
 interface DestinationCardProps {
   id: string;
@@ -11,13 +10,13 @@ interface DestinationCardProps {
   rating: number;
   popular: string[];
   delay?: number;
+  isSaved: boolean;
+  onToggleSave: () => void;
 }
 
-const DestinationCard = ({ id, name, country, image, rating, popular, delay = 0 }: DestinationCardProps) => {
+const DestinationCard = ({ id, name, country, image, rating, popular, delay = 0, isSaved, onToggleSave }: DestinationCardProps) => {
   const [imageError, setImageError] = useState(false);
   const fallbackImage = "https://images.unsplash.com/photo-1469474968028-56623f02e42e?auto=format&fit=crop&w=800&q=80";
-  const { savedIds, save, unsave } = useSavedDestinations();
-  const isSaved = savedIds.includes(id);
 
   const handleImageError = () => {
     console.log(`Image failed to load: ${image}`);
@@ -43,7 +42,7 @@ const DestinationCard = ({ id, name, country, image, rating, popular, delay = 0 
         
         {/* Save/Unsave Button */}
         <button
-          onClick={e => { e.preventDefault(); e.stopPropagation(); isSaved ? unsave(id) : save(id); }}
+          onClick={e => { e.preventDefault(); e.stopPropagation(); onToggleSave(); }}
           className={
             `absolute top-3 right-3 w-8 h-8 rounded-full flex items-center justify-center transition-colors duration-300 ` +
             (isSaved

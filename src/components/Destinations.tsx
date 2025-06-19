@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import DestinationCard from './DestinationCard';
+import { useSavedDestinations } from '@/hooks/useSavedDestinations';
 import { Loader } from './Loader';
 import { toast } from '@/components/ui/use-toast';
 import { destinationService, type Destination } from '@/services/destinations';
@@ -39,6 +40,8 @@ const Destinations = () => {
     return false;
   });
 
+  // load save state and handlers
+  const { savedIds, save, unsave } = useSavedDestinations();
   return (
     <section id="destinations" className="py-20 bg-gray-50 dark:bg-gray-900/50">
       <div className="container mx-auto px-4">
@@ -87,18 +90,23 @@ const Destinations = () => {
             {/* Destination Grid */}
             {filteredDestinations.length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                {filteredDestinations.map((destination, index) => (
-                  <DestinationCard
-                    key={destination.id}
-                    id={destination.id}
-                    name={destination.name}
-                    country={destination.country}
-                    image={destination.image}
-                    rating={destination.rating}
-                    popular={destination.popular}
-                    delay={index * 100}
-                  />
-                ))}
+                {filteredDestinations.map((destination, index) => {
+                  const isSaved = savedIds.includes(destination.id);
+                  return (
+                    <DestinationCard
+                      key={destination.id}
+                      id={destination.id}
+                      name={destination.name}
+                      country={destination.country}
+                      image={destination.image}
+                      rating={destination.rating}
+                      popular={destination.popular}
+                      delay={index * 100}
+                      isSaved={isSaved}
+                      onToggleSave={() => isSaved ? unsave(destination.id) : save(destination.id)}
+                    />
+                  );
+                })}
               </div>
             ) : (
               <div className="text-center my-20">

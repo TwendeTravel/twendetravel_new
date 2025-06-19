@@ -92,7 +92,7 @@ const SavedDestinations = ({ extended = false }: SavedDestinationsProps) => {
             variant="ghost" 
             size="icon"
             disabled={isLoading}
-            onClick={() => handleUnsaveDestination(destination.id)}
+            onClick={() => handleUnsave(destination.id)}
             className="absolute top-2 right-2 bg-white/80 hover:bg-white/90 text-red-500 dark:bg-gray-800/80 dark:hover:bg-gray-800/90"
           >
             <Heart className="h-4 w-4 fill-current" />
@@ -103,7 +103,7 @@ const SavedDestinations = ({ extended = false }: SavedDestinationsProps) => {
             </h4>
             <div className="flex items-center text-sm text-gray-500 mt-1 dark:text-gray-400">
               <Calendar className="h-3.5 w-3.5 mr-1" />
-              <span>Best time: {destination.bestTime}</span>
+              <span>Rating: {destination.rating}</span>
             </div>
             <div className="flex justify-end mt-2">
               <Link to={`/destination/${destination.id}`}>
