@@ -1,77 +1,33 @@
 
-import { useState } from "react";
-import { Heart, MapPin, Calendar, Trash2 } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Heart, Calendar } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { toast } from "@/components/ui/use-toast";
-import { useAuth } from "@/contexts/AuthContext";
+import { useSavedDestinations } from "@/hooks/useSavedDestinations";
+import { destinationService, Destination } from "@/services/destinations";
 
 interface SavedDestinationsProps {
   extended?: boolean;
 }
 
 const SavedDestinations = ({ extended = false }: SavedDestinationsProps) => {
-  const { user } = useAuth();
-  const [destinations, setDestinations] = useState([
-    {
-      id: "dest-1",
-      name: "Accra",
-      country: "Ghana",
-      image: "https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=600&q=80", // Accra skyline
-      bestTime: "Oct-Apr",
-      saved: true
-    },
-    {
-      id: "dest-2",
-      name: "Nairobi",
-      country: "Kenya",
-      image: "https://images.unsplash.com/photo-1464983953574-0892a716854b?auto=format&fit=crop&w=600&q=80", // Nairobi cityscape
-      bestTime: "Jun-Oct",
-      saved: true
-    },
-    {
-      id: "dest-3",
-      name: "Cape Coast",
-      country: "Ghana",
-      image: "https://images.unsplash.com/photo-1519125323398-675f0ddb6308?auto=format&fit=crop&w=600&q=80", // Cape Coast Castle
-      bestTime: "Nov-Mar",
-      saved: true
-    }
-  ]);
-  
-  const [isLoading, setIsLoading] = useState(false);
+  const { savedIds, unsave } = useSavedDestinations();
+  const [destinations, setDestinations] = useState<Destination[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   // If not extended, show only first 2 destinations
   const displayDestinations = extended ? destinations : destinations.slice(0, 2);
   
-  const handleUnsaveDestination = async (destinationId: string) => {
-    if (!user) return;
-    
+  const handleUnsave = async (destinationId: string) => {
     setIsLoading(true);
     try {
-      const { error } = await supabase
-        .from('saved_destinations')
-        .delete()
-        .eq('destination_id', destinationId)
-        .eq('user_id', user.id);
-        
-      if (error) throw error;
-      
-      // Update local state
-      setDestinations(destinations.filter(dest => dest.id !== destinationId));
-      
-      toast({
-        title: "Destination removed",
-        description: "This destination has been removed from your saved list",
-      });
-    } catch (error) {
-      console.error('Error removing saved destination:', error);
-      toast({
-        title: "Error",
-        description: "Could not remove the destination. Please try again.",
-        variant: "destructive",
-      });
+      await unsave(destinationId);
+      setDestinations(prev => prev.filter(d => d.id !== destinationId));
+      toast({ title: "Removed", description: "Destination unsaved" });
+    } catch {
+      toast({ title: "Error", description: "Unsave failed", variant: "destructive" });
     } finally {
       setIsLoading(false);
     }
@@ -92,8 +48,28 @@ const SavedDestinations = ({ extended = false }: SavedDestinationsProps) => {
     show: { opacity: 1, scale: 1 }
   };
 
+  useEffect(() => {
+    const load = async () => {
+      setIsLoading(true);
+      if (!savedIds.length) {
+        setDestinations([]);
+        setIsLoading(false);
+        return;
+      }
+      try {
+        const items = await Promise.all(savedIds.map(id => destinationService.getById(id)));
+        setDestinations(items);
+      } catch (e) {
+        console.error(e);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    load();
+  }, [savedIds]);
+
   return (
-    <motion.div 
+    <motion.div
       className="grid grid-cols-1 md:grid-cols-2 gap-4"
       variants={container}
       initial="hidden"
