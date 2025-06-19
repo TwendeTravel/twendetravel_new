@@ -166,9 +166,12 @@ const CountryNewsWidget = ({ country = "ghana", limit = 2 }: CountryNewsWidgetPr
             animate="show"
           >
             {news.map(item => (
-              <motion.div 
-                key={item.id} 
-                className="border-b border-gray-100 dark:border-gray-800 pb-3 last:border-0 last:pb-0"
+              <motion.a
+                key={item.id}
+                href={item.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="block border-b border-gray-100 dark:border-gray-800 pb-3 last:border-0 last:pb-0"
                 variants={itemVariants}
               >
                 <h3 className="font-medium text-sm mb-1">{item.title}</h3>
@@ -177,7 +180,7 @@ const CountryNewsWidget = ({ country = "ghana", limit = 2 }: CountryNewsWidgetPr
                   <Clock className="h-3 w-3 mr-1" />
                   {item.date}
                 </div>
-              </motion.div>
+              </motion.a>
             ))}
           </motion.div>
         )}
