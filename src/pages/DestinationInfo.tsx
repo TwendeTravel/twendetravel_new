@@ -30,6 +30,8 @@ const DestinationInfo = () => {
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(true);
   const [isFavorite, setIsFavorite] = useState(false);
+  // Load all destinations for similar section
+  const [allDestinations, setAllDestinations] = useState<Destination[]>([]);
 
   useEffect(() => {
     const fetchDest = async () => {
@@ -37,8 +39,11 @@ const DestinationInfo = () => {
         const data = await destinationService.getById(id!);
         setDestination(data);
         setIsFavorite(localStorage.getItem(`favorite-${id}`) === 'true');
+        // also fetch list for similar destinations
+        const list = await destinationService.getAll();
+        setAllDestinations(list);
       } catch (err) {
-        console.error('Error fetching destination:', err);
+        console.error('Error fetching destination or list:', err);
       } finally {
         setIsLoading(false);
       }
@@ -61,7 +66,7 @@ const DestinationInfo = () => {
       {/* Hero section with full-width image */}
       <div className="relative h-[40vh] md:h-[50vh] overflow-hidden">
         <img 
-          src={destination.coverImage || destination.image} 
+          src={destination.image} 
           alt={`${destination.name}, ${destination.country}`} 
           className="w-full h-full object-cover"
         />
@@ -109,7 +114,7 @@ const DestinationInfo = () => {
         <p className="text-gray-700 dark:text-gray-300 mb-4">{destination.description}</p>
         <div className="text-center mb-6">
           <Button 
-            variant="primary"
+            variant="default"
             onClick={() => navigate(`/dashboard?tab=services&destination=${encodeURIComponent(destination.name)}`)}
           >
             Request Services
@@ -122,34 +127,13 @@ const DestinationInfo = () => {
       <section className="mt-12 mb-6">
         <h2 className="text-2xl font-bold mb-6">Similar Destinations</h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {destinations
+          {allDestinations
             .filter(d => d.id !== id)
             .slice(0, 3)
             .map(dest => (
               <Link to={`/destination/${dest.id}`} key={dest.id}>
                 <Card className="h-full hover-lift overflow-hidden">
-                  <div className="relative h-48">
-                    <img 
-                      src={dest.image} 
-                      alt={`${dest.name}, ${dest.country}`} 
-                      className="w-full h-full object-cover"
-                    />
-                    <div className="absolute top-2 right-2">
-                      <Badge className="bg-white/80 text-gray-800 hover:bg-white/90">
-                        {dest.bestTime}
-                      </Badge>
-                    </div>
-                  </div>
-                  <CardContent className="p-4">
-                    <h3 className="font-semibold text-lg">{dest.name}, {dest.country}</h3>
-                    <div className="flex justify-between items-center mt-2">
-                      <div className="flex items-center">
-                        <Star className="h-4 w-4 text-yellow-400 fill-yellow-400 mr-1" />
-                        <span>{dest.rating}</span>
-                      </div>
-                      <span className="font-bold text-twende-teal dark:text-twende-skyblue">{dest.price}</span>
-                    </div>
-                  </CardContent>
+                  {/* ...existing card markup... */}
                 </Card>
               </Link>
             ))}
