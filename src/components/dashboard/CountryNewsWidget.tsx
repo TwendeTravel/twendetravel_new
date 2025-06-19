@@ -6,7 +6,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { supabase } from '@/lib/supabaseClient';
-import placeholder from '@/assets/placeholder.svg';
 // GNews API key from env
 const GNEWS_API_KEY = import.meta.env.VITE_GNEWS_API_KEY;
 const CACHE_TTL = 24 * 60 * 60 * 1000; // 24h cache
@@ -177,10 +176,10 @@ const CountryNewsWidget = ({ country = "ghana", limit = 2 }: CountryNewsWidgetPr
                 variants={itemVariants}
                 className="relative block rounded-lg overflow-hidden shadow-lg hover:shadow-2xl transition-shadow bg-white dark:bg-gray-800"
               >
-                {/* Background image */}
+                {/* Background image or placeholder color */}
                 <div
-                  className="h-32 bg-center bg-cover"
-                  style={{ backgroundImage: `url(${item.image || placeholder})` }}
+                  className="h-32 bg-center bg-cover bg-gray-200 dark:bg-gray-700"
+                  style={item.image ? { backgroundImage: `url(${item.image})` } : {}}
                 />
                 <div className="p-4">
                   <h3 className="font-semibold text-base text-gray-900 dark:text-white line-clamp-2 mb-2">
