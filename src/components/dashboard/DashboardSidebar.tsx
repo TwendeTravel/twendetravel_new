@@ -68,22 +68,26 @@ const DashboardSidebar = () => {
           matchSearch={search => new URLSearchParams(search).get('tab') === 'services'}
         />
 
-        {/* Common links for all users */}
-        <SidebarLink to="/destination" icon={<Map size={18} />} label="Destinations" />
-        <SidebarLink to="/trip" icon={<Calendar size={18} />} label="My Trips" />
-        <SidebarLink
-          to="/dashboard?tab=messages"
-          icon={<MessageSquare size={18} />}
-          label="Messages"
-          matchSearch={search => new URLSearchParams(search).get('tab') === 'messages'}
-        />
-        {/* Flights tab within dashboard */}
-        <SidebarLink
-          to="/dashboard?tab=flights"
-          icon={<Plane size={18} />}
-          label="Flights"
-          matchSearch={search => new URLSearchParams(search).get('tab') === 'flights'}
-        />
+        {/* User-specific links (hidden for admins) */}
+        {!isAdmin && (
+          <>
+            <SidebarLink to="/destination" icon={<Map size={18} />} label="Destinations" />
+            <SidebarLink to="/trip" icon={<Calendar size={18} />} label="My Trips" />
+            <SidebarLink
+              to="/dashboard?tab=messages"
+              icon={<MessageSquare size={18} />}
+              label="Messages"
+              matchSearch={search => new URLSearchParams(search).get('tab') === 'messages'}
+            />
+            {/* Flights tab within dashboard */}
+            <SidebarLink
+              to="/dashboard?tab=flights"
+              icon={<Plane size={18} />}
+              label="Flights"
+              matchSearch={search => new URLSearchParams(search).get('tab') === 'flights'}
+            />
+          </>
+        )}
         
         {/* Admin specific links */}
         {!isLoading && isAdmin && (
