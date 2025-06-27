@@ -20,8 +20,8 @@ const Login = () => {
   
   useEffect(() => {
     if (user) {
-      const from = location.state?.from?.pathname || '/dashboard';
-      navigate(from, { replace: true });
+      // After login, always go to unified dashboard (role-based view)
+      navigate('/dashboard', { replace: true });
     }
   }, [user, navigate, location]);
   
@@ -30,8 +30,8 @@ const Login = () => {
     setError(null);
     try {
       await login(email, password);
-      const from = (location.state as any)?.from?.pathname || '/dashboard';
-      navigate(from, { replace: true });
+      // After login, always redirect to dashboard
+      navigate('/dashboard', { replace: true });
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Login failed';
       setError(message);

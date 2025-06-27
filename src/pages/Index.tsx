@@ -40,29 +40,10 @@ const Index = () => {
       window.history.replaceState({}, document.title, newUrl);
     }
     
-    // If user is already logged in, handle admin vs traveler redirect
+    // If user is already logged in, redirect to dashboard
     if (user && !roleLoading) {
-      if (isAdmin) {
-        navigate('/admin');
-        return;
-      }
-      // Traveler
-      const timer = setTimeout(() => {
-        toast({
-          title: "Already logged in",
-          description: "You're already logged in. Would you like to go to your dashboard?",
-          action: (
-            <button 
-              onClick={() => navigate('/dashboard')}
-              className="bg-primary text-primary-foreground hover:bg-primary/90 h-8 rounded-md px-3 text-xs"
-            >
-              Go to Dashboard
-            </button>
-          ),
-        });
-      }, 2000); // Delay the toast a bit to avoid showing immediately
-
-      return () => clearTimeout(timer);
+      navigate('/dashboard');
+      return;
     }
   }, [user, isAdmin, roleLoading, navigate]);
   
