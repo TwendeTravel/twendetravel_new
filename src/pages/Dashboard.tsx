@@ -17,9 +17,10 @@ import TravelAssistant from "@/pages/TravelAssistant";
 import { ServiceRequestForm } from '@/components/ServiceRequestForm';
 import Chat from './Chat';
 import { useRole } from '@/hooks/useRole';
-import { supabase } from '@/lib/supabaseClient';
 import { roleService } from '@/services/roles';
 import { serviceRequestService } from '@/services/service-requests';
+// import { tripService } from '@/services/trips';
+import { supabase } from '@/services/supabaseClient';
 
 const Dashboard = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -38,17 +39,13 @@ const Dashboard = () => {
       const trav=users.filter(u=>u.role==='traveller').length;
       setStats({ totalUsers:total, adminUsers:admin, travellerUsers:trav, totalTrips:0 });
     });
-    // fetch total trips count
+    // fetch total trips count via Supabase head select
     supabase
       .from('trips')
-      .select('*', { count: 'exact' })
-      .then(({ data, count, error }) => {
-        if (error) {
-          console.error('Error fetching trip count:', error);
-        } else {
-          const total = count ?? data?.length ?? 0;
-          setStats(prev => ({ ...prev, totalTrips: total }));
-        }
+      .select('id', { count: 'exact', head: true })
+      .then(({ count, error }) => {
+        if (error) console.error('Error counting trips:', error);
+        else setStats(prev => ({ ...prev, totalTrips: count ?? 0 }));
       });
     // recent 3 chats
     supabase.from('conversations').select('*').order('updated_at',{ascending:false}).limit(3)
