@@ -206,40 +206,6 @@ const Dashboard = () => {
                     </div>
                   </>
                 )}
-                
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  <Card className="md:col-span-2 bg-card/50 backdrop-blur-sm border-border/50 shadow-lg">
-                    <CardHeader>
-                      <CardTitle className="flex items-center gap-2 text-foreground">
-                        <Map className="h-5 w-5 text-twende-orange" />
-                        Saved Destinations
-                      </CardTitle>
-                      <CardDescription className="text-muted-foreground">Places you've bookmarked</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      <SavedDestinations />
-                    </CardContent>
-                  </Card>
-                  
-                  <Card className="bg-card/50 backdrop-blur-sm border-border/50 shadow-lg">
-                    <CardHeader>
-                      <CardTitle className="flex items-center gap-2 text-foreground">
-                        <Globe className="h-5 w-5 text-twende-orange" />
-                        Travel Stats
-                      </CardTitle>
-                      <CardDescription className="text-muted-foreground">Your travel statistics</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      <TravelStats />
-                    </CardContent>
-                  </Card>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  <CountryNewsWidget country="ghana" limit={2} />
-                  <CountryNewsWidget country="kenya" limit={2} />
-                  <CountryNewsWidget country="south africa" limit={2} />
-                </div>
               </TabsContent>
               
               <TabsContent value="trips">
