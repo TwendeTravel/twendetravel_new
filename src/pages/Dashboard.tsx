@@ -38,6 +38,13 @@ const Dashboard = () => {
       const trav=users.filter(u=>u.role==='traveller').length;
       setStats({ totalUsers:total, adminUsers:admin, travellerUsers:trav, totalTrips:0 });
     });
+    // fetch total trips count
+    supabase
+      .from('trips')
+      .select('id', { count: 'exact', head: true })
+      .then(({ count }) => {
+        setStats(prev => ({ ...prev, totalTrips: count || 0 }));
+      });
     // recent 3 chats
     supabase.from('conversations').select('*').order('updated_at',{ascending:false}).limit(3)
       .then(({data})=>data&&setRecentConversations(data));
