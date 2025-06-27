@@ -41,9 +41,14 @@ const Dashboard = () => {
     // fetch total trips count
     supabase
       .from('trips')
-      .select('id', { count: 'exact', head: true })
-      .then(({ count }) => {
-        setStats(prev => ({ ...prev, totalTrips: count || 0 }));
+      .select('*', { count: 'exact' })
+      .then(({ data, count, error }) => {
+        if (error) {
+          console.error('Error fetching trip count:', error);
+        } else {
+          const total = count ?? data?.length ?? 0;
+          setStats(prev => ({ ...prev, totalTrips: total }));
+        }
       });
     // recent 3 chats
     supabase.from('conversations').select('*').order('updated_at',{ascending:false}).limit(3)
