@@ -147,33 +147,64 @@ const Dashboard = () => {
                     </div>
                   </>
                 ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <Card className="bg-card/50 backdrop-blur-sm border-border/50 shadow-lg">
-                      <CardHeader>
-                        <CardTitle className="flex items-center gap-2 text-foreground">
-                          <Calendar className="h-5 w-5 text-twende-teal dark:text-twende-skyblue" />
-                          Upcoming Trips
-                        </CardTitle>
-                        <CardDescription className="text-muted-foreground">Your scheduled travel plans</CardDescription>
-                      </CardHeader>
-                      <CardContent>
-                        <UpcomingTrips />
-                      </CardContent>
-                    </Card>
-                    
-                    <Card className="bg-card/50 backdrop-blur-sm border-border/50 shadow-lg">
-                      <CardHeader>
-                        <CardTitle className="flex items-center gap-2 text-foreground">
-                          <FileText className="h-5 w-5 text-twende-teal dark:text-twende-skyblue" />
-                          Service Requests
-                        </CardTitle>
-                        <CardDescription className="text-muted-foreground">Your travel service requests</CardDescription>
-                      </CardHeader>
-                      <CardContent>
-                        <ServiceRequestsPanel />
-                      </CardContent>
-                    </Card>
-                  </div>
+                  <>  {/* traveler overview */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <Card className="bg-card/50 backdrop-blur-sm border-border/50 shadow-lg">
+                        <CardHeader>
+                          <CardTitle className="flex items-center gap-2 text-foreground">
+                            <Calendar className="h-5 w-5 text-twende-teal dark:text-twende-skyblue" />
+                            Upcoming Trips
+                          </CardTitle>
+                          <CardDescription className="text-muted-foreground">Your scheduled travel plans</CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                          <UpcomingTrips />
+                        </CardContent>
+                      </Card>
+                      
+                      <Card className="bg-card/50 backdrop-blur-sm border-border/50 shadow-lg">
+                        <CardHeader>
+                          <CardTitle className="flex items-center gap-2 text-foreground">
+                            <FileText className="h-5 w-5 text-twende-teal dark:text-twende-skyblue" />
+                            Service Requests
+                          </CardTitle>
+                          <CardDescription className="text-muted-foreground">Your travel service requests</CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                          <ServiceRequestsPanel />
+                        </CardContent>
+                      </Card>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                      {/* Saved Destinations & Travel Stats for travelers only */}
+                      <Card className="md:col-span-2 bg-card/50 backdrop-blur-sm border-border/50 shadow-lg">
+                        <CardHeader>
+                          <CardTitle className="flex items-center gap-2 text-foreground">
+                            <Map className="h-5 w-5 text-twende-orange" />
+                            Saved Destinations
+                          </CardTitle>
+                          <CardDescription className="text-muted-foreground">Places you've bookmarked</CardDescription>
+                        </CardHeader>
+                        <CardContent><SavedDestinations /></CardContent>
+                      </Card>
+                      <Card className="bg-card/50 backdrop-blur-sm border-border/50 shadow-lg">
+                        <CardHeader>
+                          <CardTitle className="flex items-center gap-2 text-foreground">
+                            <Globe className="h-5 w-5 text-twende-orange" />
+                            Travel Stats
+                          </CardTitle>
+                          <CardDescription className="text-muted-foreground">Your travel statistics</CardDescription>
+                        </CardHeader>
+                        <CardContent><TravelStats /></CardContent>
+                      </Card>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                      {/* Country news widgets for travelers only */}
+                      <CountryNewsWidget country="ghana" limit={2} />
+                      <CountryNewsWidget country="kenya" limit={2} />
+                      <CountryNewsWidget country="south africa" limit={2} />
+                    </div>
+                  </>
                 )}
                 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
