@@ -27,22 +27,22 @@ const Dashboard = () => {
   const { isAdmin, isLoading: roleLoading } = useRole();
   const [stats, setStats] = useState({ totalUsers:0, adminUsers:0, travellerUsers:0, totalTrips:0 });
   const [recentConversations, setRecentConversations] = useState<any[]>([]);
-  const [recentSignups, setRecentSignups] = useState<any[]>([]);
   const [recentRequests, setRecentRequests] = useState<any[]>([]);
 
   useEffect(() => {
     if (!isAdmin) return;
+    // fetch basic stats
     roleService.getAllUserRoles().then(users=>{
       const total=users.length;
       const admin=users.filter(u=>u.role==='admin').length;
       const trav=users.filter(u=>u.role==='traveller').length;
       setStats({ totalUsers:total, adminUsers:admin, travellerUsers:trav, totalTrips:0 });
     });
-    supabase.from('conversations').select('*').order('updated_at',{ascending:false}).limit(5)
+    // recent 3 chats
+    supabase.from('conversations').select('*').order('updated_at',{ascending:false}).limit(3)
       .then(({data})=>data&&setRecentConversations(data));
-    supabase.from('profiles').select('id,email,created_at').order('created_at',{ascending:false}).limit(5)
-      .then(({data})=>data&&setRecentSignups(data));
-    serviceRequestService.getAll().then(data=>setRecentRequests(data.slice(0,5)));
+    // recent 3 service requests
+    serviceRequestService.getAll().then(data=>setRecentRequests(data.slice(0,3)));
   },[isAdmin]);
 
   return (
@@ -135,14 +135,39 @@ const Dashboard = () => {
                       <Card><CardHeader><CardTitle className="text-sm">Total Trips</CardTitle></CardHeader>
                         <CardContent><div>{stats.totalTrips}</div></CardContent></Card>
                     </div>
-                    <div><h2 className="text-lg font-semibold">Recent Activities</h2>
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <Card><CardHeader><CardTitle className="text-sm">Recent Chats</CardTitle></CardHeader>
-                          <CardContent>{recentConversations.map(c=><div key={c.id}>{c.id}</div>)}</CardContent></Card>
-                        <Card><CardHeader><CardTitle className="text-sm">Recent Sign-ups</CardTitle></CardHeader>
-                          <CardContent>{recentSignups.map(u=><div key={u.id}>{u.email}</div>)}</CardContent></Card>
-                        <Card><CardHeader><CardTitle className="text-sm">Recent Requests</CardTitle></CardHeader>
-                          <CardContent>{recentRequests.map(r=><div key={r.id}>{r.origin}→{r.destination}</div>)}</CardContent></Card>
+                    <div>
+                      <h2 className="text-lg font-semibold mb-2">Recent Activities</h2>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <Card className="bg-card/50 backdrop-blur-sm border-border/50 shadow-lg">
+                          <CardHeader>
+                            <CardTitle className="text-sm">Recent Chats</CardTitle>
+                          </CardHeader>
+                          <CardContent>
+                            <ul className="list-disc pl-5 space-y-1 text-sm">
+                              {recentConversations.map(c => (
+                                <li key={c.id}>
+                                  Conversation {c.id} <span className="text-muted-foreground">{new Date(c.updated_at).toLocaleTimeString()}</span>
+                                </li>
+                              ))}
+                              {recentConversations.length === 0 && <li className="text-muted-foreground">No recent chats</li>}
+                            </ul>
+                          </CardContent>
+                        </Card>
+                        <Card className="bg-card/50 backdrop-blur-sm border-border/50 shadow-lg">
+                          <CardHeader>
+                            <CardTitle className="text-sm">Recent Requests</CardTitle>
+                          </CardHeader>
+                          <CardContent>
+                            <ul className="list-disc pl-5 space-y-1 text-sm">
+                              {recentRequests.map(r => (
+                                <li key={r.id}>
+                                  {r.origin} to {r.destination} <span className="text-muted-foreground">{r.status}</span>
+                                </li>
+                              ))}
+                              {recentRequests.length === 0 && <li className="text-muted-foreground">No recent requests</li>}
+                            </ul>
+                          </CardContent>
+                        </Card>
                       </div>
                     </div>
                   </>
