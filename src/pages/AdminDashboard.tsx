@@ -1,7 +1,6 @@
 
 import { useState, useEffect } from 'react';
 import { roleService } from '@/services/roles';
-import { adminAssignmentService } from '@/services/admin-assignments';
 import { 
   Table, 
   TableBody, 
@@ -16,6 +15,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { toast } from '@/hooks/use-toast';
 import DashboardHeader from '@/components/dashboard/DashboardHeader';
 import { Loader } from '@/components/Loader';
+import { supabase } from '@/lib/supabaseClient';
+import { serviceRequestService } from '@/services/service-requests';
 import { Shield, Users, UserCheck, Calendar, PieChart } from "lucide-react";
 
 const AdminDashboard = () => {
@@ -59,6 +60,58 @@ const AdminDashboard = () => {
     }
 
     fetchUsers();
+  }, []);
+  
+  // Fetch recent activities: chats, sign-ups, service requests
+  const [recentConversations, setRecentConversations] = useState<any[]>([]);
+  const [recentSignups, setRecentSignups] = useState<any[]>([]);
+  const [recentRequests, setRecentRequests] = useState<any[]>([]);
+  useEffect(() => {
+    // Initial fetch
+    const fetchInitial = async () => {
+      const { data: convs } = await supabase
+        .from('conversations')
+        .select('*')
+        .order('updated_at', { ascending: false })
+        .limit(5);
+      setRecentConversations(convs || []);
+      const { data: users } = await supabase
+        .from('profiles')
+        .select('id, email, created_at')
+        .order('created_at', { ascending: false })
+        .limit(5);
+      setRecentSignups(users || []);
+      const reqs = await serviceRequestService.getAll();
+      setRecentRequests(reqs.slice(0, 5));
+    };
+    fetchInitial();
+
+    // Subscriptions for live updates
+    const convSub = supabase
+      .channel('public:conversations')
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'conversations' }, payload => {
+        setRecentConversations(prev => [payload.new, ...prev].slice(0, 5));
+      })
+      .subscribe();
+    const signSub = supabase
+      .channel('public:profiles')
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'profiles' }, payload => {
+        setRecentSignups(prev => [payload.new, ...prev].slice(0, 5));
+      })
+      .subscribe();
+    const reqSub = supabase
+      .channel('public:service_requests')
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'service_requests' }, payload => {
+        setRecentRequests(prev => [payload.new, ...prev].slice(0, 5));
+      })
+      .subscribe();
+
+    // Cleanup subscriptions
+    return () => {
+      supabase.removeChannel(convSub);
+      supabase.removeChannel(signSub);
+      supabase.removeChannel(reqSub);
+    };
   }, []);
 
   const handleRoleUpdate = async (userId: string, newRole: 'admin' | 'traveller') => {
@@ -159,6 +212,60 @@ const AdminDashboard = () => {
               </div>
             </CardContent>
           </Card>
+        </div>
+        {/* Recent Activities Widgets */}
+        <div className="mb-8">
+          <h2 className="text-xl font-semibold mb-4">Recent Activities</h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-sm">Recent Chats</CardTitle>
+              </CardHeader>
+              <CardContent>
+                {recentConversations.length === 0 ? (
+                  <p className="text-sm text-gray-500">No recent chats</p>
+                ) : (
+                  recentConversations.map(conv => (
+                    <div key={conv.id} className="mb-2 text-sm">
+                      Conversation {conv.id} - {conv.status || 'active'}
+                    </div>
+                  ))
+                )}
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-sm">Recent Sign-ups</CardTitle>
+              </CardHeader>
+              <CardContent>
+                {recentSignups.length === 0 ? (
+                  <p className="text-sm text-gray-500">No recent sign-ups</p>
+                ) : (
+                  recentSignups.map(user => (
+                    <div key={user.id} className="mb-2 text-sm">
+                      {user.email} - {new Date(user.created_at).toLocaleDateString()}
+                    </div>
+                  ))
+                )}
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-sm">Recent Service Requests</CardTitle>
+              </CardHeader>
+              <CardContent>
+                {recentRequests.length === 0 ? (
+                  <p className="text-sm text-gray-500">No recent requests</p>
+                ) : (
+                  recentRequests.map(req => (
+                    <div key={req.id} className="mb-2 text-sm">
+                      {req.origin} to {req.destination} - {req.status}
+                    </div>
+                  ))
+                )}
+              </CardContent>
+            </Card>
+          </div>
         </div>
         
         {/* User Management Table */}

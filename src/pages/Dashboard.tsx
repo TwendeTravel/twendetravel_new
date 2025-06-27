@@ -3,8 +3,6 @@ import { useSearchParams } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Calendar, Globe, Map, FileText, Newspaper } from "lucide-react";
-import { useRole } from '@/hooks/useRole';
-import AdminDashboard from '@/pages/AdminDashboard';
 import DashboardHeader from "@/components/dashboard/DashboardHeader";
 import DashboardSidebar from "@/components/dashboard/DashboardSidebar";
 import UpcomingTrips from "@/components/dashboard/UpcomingTrips";
@@ -21,12 +19,7 @@ import Chat from './Chat';
 
 const Dashboard = () => {
   const [searchParams, setSearchParams] = useSearchParams();
-  const { isAdmin, isLoading: roleLoading } = useRole();
-  // If admin, show admin dashboard instead
-  if (!roleLoading && isAdmin) {
-    return <AdminDashboard />;
-  }
-  // Derive active tab directly from the URL search param for traveller
+  // Derive active tab directly from the URL search param
   const activeTab = searchParams.get("tab") || "overview";
 
 
