@@ -16,12 +16,34 @@ import FlightSearch from "@/pages/FlightSearch";
 import TravelAssistant from "@/pages/TravelAssistant";
 import { ServiceRequestForm } from '@/components/ServiceRequestForm';
 import Chat from './Chat';
+import { useRole } from '@/hooks/useRole';
+import { supabase } from '@/lib/supabaseClient';
+import { roleService } from '@/services/roles';
+import { serviceRequestService } from '@/services/service-requests';
 
 const Dashboard = () => {
   const [searchParams, setSearchParams] = useSearchParams();
-  // Derive active tab directly from the URL search param
   const activeTab = searchParams.get("tab") || "overview";
+  const { isAdmin, isLoading: roleLoading } = useRole();
+  const [stats, setStats] = useState({ totalUsers:0, adminUsers:0, travellerUsers:0, totalTrips:0 });
+  const [recentConversations, setRecentConversations] = useState<any[]>([]);
+  const [recentSignups, setRecentSignups] = useState<any[]>([]);
+  const [recentRequests, setRecentRequests] = useState<any[]>([]);
 
+  useEffect(() => {
+    if (!isAdmin) return;
+    roleService.getAllUserRoles().then(users=>{
+      const total=users.length;
+      const admin=users.filter(u=>u.role==='admin').length;
+      const trav=users.filter(u=>u.role==='traveller').length;
+      setStats({ totalUsers:total, adminUsers:admin, travellerUsers:trav, totalTrips:0 });
+    });
+    supabase.from('conversations').select('*').order('updated_at',{ascending:false}).limit(5)
+      .then(({data})=>data&&setRecentConversations(data));
+    supabase.from('profiles').select('id,email,created_at').order('created_at',{ascending:false}).limit(5)
+      .then(({data})=>data&&setRecentSignups(data));
+    serviceRequestService.getAll().then(data=>setRecentRequests(data.slice(0,5)));
+  },[isAdmin]);
 
   return (
     <PageTransition>
@@ -33,7 +55,6 @@ const Dashboard = () => {
             <Tabs
               value={activeTab}
               onValueChange={(value) => {
-                // Update URL to sync tabs and sidebar
                 if (value === "overview") {
                   setSearchParams({});
                 } else {
@@ -43,12 +64,6 @@ const Dashboard = () => {
               className="space-y-6"
             >
               <TabsList className="grid grid-cols-2 sm:grid-cols-8 w-full max-w-4xl bg-card/50 backdrop-blur-sm border border-border/50">
-                {/* <TabsTrigger 
-                  value="overview" 
-                  className="text-muted-foreground data-[state=active]:bg-primary/20 data-[state=active]:text-foreground"
-                >
-                  Overview
-                </TabsTrigger> */}
                 <TabsTrigger 
                   value="trips" 
                   className="text-muted-foreground data-[state=active]:bg-primary/20 data-[state=active]:text-foreground"
@@ -106,33 +121,60 @@ const Dashboard = () => {
               </TabsList>
               
               <TabsContent value="overview" className="space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <Card className="bg-card/50 backdrop-blur-sm border-border/50 shadow-lg">
-                    <CardHeader>
-                      <CardTitle className="flex items-center gap-2 text-foreground">
-                        <Calendar className="h-5 w-5 text-twende-teal dark:text-twende-skyblue" />
-                        Upcoming Trips
-                      </CardTitle>
-                      <CardDescription className="text-muted-foreground">Your scheduled travel plans</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      <UpcomingTrips />
-                    </CardContent>
-                  </Card>
-                  
-                  <Card className="bg-card/50 backdrop-blur-sm border-border/50 shadow-lg">
-                    <CardHeader>
-                      <CardTitle className="flex items-center gap-2 text-foreground">
-                        <FileText className="h-5 w-5 text-twende-teal dark:text-twende-skyblue" />
-                        Service Requests
-                      </CardTitle>
-                      <CardDescription className="text-muted-foreground">Your travel service requests</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      <ServiceRequestsPanel />
-                    </CardContent>
-                  </Card>
-                </div>
+                { roleLoading ? (
+                  <div className="flex items-center justify-center h-40"><div className="loader"></div></div>
+                ) : isAdmin ? (
+                  <>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">  
+                      <Card><CardHeader><CardTitle className="text-sm">Total Users</CardTitle></CardHeader>
+                        <CardContent><div>{stats.totalUsers}</div></CardContent></Card>
+                      <Card><CardHeader><CardTitle className="text-sm">Admin Users</CardTitle></CardHeader>
+                        <CardContent><div>{stats.adminUsers}</div></CardContent></Card>
+                      <Card><CardHeader><CardTitle className="text-sm">Traveller Users</CardTitle></CardHeader>
+                        <CardContent><div>{stats.travellerUsers}</div></CardContent></Card>
+                      <Card><CardHeader><CardTitle className="text-sm">Total Trips</CardTitle></CardHeader>
+                        <CardContent><div>{stats.totalTrips}</div></CardContent></Card>
+                    </div>
+                    <div><h2 className="text-lg font-semibold">Recent Activities</h2>
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <Card><CardHeader><CardTitle className="text-sm">Recent Chats</CardTitle></CardHeader>
+                          <CardContent>{recentConversations.map(c=><div key={c.id}>{c.id}</div>)}</CardContent></Card>
+                        <Card><CardHeader><CardTitle className="text-sm">Recent Sign-ups</CardTitle></CardHeader>
+                          <CardContent>{recentSignups.map(u=><div key={u.id}>{u.email}</div>)}</CardContent></Card>
+                        <Card><CardHeader><CardTitle className="text-sm">Recent Requests</CardTitle></CardHeader>
+                          <CardContent>{recentRequests.map(r=><div key={r.id}>{r.origin}→{r.destination}</div>)}</CardContent></Card>
+                      </div>
+                    </div>
+                  </>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <Card className="bg-card/50 backdrop-blur-sm border-border/50 shadow-lg">
+                      <CardHeader>
+                        <CardTitle className="flex items-center gap-2 text-foreground">
+                          <Calendar className="h-5 w-5 text-twende-teal dark:text-twende-skyblue" />
+                          Upcoming Trips
+                        </CardTitle>
+                        <CardDescription className="text-muted-foreground">Your scheduled travel plans</CardDescription>
+                      </CardHeader>
+                      <CardContent>
+                        <UpcomingTrips />
+                      </CardContent>
+                    </Card>
+                    
+                    <Card className="bg-card/50 backdrop-blur-sm border-border/50 shadow-lg">
+                      <CardHeader>
+                        <CardTitle className="flex items-center gap-2 text-foreground">
+                          <FileText className="h-5 w-5 text-twende-teal dark:text-twende-skyblue" />
+                          Service Requests
+                        </CardTitle>
+                        <CardDescription className="text-muted-foreground">Your travel service requests</CardDescription>
+                      </CardHeader>
+                      <CardContent>
+                        <ServiceRequestsPanel />
+                      </CardContent>
+                    </Card>
+                  </div>
+                )}
                 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                   <Card className="md:col-span-2 bg-card/50 backdrop-blur-sm border-border/50 shadow-lg">
