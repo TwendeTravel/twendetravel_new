@@ -28,6 +28,16 @@ const Dashboard = () => {
   const [stats, setStats] = useState({ totalUsers:0, adminUsers:0, travellerUsers:0, totalTrips:0 });
   const [recentConversations, setRecentConversations] = useState<any[]>([]);
   const [recentRequests, setRecentRequests] = useState<any[]>([]);
+  // Always fetch total trips count on mount
+  useEffect(() => {
+    supabase
+      .from('trips')
+      .select('id', { count: 'exact', head: true })
+      .then(({ count, error }) => {
+        if (error) console.error('Error counting trips:', error);
+        else setStats(prev => ({ ...prev, totalTrips: count ?? 0 }));
+      });
+  }, []);
 
   useEffect(() => {
     if (!isAdmin) return;
@@ -38,18 +48,6 @@ const Dashboard = () => {
       const trav=users.filter(u=>u.role==='traveller').length;
       setStats({ totalUsers:total, adminUsers:admin, travellerUsers:trav, totalTrips:0 });
     });
-    // fetch total trips count
-    supabase
-      .from('trips')
-      .select('*', { count: 'exact' })
-      .then(({ data, count, error }) => {
-        if (error) {
-          console.error('Error fetching trip count:', error);
-        } else {
-          const total = count ?? data?.length ?? 0;
-          setStats(prev => ({ ...prev, totalTrips: total }));
-        }
-      });
     // recent 3 chats
     supabase.from('conversations').select('*').order('updated_at',{ascending:false}).limit(3)
       .then(({data})=>data&&setRecentConversations(data));
