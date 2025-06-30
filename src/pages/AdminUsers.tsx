@@ -109,7 +109,7 @@ const AdminUsers = () => {
       <DashboardHeader />
       <main className="container mx-auto py-8 px-4">
         <Button variant="outline" asChild className="mb-6">
-          <Link to="/admin">
+          <Link to="/dashboard">
             <ArrowLeft className="mr-2 h-4 w-4" />
             Back to Dashboard
           </Link>
