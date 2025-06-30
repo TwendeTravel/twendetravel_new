@@ -39,19 +39,14 @@ export const roleService = {
   setUserPermission: permissionService.setUserPermission,
 
   /**
-   * Fetch all user permission records and map to { user_id, permission_level, role, created_at }
+   * Fetch all user roles with email and join date from user_roles_view
    */
   async getAllUserRoles() {
     const { data, error } = await supabase
-      .from('twende_permissions')
-      .select('id, twende_user, permission');
+      .from('user_roles_view')
+      .select('user_id, email, created_at, role');
     if (error) throw error;
-    return (data ?? []).map((rec) => ({
-      user_id: rec.twende_user,
-      permission: rec.permission,
-      role: rec.permission === 1 ? 'admin' : 'traveller',
-      // no created_at on new table
-    }));
+    return data ?? [];
   },
 
   /**

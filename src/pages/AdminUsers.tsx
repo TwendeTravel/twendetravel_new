@@ -63,7 +63,7 @@ const AdminUsers = () => {
     // Apply search filter
     if (searchTerm) {
       result = result.filter(user => 
-        user.user_id.toLowerCase().includes(searchTerm.toLowerCase())
+        user.email.toLowerCase().includes(searchTerm.toLowerCase())
       );
     }
     
@@ -124,7 +124,7 @@ const AdminUsers = () => {
           <div className="relative flex-grow">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
             <Input
-              placeholder="Search by user ID..."
+              placeholder="Search by email..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="pl-10"
@@ -164,17 +164,17 @@ const AdminUsers = () => {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>User ID</TableHead>
+                  <TableHead>Email</TableHead>
                   <TableHead>Role</TableHead>
-                  <TableHead>Created At</TableHead>
+                  <TableHead>Joined On</TableHead>
                   <TableHead>Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {filteredUsers.length > 0 ? (
                   filteredUsers.map((user) => (
-                    <TableRow key={user.id}>
-                      <TableCell className="font-mono text-xs">{user.user_id}</TableCell>
+                    <TableRow key={user.user_id}>
+                      <TableCell>{user.email}</TableCell>
                       <TableCell>
                         <Badge variant={user.role === 'admin' ? 'default' : 'secondary'}>
                           {user.role}
