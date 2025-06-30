@@ -59,15 +59,17 @@ const DashboardSidebar = () => {
       <nav className="p-4 space-y-1">
         <SidebarLink to="/dashboard" icon={<Home size={18} />} label="Dashboard" end />
         
-        {/* Request Service link (new service request = services tab) */}
-        <SidebarLink
-          to="/dashboard?tab=services"
-          icon={<FileText size={18} />}
-          label="Request Service"
-          end
-          matchSearch={search => new URLSearchParams(search).get('tab') === 'services'}
-        />
-
+        {/* Request Service link (new service request = services tab) for travelers only */}
+        {!isAdmin && (
+          <SidebarLink
+            to="/dashboard?tab=services"
+            icon={<FileText size={18} />}
+            label="Request Service"
+            end
+            matchSearch={search => new URLSearchParams(search).get('tab') === 'services'}
+          />
+        )}
+        
         {/* User-specific links (hidden for admins) */}
         {!isAdmin && (
           <>
