@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { roleService } from '@/services/roles';
 import { 
@@ -22,7 +21,8 @@ import {
 import { toast } from '@/hooks/use-toast';
 import DashboardHeader from '@/components/dashboard/DashboardHeader';
 import { Loader } from '@/components/Loader';
-import { Users, Filter, MoreHorizontal, Search } from "lucide-react";
+import { Users, Filter, MoreHorizontal, Search, ArrowLeft } from "lucide-react";
+import { Link } from 'react-router-dom';
 
 const AdminUsers = () => {
   const [users, setUsers] = useState<any[]>([]);
@@ -108,6 +108,12 @@ const AdminUsers = () => {
     <div className="min-h-screen bg-background">
       <DashboardHeader />
       <main className="container mx-auto py-8 px-4">
+        <Button variant="outline" asChild className="mb-6">
+          <Link to="/admin">
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Back to Dashboard
+          </Link>
+        </Button>
         <div className="flex items-center mb-6">
           <Users className="h-8 w-8 mr-3 text-primary" />
           <h1 className="text-3xl font-bold">User Management</h1>
