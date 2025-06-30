@@ -71,6 +71,7 @@ const Dashboard = () => {
               }}
               className="space-y-6"
             >
+              {!isAdmin && (
               <TabsList className="grid grid-cols-2 sm:grid-cols-8 w-full max-w-4xl bg-card/50 backdrop-blur-sm border border-border/50">
                 <TabsTrigger 
                   value="trips" 
@@ -127,7 +128,8 @@ const Dashboard = () => {
                   Messages
                 </TabsTrigger>
               </TabsList>
-              
+              )}
+
               <TabsContent value="overview" className="space-y-6">
                 { roleLoading ? (
                   <div className="flex items-center justify-center h-40"><div className="loader"></div></div>
