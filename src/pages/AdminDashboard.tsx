@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { roleService } from '@/services/roles';
 import { 
@@ -62,9 +61,8 @@ const AdminDashboard = () => {
     fetchUsers();
   }, []);
   
-  // Fetch recent activities: chats, sign-ups, service requests
+  // Fetch recent activities: chats and service requests
   const [recentConversations, setRecentConversations] = useState<any[]>([]);
-  const [recentSignups, setRecentSignups] = useState<any[]>([]);
   const [recentRequests, setRecentRequests] = useState<any[]>([]);
   useEffect(() => {
     // Initial fetch
@@ -75,12 +73,6 @@ const AdminDashboard = () => {
         .order('updated_at', { ascending: false })
         .limit(5);
       setRecentConversations(convs || []);
-      const { data: users } = await supabase
-        .from('profiles')
-        .select('id, email, created_at')
-        .order('created_at', { ascending: false })
-        .limit(5);
-      setRecentSignups(users || []);
       const reqs = await serviceRequestService.getAll();
       setRecentRequests(reqs.slice(0, 5));
     };
@@ -91,12 +83,6 @@ const AdminDashboard = () => {
       .channel('public:conversations')
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'conversations' }, payload => {
         setRecentConversations(prev => [payload.new, ...prev].slice(0, 5));
-      })
-      .subscribe();
-    const signSub = supabase
-      .channel('public:profiles')
-      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'profiles' }, payload => {
-        setRecentSignups(prev => [payload.new, ...prev].slice(0, 5));
       })
       .subscribe();
     const reqSub = supabase
@@ -235,22 +221,6 @@ const AdminDashboard = () => {
             </Card>
             <Card>
               <CardHeader>
-                <CardTitle className="text-sm">Recent Sign-ups</CardTitle>
-              </CardHeader>
-              <CardContent>
-                {recentSignups.length === 0 ? (
-                  <p className="text-sm text-gray-500">No recent sign-ups</p>
-                ) : (
-                  recentSignups.map(user => (
-                    <div key={user.id} className="mb-2 text-sm">
-                      {user.email} - {new Date(user.created_at).toLocaleDateString()}
-                    </div>
-                  ))
-                )}
-              </CardContent>
-            </Card>
-            <Card>
-              <CardHeader>
                 <CardTitle className="text-sm">Recent Service Requests</CardTitle>
               </CardHeader>
               <CardContent>
@@ -280,16 +250,16 @@ const AdminDashboard = () => {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>User ID</TableHead>
+                  <TableHead>Email</TableHead>
                   <TableHead>Role</TableHead>
-                  <TableHead>Created At</TableHead>
+                  <TableHead>Joined On</TableHead>
                   <TableHead>Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {users.map((user) => (
-                  <TableRow key={user.id}>
-                    <TableCell className="font-mono text-xs">{user.user_id}</TableCell>
+                  <TableRow key={user.user_id}>
+                    <TableCell>{user.email}</TableCell>
                     <TableCell>
                       <Badge variant={user.role === 'admin' ? 'default' : 'secondary'}>
                         {user.role}
