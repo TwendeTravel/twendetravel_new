@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import DashboardHeader from '@/components/dashboard/DashboardHeader';
 import { TravelerAssignments } from '@/components/admin/TravelerAssignments';
@@ -30,6 +29,7 @@ import {
 } from "@/components/ui/table";
 import { Link } from 'react-router-dom';
 import { format } from 'date-fns';
+import { supabase } from '@/lib/supabaseClient';
 
 export default function AdminTravelManagement() {
   const [isLoading, setIsLoading] = useState(true);
@@ -44,6 +44,7 @@ export default function AdminTravelManagement() {
     hotelsBooked: 0,
     transportsBooked: 0
   });
+  const [needAttentionStats, setNeedAttentionStats] = useState<{ expired_passports: number; unassigned_travelers: number }>({ expired_passports: 0, unassigned_travelers: 0 });
 
   useEffect(() => {
     loadData();
@@ -129,6 +130,14 @@ export default function AdminTravelManagement() {
         hotelsBooked: hotelCount || 0,
         transportsBooked: transportCount || 0
       });
+
+      // Fetch need-attention stats
+      const { data: needStatsData, error: needStatsError } = await supabase
+        .from('user_stats')
+        .select('expired_passports,unassigned_travelers')
+        .single();
+      if (needStatsError) throw needStatsError;
+      setNeedAttentionStats(needStatsData || { expired_passports: 0, unassigned_travelers: 0 });
 
     } catch (err) {
       console.error("Error loading admin travel data:", err);
@@ -384,14 +393,14 @@ export default function AdminTravelManagement() {
               <AlertCircle className="h-4 w-4" />
               <AlertTitle>Expired Passport Alert</AlertTitle>
               <AlertDescription>
-                3 travelers have passports expiring in the next 60 days. <Button variant="link" className="p-0 h-auto">View details</Button>
+                {needAttentionStats.expired_passports} travelers have passports expiring in the next 60 days. <Button variant="link" className="p-0 h-auto">View details</Button>
               </AlertDescription>
             </Alert>
             <Alert>
               <AlertCircle className="h-4 w-4" />
               <AlertTitle>Unassigned Travelers</AlertTitle>
               <AlertDescription>
-                5 travelers are not assigned to any admin. <Button variant="link" className="p-0 h-auto">Assign now</Button>
+                {needAttentionStats.unassigned_travelers} travelers are not assigned to any admin. <Button variant="link" className="p-0 h-auto">Assign now</Button>
               </AlertDescription>
             </Alert>
           </div>
