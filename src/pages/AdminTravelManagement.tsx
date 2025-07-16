@@ -31,8 +31,8 @@ import {
 import { Link } from 'react-router-dom';
 import { format } from 'date-fns';
 import { supabase } from '@/lib/supabaseClient';
+import { roleService } from '@/services/roles';
 import { toast } from '@/hooks/use-toast';
-import { roleService } from '@/services/roleService';
 
 export default function AdminTravelManagement() {
   const [isLoading, setIsLoading] = useState(true);
