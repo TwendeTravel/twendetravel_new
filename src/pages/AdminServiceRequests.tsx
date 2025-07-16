@@ -1,11 +1,13 @@
 import React, { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
+import { ArrowLeft } from 'lucide-react';
+import PageTransition from '@/components/PageTransition';
 import { serviceRequestService } from '@/services/service-requests';
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { toast } from '@/components/ui/use-toast';
-import PageTransition from '@/components/PageTransition';
 
 interface ServiceRequest {
   id: string;
@@ -51,6 +53,12 @@ export default function AdminServiceRequests() {
   return (
     <PageTransition>
       <div className="container mx-auto py-8 px-4">
+        <Button variant="outline" asChild className="mb-6">
+          <Link to="/dashboard">
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Back to Dashboard
+          </Link>
+        </Button>
         <Card>
           <CardHeader>
             <CardTitle>Service Requests</CardTitle>
