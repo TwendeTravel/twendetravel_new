@@ -38,7 +38,7 @@ export default function AdminChatManagement() {
 
   // Load conversations and travellers
   useEffect(() => {
-    const loadConversations = async () => {
+    async function loadData() {
       if (!user) return;
       setIsLoading(true);
       try {
@@ -47,9 +47,11 @@ export default function AdminChatManagement() {
           .select('*')
           .order('updated_at', { ascending: false });
         if (convErr) throw convErr;
-        // fetch user emails
         const userIds = Array.from(new Set(convs.flatMap(c => [c.traveler_id, c.admin_id]).filter(Boolean)));
-        const { data: users } = await supabase.from('user_emails_view').select('*').in('id', userIds as string[]);
+        const { data: users } = await supabase
+          .from('user_emails_view')
+          .select('*')
+          .in('id', userIds as string[]);
         const enriched = convs.map(c => ({
           ...c,
           traveler: c.traveler_id ? { email: users?.find(u => u.id === c.traveler_id)?.email || '' } : null,
@@ -58,34 +60,38 @@ export default function AdminChatManagement() {
         setConversations(enriched);
         setFilteredConversations(enriched);
         if (enriched.length && !selectedConversation) setSelectedConversation(enriched[0].id);
+        if (isAdmin) {
+          const { data: perms } = await supabase
+            .from('twende_permissions')
+            .select('twende_user')
+            .eq('permission', 0);
+          const ids = perms?.map(p => p.twende_user) || [];
+          const { data: emails } = await supabase
+            .from('user_emails_view')
+            .select('*')
+            .in('id', ids as string[]);
+          setTravellers(
+            ids.map(id => ({ id, email: emails?.find(e => e.id === id)?.email || '' }))
+          );
+        }
       } catch (err) {
-        console.error('Error loading conversations:', err);
-        toast({ title: 'Error loading conversations', description: 'Please try again.', variant: 'destructive' });
+        console.error('Error loading data:', err);
+        toast({ title: 'Error loading data', description: 'Please try again.', variant: 'destructive' });
       } finally {
         setIsLoading(false);
       }
-    };
-    loadConversations();
-    // load travellers list
-    if (user && isAdmin) {
-      // fetch traveller IDs then lookup emails separately
-      const { data: perms } = await supabase
-        .from('twende_permissions')
-        .select('twende_user')
-        .eq('permission', 0);
-      const ids = perms?.map(p => p.twende_user) || [];
-      const { data: emails } = await supabase
-        .from('user_emails_view')
-        .select('*')
-        .in('id', ids as string[]);
-      setTravellers(ids.map(id => ({ id, email: emails?.find(e => e.id === id)?.email || '' })));
     }
-    }
-    const channel = supabase.channel('public:conversations')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'conversations' }, () => loadConversations())
+    loadData();
+    const channel = supabase
+      .channel('public:conversations')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'conversations' },
+        () => loadData()
+      )
       .subscribe();
     return () => { channel.unsubscribe(); };
-  }, [user, isAdmin]);
+  }, [user, isAdmin, selectedConversation]);
 
   // Filters
   useEffect(() => {
