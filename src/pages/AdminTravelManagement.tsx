@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
 import DashboardHeader from '@/components/dashboard/DashboardHeader';
-import { TravelerAssignments } from '@/components/admin/TravelerAssignments';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Button } from "@/components/ui/button";
+import { ArrowLeft } from "lucide-react";
+import { Link } from 'react-router-dom';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -30,11 +31,11 @@ import {
 import { Link } from 'react-router-dom';
 import { format } from 'date-fns';
 import { supabase } from '@/lib/supabaseClient';
+import { toast } from '@/hooks/use-toast';
 
 export default function AdminTravelManagement() {
   const [isLoading, setIsLoading] = useState(true);
-  const [itineraries, setItineraries] = useState<any[]>([]);
-  const [upcomingTrips, setUpcomingTrips] = useState<any[]>([]);
+  const [serviceRequests, setServiceRequests] = useState<any[]>([]);
   const [travelStats, setTravelStats] = useState({
     totalItineraries: 0,
     pendingItineraries: 0,
@@ -53,83 +54,16 @@ export default function AdminTravelManagement() {
   async function loadData() {
     setIsLoading(true);
     try {
-      // Load itineraries assigned to this admin
-      const { data: itinerariesData, error: itinerariesError } = await supabase
-        .from('itineraries')
-        .select(`
-          *,
-          user:user_id(email),
-          items:id(
-            itinerary_items(count)
-          )
-        `)
-        .order('created_at', { ascending: false })
-        .limit(10);
+      // Fetch pending service requests
+      const { data: reqData, error: reqError } = await supabase
+        .from('service_requests')
+        .select(`*, user:user_id(email)`)  
+        .eq('status', 'pending')
+        .order('created_at', { ascending: false });
+      if (reqError) throw reqError;
+      setServiceRequests(reqData || []);
 
-      if (itinerariesError) throw itinerariesError;
-      setItineraries(itinerariesData || []);
-
-      // Get upcoming trips
-      const { data: tripsData, error: tripsError } = await supabase
-        .from('trips')
-        .select(`
-          *,
-          user:user_id(email),
-          destination:destination_id(name, country, image)
-        `)
-        .gt('start_date', new Date().toISOString())
-        .order('start_date', { ascending: true })
-        .limit(5);
-
-      if (tripsError) throw tripsError;
-      setUpcomingTrips(tripsData || []);
-
-      // Calculate travel statistics
-      const { data: statsData, error: statsError } = await supabase
-        .from('itineraries')
-        .select('status, id')
-        .limit(1000);
-
-      if (statsError) throw statsError;
-
-      // Flight bookings count
-      const { count: flightCount, error: flightError } = await supabase
-        .from('flight_bookings')
-        .select('*', { count: 'exact', head: true });
-
-      if (flightError) throw flightError;
-
-      // Hotel bookings count
-      const { count: hotelCount, error: hotelError } = await supabase
-        .from('hotel_bookings')
-        .select('*', { count: 'exact', head: true });
-
-      if (hotelError) throw hotelError;
-
-      // Transport bookings count
-      const { count: transportCount, error: transportError } = await supabase
-        .from('transportation_bookings')
-        .select('*', { count: 'exact', head: true });
-
-      if (transportError) throw transportError;
-
-      // Upcoming trips count
-      const { count: upcomingCount, error: upcomingError } = await supabase
-        .from('trips')
-        .select('*', { count: 'exact', head: true })
-        .gt('start_date', new Date().toISOString());
-
-      if (upcomingError) throw upcomingError;
-
-      setTravelStats({
-        totalItineraries: statsData?.length || 0,
-        pendingItineraries: statsData?.filter(i => i.status === 'draft' || i.status === 'in_progress').length || 0,
-        confirmedItineraries: statsData?.filter(i => i.status === 'confirmed').length || 0,
-        upcomingTrips: upcomingCount || 0,
-        flightsBooked: flightCount || 0,
-        hotelsBooked: hotelCount || 0,
-        transportsBooked: transportCount || 0
-      });
+      // (Removed itineraries and booking stats - not used)
 
       // Fetch need-attention stats
       const { data: needStatsData, error: needStatsError } = await supabase
@@ -178,6 +112,13 @@ export default function AdminTravelManagement() {
     <div className="min-h-screen bg-background">
       <DashboardHeader />
       <main className="container mx-auto py-8 px-4">
+        <Button variant="outline" asChild className="mb-6">
+          <Link to="/dashboard">
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Back to Dashboard
+          </Link>
+        </Button>
+
         <div className="flex items-center mb-6">
           <Map className="h-8 w-8 mr-3 text-primary" />
           <h1 className="text-3xl font-bold">Travel Management</h1>
@@ -255,134 +196,56 @@ export default function AdminTravelManagement() {
           </Card>
         </div>
         
-        {/* Admin-Traveler Assignments */}
-        <TravelerAssignments />
-        
+        {/* Pending Service Requests */}
         <div className="mt-8">
-          <Tabs defaultValue="upcoming">
-            <TabsList className="mb-4">
-              <TabsTrigger value="upcoming">Upcoming Trips</TabsTrigger>
-              <TabsTrigger value="itineraries">Recent Itineraries</TabsTrigger>
-            </TabsList>
-            
-            <TabsContent value="upcoming">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Upcoming Trips</CardTitle>
-                  <CardDescription>Schedule of upcoming traveler journeys</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  {upcomingTrips.length > 0 ? (
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Destination</TableHead>
-                          <TableHead>Traveler</TableHead>
-                          <TableHead>Date Range</TableHead>
-                          <TableHead>Status</TableHead>
-                          <TableHead>Actions</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {upcomingTrips.map((trip) => (
-                          <TableRow key={trip.id}>
-                            <TableCell>
-                              <div className="flex items-center">
-                                <div className="w-10 h-10 rounded overflow-hidden mr-3">
-                                  <img 
-                                    src={trip.destination?.image || "/placeholder.svg"} 
-                                    alt={trip.destination?.name}
-                                    className="w-full h-full object-cover"
-                                  />
-                                </div>
-                                <div>
-                                  <div className="font-medium">{trip.destination?.name}</div>
-                                  <div className="text-sm text-muted-foreground">{trip.destination?.country}</div>
-                                </div>
-                              </div>
-                            </TableCell>
-                            <TableCell>
-                              <div className="flex items-center">
-                                <Users className="h-4 w-4 mr-2" />
-                                {trip.user?.email || "Unknown"}
-                              </div>
-                            </TableCell>
-                            <TableCell>
-                              {format(new Date(trip.start_date), "MMM d")} - {format(new Date(trip.end_date), "MMM d, yyyy")}
-                            </TableCell>
-                            <TableCell>
-                              {getStatusBadge(trip.status)}
-                            </TableCell>
-                            <TableCell>
-                              <Button size="sm" variant="outline" asChild>
-                                <Link to={`/trip/${trip.id}`}>View Details</Link>
-                              </Button>
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  ) : (
-                    <div className="text-center py-8 text-muted-foreground">
-                      No upcoming trips found
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            </TabsContent>
-            
-            <TabsContent value="itineraries">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Recent Itineraries</CardTitle>
-                  <CardDescription>Latest travel plans and bookings</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  {itineraries.length > 0 ? (
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Title</TableHead>
-                          <TableHead>Traveler</TableHead>
-                          <TableHead>Date Range</TableHead>
-                          <TableHead>Status</TableHead>
-                          <TableHead>Items</TableHead>
-                          <TableHead>Actions</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {itineraries.map((itinerary) => (
-                          <TableRow key={itinerary.id}>
-                            <TableCell className="font-medium">{itinerary.title}</TableCell>
-                            <TableCell>{itinerary.user?.email || "Unknown"}</TableCell>
-                            <TableCell>
-                              {format(new Date(itinerary.start_date), "MMM d")} - 
-                              {format(new Date(itinerary.end_date), "MMM d, yyyy")}
-                            </TableCell>
-                            <TableCell>
-                              {getStatusBadge(itinerary.status)}
-                            </TableCell>
-                            <TableCell>
-                              {itinerary.items?.[0]?.itinerary_items?.[0]?.count || 0} items
-                            </TableCell>
-                            <TableCell>
-                              <Button size="sm" variant="outline">
-                                Manage
-                              </Button>
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  ) : (
-                    <div className="text-center py-8 text-muted-foreground">
-                      No itineraries found
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            </TabsContent>
-          </Tabs>
+          <Card>
+            <CardHeader>
+              <CardTitle>Pending Service Requests</CardTitle>
+              <CardDescription>Approve to convert into trips</CardDescription>
+            </CardHeader>
+            <CardContent>
+              {serviceRequests.length > 0 ? (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Origin</TableHead>
+                      <TableHead>Destination</TableHead>
+                      <TableHead>User</TableHead>
+                      <TableHead>Dates</TableHead>
+                      <TableHead>Budget</TableHead>
+                      <TableHead>Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {serviceRequests.map(req => (
+                      <TableRow key={req.id}>
+                        <TableCell>{req.origin}</TableCell>
+                        <TableCell>{req.destination}</TableCell>
+                        <TableCell>{req.user?.email}</TableCell>
+                        <TableCell>{format(new Date(req.start_date), 'MMM d')} - {format(new Date(req.end_date), 'MMM d, yyyy')}</TableCell>
+                        <TableCell>{req.budget}</TableCell>
+                        <TableCell>
+                          <Button size="sm" variant="outline" onClick={async () => {
+                            try {
+                              await supabase.from('trips').insert({ user_id: req.user_id, origin: req.origin, destination: req.destination, start_date: req.start_date, end_date: req.end_date, status: 'scheduled' });
+                              await supabase.from('service_requests').update({ status: 'approved' }).eq('id', req.id);
+                              toast({ title: 'Request approved', variant: 'default' });
+                              loadData();
+                            } catch (e) {
+                              console.error(e);
+                              toast({ title: 'Error approving', variant: 'destructive' });
+                            }
+                          }}>Approve</Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              ) : (
+                <div className="text-center py-8 text-muted-foreground">No pending requests</div>
+              )}
+            </CardContent>
+          </Card>
         </div>
         
         {/* Need attention alerts */}

@@ -17,6 +17,8 @@ import { Loader } from '@/components/Loader';
 import { supabase } from '@/lib/supabaseClient';
 import { serviceRequestService } from '@/services/service-requests';
 import { Shield, Users, UserCheck, Calendar, PieChart } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
+import { Link } from 'react-router-dom';
 
 const AdminDashboard = () => {
   const [users, setUsers] = useState<any[]>([]);
@@ -136,6 +138,12 @@ const AdminDashboard = () => {
     <div className="min-h-screen bg-background">
       <DashboardHeader />
       <main className="container mx-auto py-8 px-4">
+        <Button variant="outline" asChild className="mb-6">
+          <Link to="/dashboard">
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Back to Dashboard
+          </Link>
+        </Button>
         <div className="flex items-center mb-6">
           <Shield className="h-8 w-8 mr-3 text-primary" />
           <h1 className="text-3xl font-bold">Admin Dashboard</h1>

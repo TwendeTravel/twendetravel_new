@@ -1,4 +1,3 @@
-
 import { Mail, Phone, MapPin, Send } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -171,8 +170,8 @@ const ContactSection = () => {
                 <div>
                   <h4 className="font-bold text-foreground mb-1">Call Us</h4>
                   <p className="text-muted-foreground">
-                    <a href="tel:+233540181551" className="block hover:text-twende-teal dark:hover:text-twende-skyblue transition-colors">+233 123 456 789 (Ghana)</a>
-                    <a href="tel:+254123456789" className="block mt-1 hover:text-twende-teal dark:hover:text-twende-skyblue transition-colors">+254 123 456 789 (Kenya)</a>
+                    <a href="tel:+233530862072" className="block hover:text-twende-teal dark:hover:text-twende-skyblue transition-colors">+233 530 862 072 (Ghana)</a>
+                    <a href="tel:+254768543581" className="block mt-1 hover:text-twende-teal dark:hover:text-twende-skyblue transition-colors">+254 768 543 581 (Kenya)</a>
                   </p>
                 </div>
               </div>
