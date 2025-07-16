@@ -7,7 +7,7 @@ import { Card } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
-import { Plus, Search, User, Filter, Phone } from 'lucide-react';
+import { Plus, Search, User, Filter, Phone, ArrowLeft } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { 
   DropdownMenu, 
@@ -20,6 +20,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { format } from 'date-fns';
 import { toast } from '@/hooks/use-toast';
 import { supabase } from '@/lib/supabaseClient';
+import { Link } from 'react-router-dom';
 
 export default function AdminChatManagement() {
   const { user } = useAuth();
@@ -136,6 +137,11 @@ export default function AdminChatManagement() {
 
   return (
     <div className="container mx-auto py-6">
+      <Button variant="outline" asChild className="mb-6">
+        <Link to="/admin">
+          <ArrowLeft className="mr-2 h-4 w-4" /> Back to Dashboard
+        </Link>
+      </Button>
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold">Admin Chat</h1>
         <div className="flex items-center space-x-2">
