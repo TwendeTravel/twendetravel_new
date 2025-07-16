@@ -44,7 +44,7 @@ export default function AdminChatManagement() {
       try {
         const { data: convs, error: convErr } = await supabase
           .from('conversations')
-          .select('id, title, traveler_id, admin_id, status, priority, created_at, updated_at, related_trip ( id, start_date, end_date, destination ( name, country ) )')
+          .select('*')
           .order('updated_at', { ascending: false });
         if (convErr) throw convErr;
         // fetch user emails
@@ -52,8 +52,8 @@ export default function AdminChatManagement() {
         const { data: users } = await supabase.from('user_emails_view').select('*').in('id', userIds as string[]);
         const enriched = convs.map(c => ({
           ...c,
-          traveler: c.traveler_id && users?.find(u => u.id === c.traveler_id) ? { email: users.find(u => u.id === c.traveler_id)!.email } : null,
-          admin: c.admin_id && users?.find(u => u.id === c.admin_id) ? { email: users.find(u => u.id === c.admin_id)!.email } : null
+          traveler: c.traveler_id ? { email: users?.find(u => u.id === c.traveler_id)?.email || '' } : null,
+          admin: c.admin_id ? { email: users?.find(u => u.id === c.admin_id)?.email || '' } : null
         }));
         setConversations(enriched);
         setFilteredConversations(enriched);
@@ -68,15 +68,18 @@ export default function AdminChatManagement() {
     loadConversations();
     // load travellers list
     if (user && isAdmin) {
-      supabase
+      // fetch traveller IDs then lookup emails separately
+      const { data: perms } = await supabase
         .from('twende_permissions')
-        .select('twende_user, user:twende_user(email)')
-        .eq('permission', 0)
-        .then(({ data, error }) => {
-          if (!error && data) {
-            setTravellers(data.map(rec => ({ id: rec.twende_user, email: rec.user.email })));
-          }
-        });
+        .select('twende_user')
+        .eq('permission', 0);
+      const ids = perms?.map(p => p.twende_user) || [];
+      const { data: emails } = await supabase
+        .from('user_emails_view')
+        .select('*')
+        .in('id', ids as string[]);
+      setTravellers(ids.map(id => ({ id, email: emails?.find(e => e.id === id)?.email || '' })));
+    }
     }
     const channel = supabase.channel('public:conversations')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'conversations' }, () => loadConversations())
