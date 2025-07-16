@@ -90,8 +90,14 @@ export default function AdminServiceRequests() {
                       </Badge>
                     </TableCell>
                     <TableCell className="space-x-2">
-                      <Button size="sm" variant="outline" onClick={() => updateStatus(req.id, 'approved')}>Approve</Button>
-                      <Button size="sm" variant="outline" onClick={() => updateStatus(req.id, 'declined')}>Decline</Button>
+                      {req.status === 'pending' ? (
+                        <>
+                          <Button size="sm" variant="outline" onClick={() => updateStatus(req.id, 'approved')}>Approve</Button>
+                          <Button size="sm" variant="outline" onClick={() => updateStatus(req.id, 'declined')}>Decline</Button>
+                        </>
+                      ) : (
+                        <span className="text-muted-foreground">No actions</span>
+                      )}
                     </TableCell>
                   </TableRow>
                 ))}
