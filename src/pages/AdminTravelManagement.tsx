@@ -129,74 +129,27 @@ export default function AdminTravelManagement() {
           <h1 className="text-3xl font-bold">Travel Management</h1>
         </div>
 
-        {/* Stats Overview */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+        {/* Overview Tiles */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
           <Card>
             <CardHeader className="pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground">
-                Upcoming Trips
+                Pending Requests
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="flex items-center">
-                <Calendar className="h-5 w-5 text-muted-foreground mr-2" />
-                <div className="text-2xl font-bold">{travelStats.upcomingTrips}</div>
-              </div>
+              <div className="text-2xl font-bold">{serviceRequests.length}</div>
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader className="pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground">
-                Pending Itineraries
+                Starting Soon
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="flex items-center">
-                <Clock className="h-5 w-5 text-muted-foreground mr-2" />
-                <div className="text-2xl font-bold">{travelStats.pendingItineraries}</div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
-                Confirmed Itineraries
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="flex items-center">
-                <Check className="h-5 w-5 text-muted-foreground mr-2" />
-                <div className="text-2xl font-bold">{travelStats.confirmedItineraries}</div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
-                Total Bookings
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="flex items-center">
-                <ShoppingBag className="h-5 w-5 text-muted-foreground mr-2" />
-                <div className="text-2xl font-bold">
-                  {travelStats.flightsBooked + travelStats.hotelsBooked + travelStats.transportsBooked}
-                </div>
-              </div>
-              <div className="flex gap-3 mt-2 text-xs text-muted-foreground">
-                <div className="flex items-center">
-                  <Plane className="h-3 w-3 mr-1" /> {travelStats.flightsBooked}
-                </div>
-                <div className="flex items-center">
-                  <Building className="h-3 w-3 mr-1" /> {travelStats.hotelsBooked}
-                </div>
-                <div className="flex items-center">
-                  <Car className="h-3 w-3 mr-1" /> {travelStats.transportsBooked}
-                </div>
-              </div>
+              <div className="text-2xl font-bold">{attentionRequests.length}</div>
             </CardContent>
           </Card>
         </div>
