@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft } from 'lucide-react';
 import { Input } from '@/components/ui/input';
-import { Select } from '@/components/ui/select';
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select';
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table';
 import { supabase } from '@/lib/supabaseClient';
 import { toast } from '@/hooks/use-toast';
@@ -89,14 +89,14 @@ export default function AdminTrips() {
           <Input type="date" placeholder="Start Date" value={form.start_date} onChange={e => setForm({ ...form, start_date: e.target.value })} />
           <Input type="date" placeholder="End Date" value={form.end_date} onChange={e => setForm({ ...form, end_date: e.target.value })} />
           <Select value={form.status} onChange={val => setForm({ ...form, status: val })}>
-            <Select.Trigger className="w-[120px]">
-              <Select.Value placeholder="Status" />
-            </Select.Trigger>
-            <Select.Content>
-              <Select.Item value="scheduled">Scheduled</Select.Item>
-              <Select.Item value="completed">Completed</Select.Item>
-              <Select.Item value="cancelled">Cancelled</Select.Item>
-            </Select.Content>
+            <SelectTrigger className="w-[120px]">
+              <SelectValue placeholder="Status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="scheduled">Scheduled</SelectItem>
+              <SelectItem value="completed">Completed</SelectItem>
+              <SelectItem value="cancelled">Cancelled</SelectItem>
+            </SelectContent>
           </Select>
           <Button onClick={handleSubmit}>{editing ? 'Update' : 'Add'}</Button>
           {editing && <Button variant="secondary" onClick={resetForm}>Cancel</Button>}
