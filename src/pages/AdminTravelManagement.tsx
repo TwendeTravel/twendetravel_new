@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import DashboardHeader from '@/components/dashboard/DashboardHeader';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -46,7 +46,6 @@ export default function AdminTravelManagement() {
     hotelsBooked: 0,
     transportsBooked: 0
   });
-  const [needAttentionStats, setNeedAttentionStats] = useState<{ expired_passports: number; unassigned_travelers: number }>({ expired_passports: 0, unassigned_travelers: 0 });
 
   useEffect(() => {
     loadData();
@@ -255,26 +254,38 @@ export default function AdminTravelManagement() {
           </Card>
         </div>
         
-        {/* Need attention alerts */}
-        <div className="mt-8">
-          <h2 className="text-xl font-semibold mb-4">Need Attention</h2>
-          <div className="space-y-4">
-            <Alert>
-              <AlertCircle className="h-4 w-4" />
-              <AlertTitle>Expired Passport Alert</AlertTitle>
-              <AlertDescription>
-                {needAttentionStats.expired_passports} travelers have passports expiring in the next 60 days. <Button variant="link" className="p-0 h-auto">View details</Button>
-              </AlertDescription>
-            </Alert>
-            <Alert>
-              <AlertCircle className="h-4 w-4" />
-              <AlertTitle>Unassigned Travelers</AlertTitle>
-              <AlertDescription>
-                {needAttentionStats.unassigned_travelers} travelers are not assigned to any admin. <Button variant="link" className="p-0 h-auto">Assign now</Button>
-              </AlertDescription>
-            </Alert>
-          </div>
-        </div>
+        {/* Attention Needed: pending requests starting soon */}
+        {useMemo(() => {
+          const today = new Date();
+          const soon = new Date(); soon.setDate(today.getDate() + 7);
+          const attention = serviceRequests.filter(req => {
+            const sd = new Date(req.start_date);
+            return sd >= today && sd <= soon;
+          });
+          return (
+            <div className="mt-8">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Attention Needed</CardTitle>
+                  <CardDescription>Service requests starting in the next 7 days</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {attention.length > 0 ? (
+                    <ul className="list-disc pl-5">
+                      {attention.map(req => (
+                        <li key={req.id} className="mb-2">
+                          {req.email}: {format(new Date(req.start_date), 'MMM d')} - {req.origin} to {req.destination}
+                        </li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <p className="text-muted-foreground">No service requests starting soon</p>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
+          );
+        }, [serviceRequests])}
       </main>
     </div>
   );
