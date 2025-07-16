@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
 import { Link } from 'react-router-dom';
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+// Removed Alert imports (not used)
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Loader } from "@/components/Loader";
@@ -15,7 +15,6 @@ import {
   Building,
   Car,
   Check,
-  AlertCircle,
   ShoppingBag,
   Users,
   Map
@@ -71,13 +70,6 @@ export default function AdminTravelManagement() {
 
       // (Removed itineraries and booking stats - not used)
 
-      // Fetch need-attention stats
-      const { data: needStatsData, error: needStatsError } = await supabase
-        .from('user_stats')
-        .select('expired_passports,unassigned_travelers')
-        .single();
-      if (needStatsError) throw needStatsError;
-      setNeedAttentionStats(needStatsData || { expired_passports: 0, unassigned_travelers: 0 });
 
     } catch (err) {
       console.error("Error loading admin travel data:", err);
