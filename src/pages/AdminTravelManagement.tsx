@@ -32,6 +32,7 @@ import { Link } from 'react-router-dom';
 import { format } from 'date-fns';
 import { supabase } from '@/lib/supabaseClient';
 import { toast } from '@/hooks/use-toast';
+import { roleService } from '@/services/roleService';
 
 export default function AdminTravelManagement() {
   const [isLoading, setIsLoading] = useState(true);
@@ -54,14 +55,20 @@ export default function AdminTravelManagement() {
   async function loadData() {
     setIsLoading(true);
     try {
-      // Fetch pending service requests
+      // Fetch pending service requests (just request data)
       const { data: reqData, error: reqError } = await supabase
         .from('service_requests')
-        .select(`*, user:user_id(email)`)  
+        .select('*')  
         .eq('status', 'pending')
         .order('created_at', { ascending: false });
       if (reqError) throw reqError;
-      setServiceRequests(reqData || []);
+      // Fetch user emails via roles view
+      const roles = await roleService.getAllUserRoles();
+      const enriched = (reqData || []).map(req => ({
+        ...req,
+        email: roles.find(r => r.user_id === req.user_id)?.email || 'Unknown'
+      }));
+      setServiceRequests(enriched);
 
       // (Removed itineraries and booking stats - not used)
 
@@ -221,7 +228,7 @@ export default function AdminTravelManagement() {
                       <TableRow key={req.id}>
                         <TableCell>{req.origin}</TableCell>
                         <TableCell>{req.destination}</TableCell>
-                        <TableCell>{req.user?.email}</TableCell>
+                        <TableCell>{req.email}</TableCell>
                         <TableCell>{format(new Date(req.start_date), 'MMM d')} - {format(new Date(req.end_date), 'MMM d, yyyy')}</TableCell>
                         <TableCell>{req.budget}</TableCell>
                         <TableCell>
