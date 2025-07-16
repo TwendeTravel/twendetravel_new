@@ -107,7 +107,7 @@ const DashboardSidebar = () => {
             <SidebarLink to="/admin/trips" icon={<Calendar size={18} />} label="Trips" />
             <SidebarLink to="/admin/experiences" icon={<Plane size={18} />} label="Experiences" />
             <SidebarLink to="/admin/flights" icon={<Plane size={18} />} label="Flights" />
-            <SidebarLink to="/admin/bulk-actions" icon={<Users size={18} />} label="Bulk Actions" />
+            <SidebarLink to="/admin/bulk-actions" icon={<FileText size={18} />} label="Services" />
             <SidebarLink to="/admin/chat-management" icon={<MessageSquare size={18} />} label="Chat Management" />
           </>
         )}
