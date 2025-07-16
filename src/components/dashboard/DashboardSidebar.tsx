@@ -105,18 +105,10 @@ const DashboardSidebar = () => {
             <SidebarLink to="/admin/service-requests" icon={<FileText size={18} />} label="Service Requests" />
             <SidebarLink to="/admin/destinations" icon={<Map size={18} />} label="Destinations" />
             <SidebarLink to="/admin/trips" icon={<Calendar size={18} />} label="Trips" />
-            <SidebarLink to="/admin/itineraries" icon={<BookOpen size={18} />} label="Itineraries" />
             <SidebarLink to="/admin/experiences" icon={<Plane size={18} />} label="Experiences" />
             <SidebarLink to="/admin/flights" icon={<Plane size={18} />} label="Flights" />
-            <SidebarLink to="/admin/reviews" icon={<FileText size={18} />} label="Reviews" />
-            <SidebarLink to="/admin/analytics" icon={<PieChart size={18} />} label="Analytics" />
-            <SidebarLink to="/admin/notifications" icon={<MessageSquare size={18} />} label="Notifications" />
-            <SidebarLink to="/admin/audit-logs" icon={<FileText size={18} />} label="Audit Logs" />
             <SidebarLink to="/admin/bulk-actions" icon={<Users size={18} />} label="Bulk Actions" />
-            <SidebarLink to="/admin/settings" icon={<Settings size={18} />} label="Admin Settings" />
             <SidebarLink to="/admin/chat-management" icon={<MessageSquare size={18} />} label="Chat Management" />
-            <SidebarLink to="/admin/documents" icon={<FileText size={18} />} label="Documents" />
-            <SidebarLink to="/admin/saved-destinations" icon={<Map size={18} />} label="Saved Destinations" />
           </>
         )}
         
