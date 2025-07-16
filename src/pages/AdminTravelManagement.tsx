@@ -1,12 +1,11 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect } from 'react';
 import DashboardHeader from '@/components/dashboard/DashboardHeader';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
 import { Link } from 'react-router-dom';
-// Removed Alert imports (not used)
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+// Removed duplicate Button import
 import { Loader } from "@/components/Loader";
 import { 
   Calendar,
@@ -36,6 +35,14 @@ import { toast } from '@/hooks/use-toast';
 export default function AdminTravelManagement() {
   const [isLoading, setIsLoading] = useState(true);
   const [serviceRequests, setServiceRequests] = useState<any[]>([]);
+  // Compute requests starting in next 7 days
+  const attentionRequests = serviceRequests.filter(req => {
+    const today = new Date();
+    const soon = new Date(today);
+    soon.setDate(today.getDate() + 7);
+    const sd = new Date(req.start_date);
+    return sd >= today && sd <= soon;
+  });
   const [travelStats, setTravelStats] = useState({
     totalItineraries: 0,
     pendingItineraries: 0,
@@ -247,37 +254,28 @@ export default function AdminTravelManagement() {
         </div>
         
         {/* Attention Needed: pending requests starting soon */}
-        {useMemo(() => {
-          const today = new Date();
-          const soon = new Date(); soon.setDate(today.getDate() + 7);
-          const attention = serviceRequests.filter(req => {
-            const sd = new Date(req.start_date);
-            return sd >= today && sd <= soon;
-          });
-          return (
-            <div className="mt-8">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Attention Needed</CardTitle>
-                  <CardDescription>Service requests starting in the next 7 days</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  {attention.length > 0 ? (
-                    <ul className="list-disc pl-5">
-                      {attention.map(req => (
-                        <li key={req.id} className="mb-2">
-                          {req.email}: {format(new Date(req.start_date), 'MMM d')} - {req.origin} to {req.destination}
-                        </li>
-                      ))}
-                    </ul>
-                  ) : (
-                    <p className="text-muted-foreground">No service requests starting soon</p>
-                  )}
-                </CardContent>
-              </Card>
-            </div>
-          );
-        }, [serviceRequests])}
+        {/* Attention Needed: pending requests starting soon */}
+        <div className="mt-8">
+          <Card>
+            <CardHeader>
+              <CardTitle>Attention Needed</CardTitle>
+              <CardDescription>Service requests starting in the next 7 days</CardDescription>
+            </CardHeader>
+            <CardContent>
+              {attentionRequests.length > 0 ? (
+                <ul className="list-disc pl-5">
+                  {attentionRequests.map(req => (
+                    <li key={req.id} className="mb-2">
+                      {req.email}: {format(new Date(req.start_date), 'MMM d')} - {req.origin} to {req.destination}
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="text-muted-foreground">No service requests starting soon</p>
+              )}
+            </CardContent>
+          </Card>
+        </div>
       </main>
     </div>
   );
