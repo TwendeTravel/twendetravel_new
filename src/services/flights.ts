@@ -60,6 +60,35 @@ export interface Itinerary {
   pricingOptions: PricingOption[];
 }
 
+// Location suggestion type
+export interface LocationSuggestion {
+  skyId: string;
+  entityId: string;
+  title: string;
+  subtitle?: string;
+}
+
+/**
+ * Suggest origin or destination locations (cities/airports)
+ */
+export async function searchLocations(query: string): Promise<LocationSuggestion[]> {
+  const url = `https://${API_HOST}/api/v2/flights/searchFlightsWebComplete?originSkyId=${encodeURIComponent(query)}&destinationSkyId=&originEntityId=&destinationEntityId=&adults=1&cabinClass=economy&currency=USD&market=en-US&countryCode=US`;
+  const res = await fetch(url, {
+    headers: {
+      'X-RapidAPI-Key': API_KEY,
+      'X-RapidAPI-Host': API_HOST,
+    },
+  });
+  const json = await res.json();
+  if (!json.status || !json.data) return [];
+  return json.data.map((item: any) => ({
+    skyId: item.skyId,
+    entityId: item.entityId,
+    title: item.presentation?.suggestionTitle || item.presentation?.title,
+    subtitle: item.presentation?.subtitle,
+  }));
+}
+
 /**
  * Fetches flight itinerary from RapidAPI Air Scraper API
  */
@@ -165,4 +194,49 @@ export async function getFlightItinerary(
   });
 
   return itinerary;
+}
+
+/**
+ * Fetches the cheapest flight itinerary from v2 search results
+ */
+export async function getCheapestFlight(
+  origin: string,
+  destination: string,
+  date: string
+): Promise<Itinerary> {
+  const org = await searchAirport(origin);
+  const dest = await searchAirport(destination);
+  const url = `https://${API_HOST}/api/v2/flights/searchFlights?originSkyId=${encodeURIComponent(
+    org.skyId
+  )}&destinationSkyId=${encodeURIComponent(dest.skyId)}&originEntityId=${encodeURIComponent(
+    org.entityId
+  )}&destinationEntityId=${encodeURIComponent(dest.entityId)}&adults=1&sortBy=price&currency=USD&market=en-US&countryCode=US&cabinClass=economy&locale=en-US&date=${encodeURIComponent(
+    date
+  )}`;
+  const res = await fetch(url, {
+    headers: {
+      'X-RapidAPI-Key': API_KEY,
+      'X-RapidAPI-Host': API_HOST,
+    },
+  });
+  const json = await res.json();
+  if (!json.status || !json.data || !Array.isArray(json.data.itineraries)) {
+    throw new Error('No itineraries found');
+  }
+  // Pick cheapest
+  const cheapest = json.data.itineraries.reduce((a: any, b: any) =>
+    a.price.raw <= b.price.raw ? a : b
+  );
+  // Map to Itinerary
+  return {
+    legs: cheapest.legs,
+    pricingOptions: [
+      {
+        totalPrice: cheapest.price.raw,
+        agents: [
+          { id: '', name: '', url: '', price: cheapest.price.raw }
+        ],
+      },
+    ],
+  };
 }
