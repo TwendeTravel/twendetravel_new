@@ -17,6 +17,7 @@ import TravelAssistant from "@/pages/TravelAssistant";
 import { ServiceRequestForm } from '@/components/ServiceRequestForm';
 import Chat from './Chat';
 import { useRole } from '@/hooks/useRole';
+import { Loader } from '@/components/Loader';
 import { supabase } from '@/lib/supabaseClient';
 import { roleService } from '@/services/roles';
 import { serviceRequestService } from '@/services/service-requests';
@@ -25,6 +26,13 @@ const Dashboard = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const activeTab = searchParams.get("tab") || "overview";
   const { isAdmin, isLoading: roleLoading } = useRole();
+  if (roleLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-background">
+        <Loader size="lg" />
+      </div>
+    );
+  }
   // allow admins to simulate traveller view
   const viewAsTraveller = searchParams.get("viewAs") === "traveller";
   const effectiveIsAdmin = isAdmin && !viewAsTraveller;

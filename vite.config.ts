@@ -14,8 +14,15 @@ export default defineConfig(({ mode }) => ({
       strategies: "generateSW",
       registerType: "autoUpdate",
       devOptions: { enabled: true },       // ← enable virtual module in dev
-      includeAssets: ["favicon.ico", "robots.txt", "placeholder.svg"],
+  includeAssets: ["favicon.ico", "robots.txt", "placeholder.svg"],
+  // Always serve index.html for SPA navigation
+  navigateFallback: '/index.html',
       workbox: {
+        // Remove outdated caches and serve index.html for SPA navigation
+        cleanupOutdatedCaches: true,
+        navigateFallback: '/index.html',
+        skipWaiting: true,
+        clientsClaim: true,
         maximumFileSizeToCacheInBytes: 5 * 1024 * 1024,
         // Cache MapLibre demo tiles for offline usage
         runtimeCaching: [
