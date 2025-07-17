@@ -23,6 +23,7 @@ import NotFound from "../pages/NotFound";
 import DestinationsPage from "../pages/Destinations";
 import Login from "../pages/Login";
 import Signup from "../pages/Signup";
+import ForgotPassword from "../pages/ForgotPassword";
 import Dashboard from "../pages/Dashboard";
 import TravelAssistant from "../pages/TravelAssistant";
 import DestinationInfo from "../pages/DestinationInfo";
@@ -46,7 +47,8 @@ export default function MainRoutes() {
         {/* Public routes */}
         <Route path="/" element={<Index />} />
         <Route path="/login" element={<Login />} />
-        <Route path="/signup" element={<Signup />} />
+  <Route path="/signup" element={<Signup />} />
+  <Route path="/forgot-password" element={<ForgotPassword />} />
         {/* Browse all destinations */}
         <Route path="/destinations" element={<DestinationsPage />} />
         <Route path="/destination" element={<DestinationsPage />} />
