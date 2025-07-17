@@ -25,12 +25,15 @@ const Dashboard = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const activeTab = searchParams.get("tab") || "overview";
   const { isAdmin, isLoading: roleLoading } = useRole();
+  // allow admins to simulate traveller view
+  const viewAsTraveller = searchParams.get("viewAs") === "traveller";
+  const effectiveIsAdmin = isAdmin && !viewAsTraveller;
   const [stats, setStats] = useState({ totalUsers:0, adminUsers:0, travellerUsers:0, totalTrips:0 });
   const [recentConversations, setRecentConversations] = useState<any[]>([]);
   const [recentRequests, setRecentRequests] = useState<any[]>([]);
   
   useEffect(() => {
-    if (!isAdmin) return;
+  if (!effectiveIsAdmin) return;
     // fetch basic stats
     roleService.getAllUserRoles().then(users=>{
       const total=users.length;
@@ -71,7 +74,7 @@ const Dashboard = () => {
               }}
               className="space-y-6"
             >
-              {!isAdmin && (
+              {!effectiveIsAdmin && (
               <TabsList className="grid grid-cols-2 sm:grid-cols-8 w-full max-w-4xl bg-card/50 backdrop-blur-sm border border-border/50">
                 <TabsTrigger 
                   value="trips" 
@@ -133,7 +136,7 @@ const Dashboard = () => {
               <TabsContent value="overview" className="space-y-6">
                 { roleLoading ? (
                   <div className="flex items-center justify-center h-40"><div className="loader"></div></div>
-                ) : isAdmin ? (
+                ) : effectiveIsAdmin ? (
                   <>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">  
                       <Card><CardHeader><CardTitle className="text-sm">Total Users</CardTitle></CardHeader>

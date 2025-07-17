@@ -31,26 +31,26 @@ const AdminUsers = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [roleFilter, setRoleFilter] = useState<string | null>(null);
 
-  useEffect(() => {
-    async function fetchUsers() {
-      try {
-        const roles = await roleService.getAllUserRoles();
-        setUsers(roles);
-        setFilteredUsers(roles);
-      } catch (error) {
-        console.error('Error fetching users:', error);
-        toast({
-          title: "Failed to fetch users",
-          description: "There was an error loading the user data.",
-          variant: "destructive",
-        });
-      } finally {
-        setIsLoading(false);
-      }
+  // Fetch users from backend
+  const fetchUsers = async () => {
+    setIsLoading(true);
+    try {
+      const roles = await roleService.getAllUserRoles();
+      setUsers(roles);
+      setFilteredUsers(roles);
+    } catch (error) {
+      console.error('Error fetching users:', error);
+      toast({
+        title: "Failed to fetch users",
+        description: "There was an error loading the user data.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
     }
+  };
 
-    fetchUsers();
-  }, []);
+  useEffect(() => { fetchUsers(); }, []);
 
   useEffect(() => {
     let result = users;
@@ -73,19 +73,9 @@ const AdminUsers = () => {
   const handleRoleUpdate = async (userId: string, newRole: 'admin' | 'traveller') => {
     try {
       await roleService.updateUserRole(userId, newRole);
-      
-      // Update local state
-      const updatedUsers = users.map(user => 
-        user.user_id === userId ? { ...user, role: newRole } : user
-      );
-      
-      setUsers(updatedUsers);
-      
-      toast({
-        title: "Role updated",
-        description: `User role has been updated to ${newRole}.`,
-        variant: "default",
-      });
+      toast({ title: "Role updated", description: `User role has been updated to ${newRole}.`, variant: "default" });
+      // Refresh the list
+      fetchUsers();
     } catch (error) {
       console.error('Error updating role:', error);
       toast({

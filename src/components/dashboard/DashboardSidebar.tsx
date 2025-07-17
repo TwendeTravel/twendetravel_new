@@ -15,7 +15,8 @@ import {
   Shield,
   Globe,
   Plane,
-  PieChart
+  PieChart,
+  Eye
 } from 'lucide-react';
 
 interface SidebarLinkProps {
@@ -109,6 +110,7 @@ const DashboardSidebar = () => {
             <SidebarLink to="/admin/flights" icon={<Plane size={18} />} label="Flights" />
             <SidebarLink to="/admin/bulk-actions" icon={<FileText size={18} />} label="Services" />
             <SidebarLink to="/admin/chat-management" icon={<MessageSquare size={18} />} label="Chat Management" />
+            <SidebarLink to="/dashboard?viewAs=traveller" icon={<Eye size={18} />} label="View as Traveller" />
           </>
         )}
         

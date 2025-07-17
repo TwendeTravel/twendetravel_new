@@ -25,7 +25,10 @@ export const permissionService = {
   async setUserPermission(userId: string, permission: number): Promise<PermissionRecord> {
     const { data, error } = await supabase
       .from('twende_permissions')
-      .upsert({ twende_user: userId, permission })
+      .upsert(
+        { twende_user: userId, permission },
+        { onConflict: 'twende_user' }
+      )
       .select()
       .single();
     if (error) throw error;
