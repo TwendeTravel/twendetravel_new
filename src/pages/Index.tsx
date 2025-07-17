@@ -16,7 +16,6 @@ import CTASection from '../components/CTASection';
 import Footer from '../components/Footer';
 import MapExplorer from '../components/MapExplorer';
 import AppDownload from '../components/AppDownload';
-import ContactSection from '../components/ContactSection';
 import PageTransition from '@/components/PageTransition';
 
 const Index = () => {
@@ -65,9 +64,9 @@ const Index = () => {
         <TripPlanner />
         <AboutSection />
         <Testimonials />
-        <AppDownload />
-        <ContactSection />
-        <CTASection />
+  <AppDownload />
+  {/* ContactSection removed per request */}
+  <CTASection />
         <Footer />
       </div>
     </PageTransition>
