@@ -101,13 +101,12 @@ export async function getFlightItinerary(
   const org = await searchAirport(origin);
   const dest = await searchAirport(destination);
   // Initiate flight search to get itineraries (v2 endpoint)
+  // Use v2 endpoint without date param; sort by price
   const searchUrl = `https://${API_HOST}/api/v2/flights/searchFlights?originSkyId=${encodeURIComponent(
     org.skyId
   )}&destinationSkyId=${encodeURIComponent(dest.skyId)}&originEntityId=${encodeURIComponent(
     org.entityId
-  )}&destinationEntityId=${encodeURIComponent(dest.entityId)}&date=${encodeURIComponent(
-    date
-  )}&adults=1&currency=USD&locale=en-US&market=en-US&cabinClass=economy&countryCode=US`;
+  )}&destinationEntityId=${encodeURIComponent(dest.entityId)}&cabinClass=economy&adults=1&sortBy=price&currency=USD&market=en-US&countryCode=US`;
   const searchRes = await fetch(searchUrl, {
     headers: {
       'X-RapidAPI-Key': API_KEY,
