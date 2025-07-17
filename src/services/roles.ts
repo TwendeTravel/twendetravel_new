@@ -23,10 +23,11 @@ export const permissionService = {
   },
   /** Assign permission level to a user (0 = traveler, 1 = admin) */
   async setUserPermission(userId: string, permission: number): Promise<PermissionRecord> {
+    // Use array form to ensure onConflict is applied correctly
     const { data, error } = await supabase
       .from('twende_permissions')
       .upsert(
-        { twende_user: userId, permission },
+        [{ twende_user: userId, permission }],
         { onConflict: 'twende_user' }
       )
       .select()

@@ -14,8 +14,7 @@ import {
   Users,
   Shield,
   Globe,
-  Plane,
-  PieChart
+  Plane
 } from 'lucide-react';
 
 interface SidebarLinkProps {
