@@ -100,7 +100,7 @@ export async function getFlightItinerary(
   // Lookup origin/destination sky and entity IDs
   const org = await searchAirport(origin);
   const dest = await searchAirport(destination);
-  // Initiate flight search to get sessionId and itineraryId
+  // Initiate flight search to get itineraries (v2 endpoint)
   const searchUrl = `https://${API_HOST}/api/v2/flights/searchFlights?originSkyId=${encodeURIComponent(
     org.skyId
   )}&destinationSkyId=${encodeURIComponent(dest.skyId)}&originEntityId=${encodeURIComponent(
@@ -118,7 +118,22 @@ export async function getFlightItinerary(
   if (!searchJson.status) {
     throw new Error('Error initiating flight search: ' + JSON.stringify(searchJson.message));
   }
-  // Extract session and itinerary info
+  // If v2 itineraries present, pick cheapest and return directly
+  if (searchJson.data?.itineraries && Array.isArray(searchJson.data.itineraries)) {
+    const itins = searchJson.data.itineraries;
+    const cheapest = itins.reduce((a: any, b: any) => (a.price.raw <= b.price.raw ? a : b));
+    return {
+      legs: cheapest.legs,
+      pricingOptions: [
+        {
+          totalPrice: cheapest.price.raw,
+          agents: [{ id: '', name: '', url: '', price: cheapest.price.raw }]
+        }
+      ]
+    };
+  }
+  // Fallback: existing v1 details fetch logic
+  // Initiate flight search to get sessionId and itineraryId
   const sessionId: string = searchJson.data.context.sessionId;
   const itineraryId: string = searchJson.data.context.itineraryId ?? searchJson.data.id;
   // Use legs array returned by initial search for details
