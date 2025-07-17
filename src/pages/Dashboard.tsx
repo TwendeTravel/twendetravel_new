@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useSearchParams, Navigate } from "react-router-dom";
+import { useSearchParams } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Calendar, Globe, Map, FileText, Newspaper } from "lucide-react";
@@ -63,10 +63,6 @@ const Dashboard = () => {
         <Loader size="lg" />
       </div>
     );
-  }
-  // Redirect admins to admin dashboard
-  if (isAdmin && !viewAsTraveller) {
-    return <Navigate to="/admin" replace />;
   }
 
   return (
