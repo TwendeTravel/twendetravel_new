@@ -56,11 +56,14 @@ const Footer = () => {
             <div className="space-y-4">
               <div className="flex items-start">
                 <Mail className="text-twende-orange mr-3 mt-1 flex-shrink-0" size={18} />
-                <span className="text-gray-400">support@twendetravel.com</span>
+                <span className="text-gray-400">twendetravel@gmail.com</span>
               </div>
               <div className="flex items-start">
                 <Phone className="text-twende-orange mr-3 mt-1 flex-shrink-0" size={18} />
-                <span className="text-gray-400">+233 123 456 7890 (Ghana)<br />+254 123 456 7890 (Kenya)</span>
+                <span className="text-gray-400">
+                  0530862072 (Ghana)<br />
+                  0768543581 (Kenya)
+                </span>
               </div>
               <div className="flex items-start">
                 <MapPin className="text-twende-orange mr-3 mt-1 flex-shrink-0" size={18} />
