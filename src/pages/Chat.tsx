@@ -75,30 +75,33 @@ export default function Chat() {
       setIsLoading(true);
 
       try {
-        // Load all conversations for debugging
-      // fetch basic conversation records
-      const { data: convs, error: convErr } = await supabase
-        .from('conversations')
-        .select('id, title, traveler_id, admin_id, status, created_at, updated_at')
-        .order('updated_at', { ascending: false });
-      if (convErr) throw convErr;
-      // gather unique user IDs
-      const userIds = Array.from(new Set(
-        convs.flatMap(c => [c.traveler_id, c.admin_id]).filter(id => id)
-      ));
-      // fetch user emails via view
-      const { data: users, error: usersErr } = await supabase
-        .from('user_emails_view')
-        .select('*')
-        .in('id', userIds as string[]);
-      if (usersErr) console.error('Error fetching user emails:', usersErr);
-      // map emails
-      const enhancedData: Conversation[] = convs.map(c => ({
-        ...c,
-        traveler: c.traveler_id ? { email: users?.find(u => u.id === c.traveler_id)?.email || '' } : null,
-        admin:    c.admin_id    ? { email: users?.find(u => u.id === c.admin_id)?.email    || '' } : null
-      }));
-      setConversations(enhancedData);
+        // fetch basic conversation records, filtered for non-admins
+        let convQuery = supabase
+          .from('conversations')
+          .select('id, title, traveler_id, admin_id, status, created_at, updated_at')
+          .order('updated_at', { ascending: false });
+        if (!isAdmin) {
+          convQuery = convQuery.eq('traveler_id', user.id);
+        }
+        const { data: convs, error: convErr } = await convQuery;
+        if (convErr) throw convErr;
+        // gather unique user IDs
+        const userIds = Array.from(new Set(
+          convs.flatMap(c => [c.traveler_id, c.admin_id]).filter(id => id)
+        ));
+        // fetch user emails via view
+        const { data: users, error: usersErr } = await supabase
+          .from('user_emails_view')
+          .select('*')
+          .in('id', userIds as string[]);
+        if (usersErr) console.error('Error fetching user emails:', usersErr);
+        // map emails
+        const enhancedData: Conversation[] = convs.map(c => ({
+          ...c,
+          traveler: c.traveler_id ? { email: users?.find(u => u.id === c.traveler_id)?.email || '' } : null,
+          admin:    c.admin_id    ? { email: users?.find(u => u.id === c.admin_id)?.email    || '' } : null
+        }));
+        setConversations(enhancedData);
         setFilteredConversations(enhancedData);
         if (enhancedData.length > 0 && !selectedConversation) {
           setSelectedConversation(enhancedData[0].id);
