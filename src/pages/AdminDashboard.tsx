@@ -16,7 +16,7 @@ import DashboardHeader from '@/components/dashboard/DashboardHeader';
 import { Loader } from '@/components/Loader';
 import { supabase } from '@/lib/supabaseClient';
 import { serviceRequestService } from '@/services/service-requests';
-import { Shield, Users, UserCheck, Calendar, PieChart } from "lucide-react";
+import { Shield, Users, UserCheck, Calendar, ChartPie } from "lucide-react";
 import { ArrowLeft } from "lucide-react";
 import { Link } from 'react-router-dom';
 
@@ -304,7 +304,7 @@ const AdminDashboard = () => {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center">
-              <PieChart className="h-5 w-5 mr-2" />
+              <ChartPie className="h-5 w-5 mr-2" />
               System Overview
             </CardTitle>
             <CardDescription>
