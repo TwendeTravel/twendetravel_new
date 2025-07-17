@@ -71,8 +71,11 @@ export interface LocationSuggestion {
 /**
  * Suggest origin or destination locations (cities/airports)
  */
+/**
+ * Suggest airport or city locations using v1 airport search
+ */
 export async function searchLocations(query: string): Promise<LocationSuggestion[]> {
-  const url = `https://${API_HOST}/api/v2/flights/searchFlightsWebComplete?originSkyId=${encodeURIComponent(query)}&destinationSkyId=&originEntityId=&destinationEntityId=&adults=1&cabinClass=economy&currency=USD&market=en-US&countryCode=US`;
+  const url = `https://${API_HOST}/api/v1/flights/searchAirport?query=${encodeURIComponent(query)}`;
   const res = await fetch(url, {
     headers: {
       'X-RapidAPI-Key': API_KEY,
@@ -80,12 +83,14 @@ export async function searchLocations(query: string): Promise<LocationSuggestion
     },
   });
   const json = await res.json();
-  if (!json.status || !json.data) return [];
+  if (!json.status || !json.data || !Array.isArray(json.data)) {
+    return [];
+  }
   return json.data.map((item: any) => ({
-    skyId: item.skyId,
+    skyId: item.skyId || item.id,
     entityId: item.entityId,
-    title: item.presentation?.suggestionTitle || item.presentation?.title,
-    subtitle: item.presentation?.subtitle,
+    title: `${item.name} (${item.displayCode})`,  
+    subtitle: item.city,
   }));
 }
 
