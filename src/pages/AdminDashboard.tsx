@@ -97,7 +97,6 @@ const AdminDashboard = () => {
     // Cleanup subscriptions
     return () => {
       supabase.removeChannel(convSub);
-      supabase.removeChannel(signSub);
       supabase.removeChannel(reqSub);
     };
   }, []);
