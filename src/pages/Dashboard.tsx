@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, Navigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Calendar, Globe, Map, FileText, Newspaper } from "lucide-react";
@@ -26,13 +26,6 @@ const Dashboard = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const activeTab = searchParams.get("tab") || "overview";
   const { isAdmin, isLoading: roleLoading } = useRole();
-  if (roleLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen bg-background">
-        <Loader size="lg" />
-      </div>
-    );
-  }
   // allow admins to simulate traveller view
   const viewAsTraveller = searchParams.get("viewAs") === "traveller";
   const effectiveIsAdmin = isAdmin && !viewAsTraveller;
@@ -63,6 +56,18 @@ const Dashboard = () => {
         else setStats(prev => ({ ...prev, totalTrips: count ?? 0 }));
       });
   },[isAdmin]);
+  // Show global loading until role is determined
+  if (roleLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-background">
+        <Loader size="lg" />
+      </div>
+    );
+  }
+  // Redirect admins to admin dashboard
+  if (isAdmin && !viewAsTraveller) {
+    return <Navigate to="/admin" replace />;
+  }
 
   return (
     <PageTransition>
