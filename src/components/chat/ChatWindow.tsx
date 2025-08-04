@@ -1,9 +1,10 @@
 import { useEffect, useRef, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { chatService } from "@/services/chat";
-import { messageService, ChatMessage as ChatMessageType } from "@/services/messages";
+import { messagesService, ChatMessage as ChatMessageType } from "@/services/messages";
 import { ChatMessage } from "./ChatMessage";
-import { supabase } from '@/lib/supabaseClient';
+import { auth } from '@/lib/firebase';
+import { supabase } from '@/lib/temp-supabase-stubs';
 import { ChatInput } from "./ChatInput";
 import { Card } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -59,7 +60,7 @@ export function ChatWindow({ conversationId, initialMessage }: ChatWindowProps) 
         
         // Set participant info based on user role
         if (user) {
-          if (typedConversation.traveler_id === user.id) {
+          if (typedConversation.traveler_id === user.uid) {
             setParticipantInfo({ name: 'Twende Travel', role: 'Admin' });
           } else {
             // Try to fetch traveler name/email from conversation object if available
@@ -91,7 +92,7 @@ export function ChatWindow({ conversationId, initialMessage }: ChatWindowProps) 
     }
 
     // Set up real-time subscription for messages
-    const messageSubscription = messageService.subscribeToNewMessages(
+    const messageSubscription = messagesService.subscribeToNewMessages(
       conversationId,
       async () => {
         // Re-fetch full message list (includes sender emails)
@@ -117,7 +118,7 @@ export function ChatWindow({ conversationId, initialMessage }: ChatWindowProps) 
         'broadcast',
         { event: 'typing' },
         (payload) => {
-          if (payload.payload.user_id !== user?.id) {
+          if (payload.payload.user_id !== user?.uid) {
             setIsTyping(true);
             
             // Auto-clear typing indicator after 3 seconds
@@ -154,7 +155,7 @@ export function ChatWindow({ conversationId, initialMessage }: ChatWindowProps) 
     setIsLoading(true);
     try {
       // Send the message
-      await messageService.send({ content, conversation_id: conversationId });
+      await messagesService.send({ content, conversation_id: conversationId });
       // Refresh full message list to include new message
       const updated = await chatService.getMessages(conversationId);
       setMessages(updated);
@@ -174,7 +175,7 @@ export function ChatWindow({ conversationId, initialMessage }: ChatWindowProps) 
       .send({
         type: 'broadcast',
         event: 'typing',
-        payload: { user_id: user?.id }
+        payload: { user_id: user?.uid }
       });
   };
 

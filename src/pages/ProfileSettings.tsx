@@ -1,6 +1,6 @@
 
 import { Badge } from "@/components/ui/badge";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,6 +8,10 @@ import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { TravelDoodles, DecorativeElements } from "@/components/ui/travel-doodles";
+import WorkingWhatsAppBackground from "@/components/ui/working-whatsapp-background";
 import {
   User,
   Key,
@@ -16,515 +20,894 @@ import {
   Languages,
   Plane,
   Shield,
-  Upload
+  Upload,
+  Save,
+  ArrowLeft,
+  Eye,
+  EyeOff,
+  Phone,
+  MapPin,
+  Calendar,
+  Mail,
+  AlertCircle,
+  CheckCircle,
+  Camera,
+  Edit3,
+  Trash2,
+  Settings
 } from "lucide-react";
-import DashboardHeader from "@/components/dashboard/DashboardHeader";
+import { Link } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
+import { motion } from "framer-motion";
+import { storage, auth } from "@/lib/firebase";
+import { ref, uploadBytes, getDownloadURL, deleteObject } from "firebase/storage";
+import { updateProfile, updatePassword, EmailAuthProvider, reauthenticateWithCredential } from "firebase/auth";
 
 const ProfileSettings = () => {
   const { toast } = useToast();
+  const { user } = useAuth();
   const [activeTab, setActiveTab] = useState("profile");
   const [isUploading, setIsUploading] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   
-  // Sample user data
-  const [user, setUser] = useState({
-    name: "John Smith",
-    email: "john.smith@example.com",
-    phone: "+1 (555) 123-4567",
-    address: "123 Main Street, New York, NY 10001",
-    bio: "Passionate traveler and adventure seeker. Love exploring new cultures and experiences.",
-    profileImage: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=facearea&facepad=2&w=256&h=256&q=80"
+  // Profile data state
+  const [profileData, setProfileData] = useState({
+    displayName: user?.displayName || "",
+    email: user?.email || "",
+    phone: "",
+    dateOfBirth: "",
+    city: "",
+    country: "",
+    bio: "",
+    photoURL: user?.photoURL || "",
+    preferredCurrency: "USD",
+    interests: [] as string[],
+    nationality: "",
+    emergencyContact: "",
+    travelPreferences: "",
   });
-  
-  const handleSaveProfile = () => {
-    toast({
-      title: "Profile Updated",
-      description: "Your profile information has been saved successfully.",
-    });
+
+  // Security state
+  const [securityData, setSecurityData] = useState({
+    currentPassword: "",
+    newPassword: "",
+    confirmPassword: "",
+  });
+
+  // Form validation state
+  const [errors, setErrors] = useState<{[key: string]: string}>({});
+  const [hasChanges, setHasChanges] = useState(false);
+
+  useEffect(() => {
+    if (user) {
+      setProfileData(prev => ({
+        ...prev,
+        displayName: user.displayName || "",
+        email: user.email || "",
+        photoURL: user.photoURL || "",
+      }));
+    }
+  }, [user]);
+
+  // Form validation
+  const validateForm = () => {
+    const newErrors: {[key: string]: string} = {};
+
+    if (!profileData.displayName.trim()) {
+      newErrors.displayName = "Display name is required";
+    }
+
+    if (profileData.phone && !/^\+?[\d\s-()]+$/.test(profileData.phone)) {
+      newErrors.phone = "Please enter a valid phone number";
+    }
+
+    if (profileData.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(profileData.email)) {
+      newErrors.email = "Please enter a valid email address";
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
   };
-  
-  const handleUploadImage = () => {
+
+  // Track form changes
+  const handleInputChange = (field: string, value: string) => {
+    setProfileData(prev => ({
+      ...prev,
+      [field]: value
+    }));
+    setHasChanges(true);
+    
+    // Clear error for this field
+    if (errors[field]) {
+      setErrors(prev => ({
+        ...prev,
+        [field]: ""
+      }));
+    }
+  };
+
+  const handleSaveProfile = async () => {
+    if (!validateForm()) {
+      toast({
+        title: "Validation Error",
+        description: "Please correct the errors in the form.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsSaving(true);
+    try {
+      // Update Firebase auth profile
+      if (auth.currentUser) {
+        await updateProfile(auth.currentUser, {
+          displayName: profileData.displayName,
+          photoURL: profileData.photoURL,
+        });
+      }
+
+      // Here you would also save additional profile data to Firestore
+      // Example: await userService.updateProfile(auth.currentUser.uid, profileData);
+
+      setHasChanges(false);
+      toast({
+        title: "Profile Updated",
+        description: "Your profile information has been saved successfully.",
+      });
+    } catch (error) {
+      console.error("Profile update error:", error);
+      toast({
+        title: "Error",
+        description: "Failed to update profile. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleUploadImage = async (file: File) => {
+    if (!auth.currentUser) {
+      toast({
+        title: "Authentication Required",
+        description: "Please log in to upload a profile image.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    console.log('User authenticated:', auth.currentUser.uid);
+    console.log('Storage bucket:', storage.app.options.storageBucket);
+
+    // Validate file
+    if (file.size > 5 * 1024 * 1024) {
+      toast({
+        title: "File too large",
+        description: "Please select an image smaller than 5MB.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!file.type.startsWith('image/')) {
+      toast({
+        title: "Invalid file type",
+        description: "Please select a valid image file.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsUploading(true);
-    setTimeout(() => {
-      setIsUploading(false);
+    try {
+      // Get auth token to verify authentication
+      const token = await auth.currentUser.getIdToken();
+      console.log('Auth token obtained, length:', token.length);
+
+      // Create a unique filename with proper extension
+      const fileExtension = file.name.split('.').pop()?.toLowerCase() || 'jpg';
+      const fileName = `profile-images/${auth.currentUser.uid}-${Date.now()}.${fileExtension}`;
+      const storageRef = ref(storage, fileName);
+
+      console.log('Uploading to path:', fileName);
+      console.log('File type:', file.type);
+      console.log('File size:', file.size);
+
+      // Add metadata
+      const metadata = {
+        contentType: file.type,
+        customMetadata: {
+          'uploadedBy': auth.currentUser.uid,
+          'uploadedAt': new Date().toISOString()
+        }
+      };
+
+      // Upload the file with metadata
+      console.log('Starting upload...');
+      const snapshot = await uploadBytes(storageRef, file, metadata);
+      console.log('Upload successful, getting download URL...');
+      
+      const downloadURL = await getDownloadURL(snapshot.ref);
+      console.log('Download URL obtained:', downloadURL);
+
+      // Delete old profile image if it exists and is a Firebase Storage URL
+      if (profileData.photoURL && profileData.photoURL.includes('firebasestorage.googleapis.com')) {
+        try {
+          // Extract the file path from the URL
+          const oldUrl = profileData.photoURL;
+          const pathStart = oldUrl.indexOf('/o/') + 3;
+          const pathEnd = oldUrl.indexOf('?');
+          const filePath = decodeURIComponent(oldUrl.substring(pathStart, pathEnd));
+          
+          const oldImageRef = ref(storage, filePath);
+          await deleteObject(oldImageRef);
+          console.log('Old image deleted successfully');
+        } catch (error) {
+          console.log("Old image deletion failed (may not exist):", error);
+        }
+      }
+
+      // Update profile data
+      setProfileData(prev => ({
+        ...prev,
+        photoURL: downloadURL
+      }));
+      setHasChanges(true);
+
       toast({
         title: "Image Uploaded",
         description: "Your profile image has been updated successfully.",
       });
-    }, 1500);
-  };
-  
-  return (
-    <div className="min-h-screen flex flex-col bg-gray-50">
-      <DashboardHeader />
+    } catch (error: any) {
+      console.error("Upload error details:", error);
+      console.error("Error code:", error.code);
+      console.error("Error message:", error.message);
       
-      <div className="container max-w-6xl mx-auto py-8 px-4">
-        <div className="flex flex-col md:flex-row gap-8">
-          <div className="w-full md:w-64 flex-shrink-0">
-            <div className="bg-white rounded-lg shadow-sm p-6 text-center">
-              <div className="relative mx-auto w-32 h-32 mb-4">
-                <img 
-                  src={user.profileImage} 
-                  alt={user.name} 
-                  className="w-full h-full rounded-full object-cover"
-                />
+      let errorMessage = "Failed to upload image. Please try again.";
+      
+      if (error.code === 'storage/unauthorized') {
+        errorMessage = "You don't have permission to upload files. Please check your authentication.";
+      } else if (error.code === 'storage/canceled') {
+        errorMessage = "Upload was canceled.";
+      } else if (error.code === 'storage/quota-exceeded') {
+        errorMessage = "Storage quota exceeded.";
+      } else if (error.code === 'storage/invalid-format') {
+        errorMessage = "Invalid file format.";
+      } else if (error.code === 'storage/retry-limit-exceeded') {
+        errorMessage = "Upload failed after multiple retries. Please check your internet connection.";
+      } else if (error.message.includes('CORS')) {
+        errorMessage = "CORS configuration issue. Please contact support.";
+      }
+
+      toast({
+        title: "Upload Failed",
+        description: errorMessage,
+        variant: "destructive",
+      });
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  const handleImageUpload = () => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'image/*';
+    input.onchange = (e) => {
+      const file = (e.target as HTMLInputElement).files?.[0];
+      if (file) {
+        handleUploadImage(file);
+      }
+    };
+    input.click();
+  };
+
+  const handleRemoveImage = async () => {
+    if (!profileData.photoURL) return;
+
+    try {
+      // Delete from Firebase Storage if it's a Firebase URL
+      if (profileData.photoURL.includes('firebasestorage.googleapis.com')) {
+        try {
+          // Extract the file path from the URL
+          const url = profileData.photoURL;
+          const pathStart = url.indexOf('/o/') + 3;
+          const pathEnd = url.indexOf('?');
+          const filePath = decodeURIComponent(url.substring(pathStart, pathEnd));
+          
+          const imageRef = ref(storage, filePath);
+          await deleteObject(imageRef);
+          console.log('Image deleted from Firebase Storage');
+        } catch (error) {
+          console.error('Error deleting from storage:', error);
+          // Continue anyway to remove from profile
+        }
+      }
+
+      setProfileData(prev => ({
+        ...prev,
+        photoURL: ""
+      }));
+      setHasChanges(true);
+
+      toast({
+        title: "Image Removed",
+        description: "Your profile image has been removed.",
+      });
+    } catch (error) {
+      console.error("Remove image error:", error);
+      toast({
+        title: "Error",
+        description: "Failed to remove image. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handlePasswordUpdate = async () => {
+    if (!auth.currentUser) return;
+
+    if (securityData.newPassword !== securityData.confirmPassword) {
+      toast({
+        title: "Password Mismatch",
+        description: "New passwords don't match.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (securityData.newPassword.length < 6) {
+      toast({
+        title: "Password Too Short",
+        description: "Password must be at least 6 characters long.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      // Re-authenticate user before password change
+      const credential = EmailAuthProvider.credential(
+        auth.currentUser.email!,
+        securityData.currentPassword
+      );
+      await reauthenticateWithCredential(auth.currentUser, credential);
+
+      // Update password
+      await updatePassword(auth.currentUser, securityData.newPassword);
+
+      // Clear form
+      setSecurityData({
+        currentPassword: "",
+        newPassword: "",
+        confirmPassword: "",
+      });
+
+      toast({
+        title: "Password Updated",
+        description: "Your password has been changed successfully.",
+      });
+    } catch (error: any) {
+      console.error("Password update error:", error);
+      let errorMessage = "Failed to update password. Please try again.";
+      
+      if (error.code === 'auth/wrong-password') {
+        errorMessage = "Current password is incorrect.";
+      } else if (error.code === 'auth/weak-password') {
+        errorMessage = "Password is too weak.";
+      }
+
+      toast({
+        title: "Password Update Failed",
+        description: errorMessage,
+        variant: "destructive",
+      });
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-twende-beige via-white to-twende-skyblue/20 relative overflow-hidden">
+      {/* Authentic WhatsApp-Style Travel Pattern Background */}
+      <WorkingWhatsAppBackground opacity={0.03} />
+      
+      {/* Header */}
+      <div className="bg-white/80 backdrop-blur border-b border-gray-200 sticky top-0 z-10">
+        <div className="container max-w-6xl mx-auto px-4 py-4">
+          <div className="flex items-center gap-4 relative">
+            <div className="absolute -top-1 -right-1">
+              <TravelDoodles.Passport className="w-6 h-7" color="#1A5F7A" />
+            </div>
+            <Link to="/dashboard" className="flex items-center gap-2 text-gray-600 hover:text-twende-teal transition-colors">
+              <ArrowLeft className="h-5 w-5" />
+              Back to Dashboard
+            </Link>
+            <div className="h-6 w-px bg-gray-300"></div>
+            <h1 className="text-2xl font-bold text-gray-900">Profile Settings</h1>
+          </div>
+        </div>
+      </div>
+
+      <div className="container max-w-6xl mx-auto py-8 px-4 relative z-10">
+        <div className="flex flex-col lg:flex-row gap-8">
+          {/* Profile Summary Card */}
+          <div className="w-full lg:w-80 flex-shrink-0">
+            <motion.div
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              className="bg-white/90 backdrop-blur rounded-xl shadow-lg p-6 text-center sticky top-24 overflow-hidden"
+            >
+              {/* Travel doodles in profile card */}
+              <div className="absolute top-2 right-2">
+                <TravelDoodles.Globe className="w-6 h-6" color="#4D724D" />
+              </div>
+              <div className="absolute bottom-2 left-2">
+                <TravelDoodles.Camera className="w-6 h-5" color="#FF7F50" />
+              </div>
+              
+              <div className="relative mx-auto w-32 h-32 mb-6 z-10 group">
+                <Avatar className="w-full h-full ring-4 ring-white shadow-lg">
+                  <AvatarImage src={profileData.photoURL} alt={profileData.displayName || "User"} className="object-cover" />
+                  <AvatarFallback className="text-2xl bg-twende-teal text-white">
+                    {profileData.displayName?.charAt(0) || user?.email?.charAt(0) || "U"}
+                  </AvatarFallback>
+                </Avatar>
+                
+                {/* Upload/Camera Button */}
                 <Button 
                   variant="outline" 
                   size="icon" 
-                  className="absolute bottom-0 right-0 bg-white shadow-sm"
-                  onClick={handleUploadImage}
+                  className="absolute bottom-0 right-0 bg-white shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-105"
+                  onClick={handleImageUpload}
                   disabled={isUploading}
                 >
                   {isUploading ? (
                     <div className="w-4 h-4 rounded-full border-2 border-gray-300 border-t-twende-teal animate-spin"></div>
                   ) : (
-                    <Upload className="h-4 w-4" />
+                    <Camera className="h-4 w-4" />
                   )}
                 </Button>
+
+                {/* Remove Button - Show when image exists */}
+                {profileData.photoURL && (
+                  <Button 
+                    variant="outline" 
+                    size="icon" 
+                    className="absolute bottom-0 left-0 bg-red-50 hover:bg-red-100 border-red-200 shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-105 opacity-0 group-hover:opacity-100"
+                    onClick={handleRemoveImage}
+                    disabled={isUploading}
+                  >
+                    <Trash2 className="h-4 w-4 text-red-600" />
+                  </Button>
+                )}
+
+                {/* Upload overlay */}
+                {isUploading && (
+                  <div className="absolute inset-0 bg-black/50 rounded-full flex items-center justify-center">
+                    <div className="text-white text-xs">Uploading...</div>
+                  </div>
+                )}
               </div>
-              <h2 className="font-bold text-xl">{user.name}</h2>
-              <p className="text-gray-500 text-sm">{user.email}</p>
               
+              <h2 className="font-bold text-xl text-gray-900 mb-1">
+                {profileData.displayName || "Update Your Name"}
+              </h2>
+              <p className="text-gray-500 text-sm mb-2">{user?.email}</p>
+              
+              {user?.emailVerified ? (
+                <div className="flex items-center justify-center gap-1 text-green-600 text-xs">
+                  <CheckCircle className="h-3 w-3" />
+                  Verified Account
+                </div>
+              ) : (
+                <div className="flex items-center justify-center gap-1 text-amber-600 text-xs">
+                  <AlertCircle className="h-3 w-3" />
+                  Unverified Email
+                </div>
+              )}
+              
+              <div className="mt-6 p-4 bg-twende-beige/30 rounded-lg">
+                <p className="text-xs text-gray-600 mb-2">Member Since</p>
+                <p className="font-semibold text-sm">January 2024</p>
+              </div>
+              
+              {/* Navigation Tabs */}
               <Tabs 
                 value={activeTab} 
                 onValueChange={setActiveTab} 
                 className="mt-6"
                 orientation="vertical"
               >
-                <TabsList className="flex flex-col h-auto items-stretch space-y-1">
-                  <TabsTrigger value="profile" className="justify-start">
+                <TabsList className="flex flex-col h-auto items-stretch space-y-1 bg-gray-50">
+                  <TabsTrigger value="profile" className="justify-start data-[state=active]:bg-twende-teal data-[state=active]:text-white">
                     <User className="h-4 w-4 mr-2" />
-                    Profile
+                    Profile Info
                   </TabsTrigger>
-                  <TabsTrigger value="security" className="justify-start">
+                  <TabsTrigger value="security" className="justify-start data-[state=active]:bg-twende-teal data-[state=active]:text-white">
                     <Key className="h-4 w-4 mr-2" />
                     Security
                   </TabsTrigger>
-                  <TabsTrigger value="notifications" className="justify-start">
+                  <TabsTrigger value="notifications" className="justify-start data-[state=active]:bg-twende-teal data-[state=active]:text-white">
                     <Bell className="h-4 w-4 mr-2" />
                     Notifications
                   </TabsTrigger>
-                  <TabsTrigger value="payments" className="justify-start">
-                    <CreditCard className="h-4 w-4 mr-2" />
-                    Payments
-                  </TabsTrigger>
-                  <TabsTrigger value="preferences" className="justify-start">
-                    <Languages className="h-4 w-4 mr-2" />
-                    Preferences
-                  </TabsTrigger>
                 </TabsList>
               </Tabs>
-            </div>
+            </motion.div>
           </div>
-          
+
+          {/* Main Content Area */}
           <div className="flex-1">
             <Tabs value={activeTab} onValueChange={setActiveTab}>
-              <TabsContent value="profile" className="m-0">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Profile Information</CardTitle>
-                    <CardDescription>Update your personal information</CardDescription>
-                  </CardHeader>
-                  <CardContent className="space-y-6">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      <div className="space-y-2">
-                        <Label htmlFor="name">Full Name</Label>
-                        <Input 
-                          id="name" 
-                          value={user.name} 
-                          onChange={(e) => setUser({...user, name: e.target.value})}
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="email">Email Address</Label>
-                        <Input 
-                          id="email" 
-                          type="email" 
-                          value={user.email} 
-                          onChange={(e) => setUser({...user, email: e.target.value})}
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="phone">Phone Number</Label>
-                        <Input 
-                          id="phone" 
-                          value={user.phone} 
-                          onChange={(e) => setUser({...user, phone: e.target.value})}
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="address">Address</Label>
-                        <Input 
-                          id="address" 
-                          value={user.address} 
-                          onChange={(e) => setUser({...user, address: e.target.value})}
-                        />
-                      </div>
+              {/* Profile Information Tab */}
+              <TabsContent value="profile">
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="space-y-6"
+                >
+                  <Card className="bg-white/80 backdrop-blur shadow-lg relative overflow-hidden">
+                    <div className="absolute top-2 right-2">
+                      <TravelDoodles.Suitcase className="w-8 h-6" color="#1A5F7A" />
                     </div>
-                    
-                    <div className="space-y-2">
-                      <Label htmlFor="bio">Bio</Label>
-                      <Textarea 
-                        id="bio" 
-                        rows={4} 
-                        value={user.bio} 
-                        onChange={(e) => setUser({...user, bio: e.target.value})}
-                        placeholder="Tell us about yourself and your travel preferences"
-                      />
-                    </div>
-                    
-                    <div className="flex justify-end">
-                      <Button onClick={handleSaveProfile}>Save Changes</Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              </TabsContent>
-              
-              <TabsContent value="security" className="m-0">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Security Settings</CardTitle>
-                    <CardDescription>Manage your account security</CardDescription>
-                  </CardHeader>
-                  <CardContent className="space-y-6">
-                    <div className="space-y-4">
-                      <h3 className="text-lg font-medium">Password</h3>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2">
+                        <User className="h-5 w-5 text-twende-teal" />
+                        Personal Information
+                      </CardTitle>
+                      <CardDescription>
+                        Update your basic profile information and contact details.
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-6">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="space-y-2">
-                          <Label htmlFor="current-password">Current Password</Label>
-                          <Input id="current-password" type="password" />
-                        </div>
-                        <div></div>
-                        <div className="space-y-2">
-                          <Label htmlFor="new-password">New Password</Label>
-                          <Input id="new-password" type="password" />
+                          <Label htmlFor="displayName">Full Name *</Label>
+                          <Input
+                            id="displayName"
+                            value={profileData.displayName}
+                            onChange={(e) => handleInputChange("displayName", e.target.value)}
+                            placeholder="Enter your full name"
+                            className={errors.displayName ? "border-red-500" : ""}
+                          />
+                          {errors.displayName && (
+                            <p className="text-sm text-red-500 flex items-center gap-1">
+                              <AlertCircle className="h-3 w-3" />
+                              {errors.displayName}
+                            </p>
+                          )}
                         </div>
                         <div className="space-y-2">
-                          <Label htmlFor="confirm-password">Confirm New Password</Label>
-                          <Input id="confirm-password" type="password" />
+                          <Label htmlFor="email">Email Address</Label>
+                          <Input
+                            id="email"
+                            type="email"
+                            value={profileData.email}
+                            disabled
+                            className="bg-gray-50"
+                          />
+                          <p className="text-xs text-gray-500">Email cannot be changed here</p>
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="phone">Phone Number</Label>
+                          <Input
+                            id="phone"
+                            value={profileData.phone}
+                            onChange={(e) => handleInputChange("phone", e.target.value)}
+                            placeholder="+1 (555) 123-4567"
+                            className={errors.phone ? "border-red-500" : ""}
+                          />
+                          {errors.phone && (
+                            <p className="text-sm text-red-500 flex items-center gap-1">
+                              <AlertCircle className="h-3 w-3" />
+                              {errors.phone}
+                            </p>
+                          )}
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="dateOfBirth">Date of Birth</Label>
+                          <Input
+                            id="dateOfBirth"
+                            type="date"
+                            value={profileData.dateOfBirth}
+                            onChange={(e) => handleInputChange("dateOfBirth", e.target.value)}
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="nationality">Nationality</Label>
+                          <Input
+                            id="nationality"
+                            value={profileData.nationality}
+                            onChange={(e) => handleInputChange("nationality", e.target.value)}
+                            placeholder="e.g., American, British, Ghanaian"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="city">City</Label>
+                          <Input
+                            id="city"
+                            value={profileData.city}
+                            onChange={(e) => handleInputChange("city", e.target.value)}
+                            placeholder="Enter your city"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="country">Country</Label>
+                          <Select 
+                            value={profileData.country} 
+                            onValueChange={(value) => handleInputChange("country", value)}
+                          >
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select your country" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="us">United States</SelectItem>
+                              <SelectItem value="uk">United Kingdom</SelectItem>
+                              <SelectItem value="gh">Ghana</SelectItem>
+                              <SelectItem value="ke">Kenya</SelectItem>
+                              <SelectItem value="za">South Africa</SelectItem>
+                              <SelectItem value="ng">Nigeria</SelectItem>
+                              <SelectItem value="ca">Canada</SelectItem>
+                              <SelectItem value="au">Australia</SelectItem>
+                              <SelectItem value="de">Germany</SelectItem>
+                              <SelectItem value="fr">France</SelectItem>
+                              <SelectItem value="other">Other</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="preferredCurrency">Preferred Currency</Label>
+                          <Select 
+                            value={profileData.preferredCurrency} 
+                            onValueChange={(value) => handleInputChange("preferredCurrency", value)}
+                          >
+                            <SelectTrigger>
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="USD">USD - US Dollar</SelectItem>
+                              <SelectItem value="EUR">EUR - Euro</SelectItem>
+                              <SelectItem value="GBP">GBP - British Pound</SelectItem>
+                              <SelectItem value="GHS">GHS - Ghanaian Cedi</SelectItem>
+                              <SelectItem value="KES">KES - Kenyan Shilling</SelectItem>
+                              <SelectItem value="ZAR">ZAR - South African Rand</SelectItem>
+                            </SelectContent>
+                          </Select>
                         </div>
                       </div>
-                      
-                      <div className="pt-4 border-t">
-                        <h3 className="text-lg font-medium mb-4">Two-Factor Authentication</h3>
-                        <div className="flex items-center justify-between">
-                          <div className="space-y-0.5">
-                            <Label htmlFor="2fa">Enable 2FA</Label>
-                            <p className="text-sm text-gray-500">Secure your account with two-factor authentication</p>
-                          </div>
-                          <Switch id="2fa" />
-                        </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="bio">Bio</Label>
+                        <Textarea
+                          id="bio"
+                          value={profileData.bio}
+                          onChange={(e) => handleInputChange("bio", e.target.value)}
+                          placeholder="Tell us about yourself and your travel interests..."
+                          className="resize-none"
+                          rows={4}
+                        />
+                        <p className="text-xs text-gray-500">
+                          {profileData.bio.length}/500 characters
+                        </p>
                       </div>
-                      
-                      <div className="pt-4 border-t">
-                        <h3 className="text-lg font-medium mb-4">Sessions</h3>
-                        <div className="space-y-4">
-                          <div className="bg-gray-50 p-4 rounded-lg">
-                            <div className="flex items-center justify-between">
-                              <div>
-                                <p className="font-medium">Current Session</p>
-                                <p className="text-sm text-gray-500">New York, United States • Chrome on Windows</p>
-                              </div>
-                              <Badge variant="outline" className="text-green-600 bg-green-50">Active</Badge>
-                            </div>
-                          </div>
-                        </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="emergencyContact">Emergency Contact</Label>
+                        <Input
+                          id="emergencyContact"
+                          value={profileData.emergencyContact}
+                          onChange={(e) => handleInputChange("emergencyContact", e.target.value)}
+                          placeholder="Name and phone number of emergency contact"
+                        />
                       </div>
-                    </div>
-                    
-                    <div className="flex justify-end">
-                      <Button>Save Changes</Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              </TabsContent>
-              
-              <TabsContent value="notifications" className="m-0">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Notification Preferences</CardTitle>
-                    <CardDescription>Control how and when you receive notifications</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-6">
-                      <div>
-                        <h3 className="text-lg font-medium mb-4">Email Notifications</h3>
-                        <div className="space-y-4">
-                          <div className="flex items-center justify-between">
-                            <div className="space-y-0.5">
-                              <Label htmlFor="email-trip-updates">Trip Updates</Label>
-                              <p className="text-sm text-gray-500">Receive emails about changes to your trips</p>
-                            </div>
-                            <Switch id="email-trip-updates" defaultChecked />
-                          </div>
-                          
-                          <div className="flex items-center justify-between">
-                            <div className="space-y-0.5">
-                              <Label htmlFor="email-reminders">Trip Reminders</Label>
-                              <p className="text-sm text-gray-500">Receive reminders about upcoming trips</p>
-                            </div>
-                            <Switch id="email-reminders" defaultChecked />
-                          </div>
-                          
-                          <div className="flex items-center justify-between">
-                            <div className="space-y-0.5">
-                              <Label htmlFor="email-promotions">Promotions</Label>
-                              <p className="text-sm text-gray-500">Receive special offers and promotions</p>
-                            </div>
-                            <Switch id="email-promotions" />
-                          </div>
-                        </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="travelPreferences">Travel Preferences</Label>
+                        <Textarea
+                          id="travelPreferences"
+                          value={profileData.travelPreferences}
+                          onChange={(e) => handleInputChange("travelPreferences", e.target.value)}
+                          placeholder="Describe your travel style, preferences, dietary restrictions, etc."
+                          className="resize-none"
+                          rows={3}
+                        />
                       </div>
-                      
-                      <div className="pt-4 border-t">
-                        <h3 className="text-lg font-medium mb-4">Push Notifications</h3>
-                        <div className="space-y-4">
-                          <div className="flex items-center justify-between">
-                            <div className="space-y-0.5">
-                              <Label htmlFor="push-trip-updates">Trip Updates</Label>
-                              <p className="text-sm text-gray-500">Receive alerts about changes to your trips</p>
-                            </div>
-                            <Switch id="push-trip-updates" defaultChecked />
-                          </div>
-                          
-                          <div className="flex items-center justify-between">
-                            <div className="space-y-0.5">
-                              <Label htmlFor="push-reminders">Trip Reminders</Label>
-                              <p className="text-sm text-gray-500">Receive reminders about upcoming trips</p>
-                            </div>
-                            <Switch id="push-reminders" defaultChecked />
-                          </div>
-                          
-                          <div className="flex items-center justify-between">
-                            <div className="space-y-0.5">
-                              <Label htmlFor="push-messages">Messages</Label>
-                              <p className="text-sm text-gray-500">Receive notifications for new messages</p>
-                            </div>
-                            <Switch id="push-messages" defaultChecked />
-                          </div>
+
+                      <div className="flex justify-between items-center pt-4 border-t">
+                        <div className="text-sm text-gray-500">
+                          {hasChanges && (
+                            <span className="flex items-center gap-1 text-amber-600">
+                              <AlertCircle className="h-3 w-3" />
+                              You have unsaved changes
+                            </span>
+                          )}
                         </div>
-                      </div>
-                    </div>
-                    
-                    <div className="flex justify-end mt-6">
-                      <Button>Save Preferences</Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              </TabsContent>
-              
-              <TabsContent value="payments" className="m-0">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Payment Methods</CardTitle>
-                    <CardDescription>Manage your payment information</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-6">
-                      <div>
-                        <h3 className="text-lg font-medium mb-4">Saved Payment Methods</h3>
-                        <div className="space-y-4">
-                          <div className="bg-gray-50 p-4 rounded-lg">
-                            <div className="flex items-center justify-between">
-                              <div className="flex items-center gap-3">
-                                <div className="p-2 bg-blue-100 rounded">
-                                  <CreditCard className="h-4 w-4 text-blue-600" />
-                                </div>
-                                <div>
-                                  <p className="font-medium">Visa ending in 4242</p>
-                                  <p className="text-sm text-gray-500">Expires 12/26</p>
-                                </div>
-                              </div>
-                              <Badge>Primary</Badge>
-                            </div>
-                          </div>
-                        </div>
-                        
-                        <Button variant="outline" className="mt-4">
-                          <CreditCard className="h-4 w-4 mr-2" />
-                          Add Payment Method
+                        <Button 
+                          onClick={handleSaveProfile}
+                          disabled={isSaving || !hasChanges}
+                          className="bg-twende-teal hover:bg-twende-teal/90"
+                        >
+                          {isSaving ? (
+                            <>
+                              <div className="w-4 h-4 rounded-full border-2 border-white border-t-transparent animate-spin mr-2"></div>
+                              Saving...
+                            </>
+                          ) : (
+                            <>
+                              <Save className="h-4 w-4 mr-2" />
+                              Save Changes
+                            </>
+                          )}
                         </Button>
                       </div>
-                      
-                      <div className="pt-4 border-t">
-                        <h3 className="text-lg font-medium mb-4">Billing Address</h3>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                          <div className="space-y-2">
-                            <Label htmlFor="billing-name">Full Name</Label>
-                            <Input id="billing-name" defaultValue="John Smith" />
-                          </div>
-                          <div className="space-y-2">
-                            <Label htmlFor="billing-address">Address</Label>
-                            <Input id="billing-address" defaultValue="123 Main Street" />
-                          </div>
-                          <div className="space-y-2">
-                            <Label htmlFor="billing-city">City</Label>
-                            <Input id="billing-city" defaultValue="New York" />
-                          </div>
-                          <div className="space-y-2">
-                            <Label htmlFor="billing-state">State/Province</Label>
-                            <Input id="billing-state" defaultValue="NY" />
-                          </div>
-                          <div className="space-y-2">
-                            <Label htmlFor="billing-zip">ZIP/Postal Code</Label>
-                            <Input id="billing-zip" defaultValue="10001" />
-                          </div>
-                          <div className="space-y-2">
-                            <Label htmlFor="billing-country">Country</Label>
-                            <Input id="billing-country" defaultValue="United States" />
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                    
-                    <div className="flex justify-end mt-6">
-                      <Button>Save Changes</Button>
-                    </div>
-                  </CardContent>
-                </Card>
+                    </CardContent>
+                  </Card>
+                </motion.div>
               </TabsContent>
-              
-              <TabsContent value="preferences" className="m-0">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Travel Preferences</CardTitle>
-                    <CardDescription>Customize your travel experience</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-6">
-                      <div>
-                        <h3 className="text-lg font-medium mb-4">Display Settings</h3>
-                        <div className="space-y-4">
-                          <div className="flex items-center justify-between">
-                            <div className="space-y-0.5">
-                              <Label htmlFor="dark-mode">Dark Mode</Label>
-                              <p className="text-sm text-gray-500">Use dark mode for the application</p>
-                            </div>
-                            <Switch id="dark-mode" />
-                          </div>
-                          
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
-                            <div className="space-y-2">
-                              <Label htmlFor="language">Language</Label>
-                              <select 
-                                id="language" 
-                                className="w-full h-10 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-twende-teal"
-                                defaultValue="en"
-                              >
-                                <option value="en">English</option>
-                                <option value="fr">French</option>
-                                <option value="es">Spanish</option>
-                                <option value="de">German</option>
-                              </select>
-                            </div>
-                            
-                            <div className="space-y-2">
-                              <Label htmlFor="currency">Currency</Label>
-                              <select 
-                                id="currency" 
-                                className="w-full h-10 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-twende-teal"
-                                defaultValue="usd"
-                              >
-                                <option value="usd">USD ($)</option>
-                                <option value="eur">EUR (€)</option>
-                                <option value="gbp">GBP (£)</option>
-                                <option value="jpy">JPY (¥)</option>
-                              </select>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                      
-                      <div className="pt-4 border-t">
-                        <h3 className="text-lg font-medium mb-4">Travel Preferences</h3>
-                        <div className="space-y-4">
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div className="space-y-2">
-                              <Label htmlFor="preferred-airline">Preferred Airline</Label>
-                              <Input id="preferred-airline" placeholder="e.g., Delta, Emirates" />
-                            </div>
-                            
-                            <div className="space-y-2">
-                              <Label htmlFor="seating">Preferred Seating</Label>
-                              <select 
-                                id="seating" 
-                                className="w-full h-10 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-twende-teal"
-                                defaultValue="window"
-                              >
-                                <option value="window">Window</option>
-                                <option value="aisle">Aisle</option>
-                                <option value="middle">Middle</option>
-                                <option value="no-preference">No Preference</option>
-                              </select>
-                            </div>
-                            
-                            <div className="space-y-2">
-                              <Label htmlFor="accommodation-type">Accommodation Type</Label>
-                              <select 
-                                id="accommodation-type" 
-                                className="w-full h-10 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-twende-teal"
-                                defaultValue="hotel"
-                              >
-                                <option value="hotel">Hotel</option>
-                                <option value="resort">Resort</option>
-                                <option value="apartment">Apartment</option>
-                                <option value="hostel">Hostel</option>
-                                <option value="guesthouse">Guesthouse</option>
-                              </select>
-                            </div>
-                            
-                            <div className="space-y-2">
-                              <Label htmlFor="meal-preference">Meal Preference</Label>
-                              <select 
-                                id="meal-preference" 
-                                className="w-full h-10 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-twende-teal"
-                                defaultValue="regular"
-                              >
-                                <option value="regular">Regular</option>
-                                <option value="vegetarian">Vegetarian</option>
-                                <option value="vegan">Vegan</option>
-                                <option value="gluten-free">Gluten Free</option>
-                                <option value="kosher">Kosher</option>
-                                <option value="halal">Halal</option>
-                              </select>
-                            </div>
-                          </div>
-                          
+
+              {/* Security Tab */}
+              <TabsContent value="security">
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="space-y-6"
+                >
+                  <Card className="bg-white/80 backdrop-blur shadow-lg relative overflow-hidden">
+                    <div className="absolute top-2 right-2">
+                      <TravelDoodles.Airplane className="w-8 h-6" color="#1A5F7A" />
+                    </div>
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2">
+                        <Key className="h-5 w-5 text-twende-teal" />
+                        Security Settings
+                      </CardTitle>
+                      <CardDescription>
+                        Manage your account security and privacy.
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-6">
+                      {/* Password Change Section */}
+                      <div className="space-y-4">
+                        <h3 className="text-lg font-medium">Change Password</h3>
+                        <div className="grid grid-cols-1 gap-4 max-w-md">
                           <div className="space-y-2">
-                            <Label htmlFor="special-requirements">Special Requirements</Label>
-                            <Textarea 
-                              id="special-requirements" 
-                              placeholder="Any accessibility needs or special requirements we should know about"
-                              rows={3}
+                            <Label htmlFor="currentPassword">Current Password</Label>
+                            <Input
+                              id="currentPassword"
+                              type="password"
+                              value={securityData.currentPassword}
+                              onChange={(e) => setSecurityData(prev => ({ ...prev, currentPassword: e.target.value }))}
+                              placeholder="Enter your current password"
                             />
                           </div>
+                          <div className="space-y-2">
+                            <Label htmlFor="newPassword">New Password</Label>
+                            <Input
+                              id="newPassword"
+                              type="password"
+                              value={securityData.newPassword}
+                              onChange={(e) => setSecurityData(prev => ({ ...prev, newPassword: e.target.value }))}
+                              placeholder="Enter new password"
+                            />
+                            <p className="text-xs text-gray-500">Password must be at least 6 characters long</p>
+                          </div>
+                          <div className="space-y-2">
+                            <Label htmlFor="confirmPassword">Confirm New Password</Label>
+                            <Input
+                              id="confirmPassword"
+                              type="password"
+                              value={securityData.confirmPassword}
+                              onChange={(e) => setSecurityData(prev => ({ ...prev, confirmPassword: e.target.value }))}
+                              placeholder="Confirm new password"
+                            />
+                          </div>
+                          <Button 
+                            onClick={handlePasswordUpdate}
+                            className="bg-twende-teal hover:bg-twende-teal/90"
+                            disabled={!securityData.currentPassword || !securityData.newPassword || !securityData.confirmPassword}
+                          >
+                            <Key className="h-4 w-4 mr-2" />
+                            Update Password
+                          </Button>
                         </div>
                       </div>
-                      
-                      <div className="pt-4 border-t">
-                        <h3 className="text-lg font-medium mb-4">Travel Interests</h3>
-                        <div className="flex flex-wrap gap-2">
-                          <Badge variant="outline" className="cursor-pointer hover:bg-gray-100">Beach</Badge>
-                          <Badge variant="outline" className="cursor-pointer hover:bg-gray-100">Mountains</Badge>
-                          <Badge variant="outline" className="cursor-pointer hover:bg-gray-100">City</Badge>
-                          <Badge variant="outline" className="cursor-pointer hover:bg-gray-100">Cultural</Badge>
-                          <Badge variant="outline" className="cursor-pointer hover:bg-gray-100">Food & Dining</Badge>
-                          <Badge variant="outline" className="cursor-pointer hover:bg-gray-100">Adventure</Badge>
-                          <Badge variant="outline" className="cursor-pointer hover:bg-gray-100">Wildlife</Badge>
-                          <Badge variant="outline" className="cursor-pointer hover:bg-gray-100">Luxury</Badge>
-                          <Badge variant="outline" className="cursor-pointer hover:bg-gray-100">Budget</Badge>
-                          <Badge variant="outline" className="cursor-pointer hover:bg-gray-100">Eco-friendly</Badge>
-                          <Badge variant="outline" className="cursor-pointer hover:bg-gray-100">Historical</Badge>
-                          <Badge variant="outline" className="cursor-pointer hover:bg-gray-100">Nightlife</Badge>
+
+                      {/* Account Security Status */}
+                      <div className="space-y-4 pt-6 border-t">
+                        <h3 className="text-lg font-medium">Account Security Status</h3>
+                        <div className="space-y-4">
+                          <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                            <div className="flex items-center gap-3">
+                              <div className={`w-3 h-3 rounded-full ${user?.emailVerified ? 'bg-green-500' : 'bg-yellow-500'}`}></div>
+                              <div>
+                                <h4 className="font-medium">Email Verification</h4>
+                                <p className="text-sm text-gray-600">
+                                  {user?.emailVerified ? 'Your email is verified' : 'Please verify your email address'}
+                                </p>
+                              </div>
+                            </div>
+                            {user?.emailVerified ? (
+                              <CheckCircle className="h-5 w-5 text-green-500" />
+                            ) : (
+                              <Button variant="outline" size="sm">
+                                Verify Email
+                              </Button>
+                            )}
+                          </div>
+                          
+                          <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                            <div className="flex items-center gap-3">
+                              <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
+                              <div>
+                                <h4 className="font-medium">Two-Factor Authentication</h4>
+                                <p className="text-sm text-gray-600">Add an extra layer of security (Coming Soon)</p>
+                              </div>
+                            </div>
+                            <Button variant="outline" size="sm" disabled>
+                              Enable 2FA
+                            </Button>
+                          </div>
+
+                          <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                            <div className="flex items-center gap-3">
+                              <div className="w-3 h-3 rounded-full bg-green-500"></div>
+                              <div>
+                                <h4 className="font-medium">Login Security</h4>
+                                <p className="text-sm text-gray-600">Password protected account</p>
+                              </div>
+                            </div>
+                            <CheckCircle className="h-5 w-5 text-green-500" />
+                          </div>
                         </div>
                       </div>
-                    </div>
-                    
-                    <div className="flex justify-end mt-6">
-                      <Button>Save Preferences</Button>
-                    </div>
-                  </CardContent>
-                </Card>
+                    </CardContent>
+                  </Card>
+                </motion.div>
+              </TabsContent>
+
+              {/* Notifications Tab */}
+              <TabsContent value="notifications">
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                >
+                  <Card className="bg-white/80 backdrop-blur shadow-lg">
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2">
+                        <Bell className="h-5 w-5 text-twende-teal" />
+                        Notification Preferences
+                      </CardTitle>
+                      <CardDescription>
+                        Control how and when you receive notifications.
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-6">
+                      <div className="space-y-4">
+                        <div className="flex items-center justify-between">
+                          <div className="space-y-0.5">
+                            <Label>Email Notifications</Label>
+                            <p className="text-sm text-gray-500">Receive emails about trips and updates</p>
+                          </div>
+                          <Switch defaultChecked />
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <div className="space-y-0.5">
+                            <Label>Push Notifications</Label>
+                            <p className="text-sm text-gray-500">Receive push notifications on this device</p>
+                          </div>
+                          <Switch defaultChecked />
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <div className="space-y-0.5">
+                            <Label>SMS Notifications</Label>
+                            <p className="text-sm text-gray-500">Receive important updates via SMS</p>
+                          </div>
+                          <Switch />
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </motion.div>
               </TabsContent>
             </Tabs>
           </div>

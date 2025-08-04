@@ -1,36 +1,53 @@
 
 import { toast } from "@/components/ui/use-toast";
-import { supabase } from '@/lib/supabaseClient';
-import type { Database } from "@/integrations/supabase/types";
+import { COLLECTIONS, Review, CreateDocumentData } from '@/lib/firebase-types';
+import { FirestoreService, firestoreHelpers } from '@/lib/firestore-service';
+import { auth } from '@/lib/firebase';
 
-export type Review = Database['public']['Tables']['reviews']['Row'];
-type ReviewInsert = Database['public']['Tables']['reviews']['Insert'];
+const reviewService = new FirestoreService<Review>(COLLECTIONS.REVIEWS);
 
-export const reviewService = {
-  async getByDestination(destinationId: string) {
-    const { data, error } = await supabase
-      .from('reviews')
-      .select('*')
-      .eq('destination_id', destinationId);
-    
-    if (error) {
+export const reviewsService = {
+  firestoreService: reviewService,
+
+  async getByDestination(destinationId: string): Promise<Review[]> {
+    try {
+      return await reviewService.getWithQuery([
+        firestoreHelpers.where('destinationId', '==', destinationId),
+        firestoreHelpers.orderBy('createdAt', 'desc')
+      ]);
+    } catch (error: any) {
+      console.error('Error fetching reviews:', error);
       toast({
         title: "Error fetching reviews",
-        description: error.message,
+        description: error.message || "Please try again later",
         variant: "destructive",
       });
       throw error;
     }
-    
-    return data as Review[];
   },
 
-  async create(reviewData: Omit<ReviewInsert, 'user_id' | 'created_at' | 'updated_at' | 'id'>) {
-    // Get the current user ID
-    const { data: sessionData } = await supabase.auth.getSession();
-    const userId = sessionData.session?.user.id;
+  async getByUser(userId?: string): Promise<Review[]> {
+    const currentUser = auth.currentUser;
+    const targetUserId = userId || currentUser?.uid;
     
-    if (!userId) {
+    if (!targetUserId) {
+      return [];
+    }
+
+    try {
+      return await reviewService.getWithQuery([
+        firestoreHelpers.where('userId', '==', targetUserId),
+        firestoreHelpers.orderBy('createdAt', 'desc')
+      ]);
+    } catch (error) {
+      console.error('Error fetching user reviews:', error);
+      throw error;
+    }
+  },
+
+  async create(reviewData: CreateDocumentData<Review>): Promise<Review> {
+    const currentUser = auth.currentUser;
+    if (!currentUser) {
       toast({
         title: "Authentication Error",
         description: "You must be logged in to create a review",
@@ -39,24 +56,66 @@ export const reviewService = {
       throw new Error("User not authenticated");
     }
     
-    const { data, error } = await supabase
-      .from('reviews')
-      .insert({
+    try {
+      const review = await reviewService.create({
         ...reviewData,
-        user_id: userId
-      })
-      .select()
-      .single();
-    
-    if (error) {
+        userId: reviewData.userId || currentUser.uid,
+      });
+
+      toast({
+        title: "Success",
+        description: "Review created successfully",
+      });
+
+      return review;
+    } catch (error: any) {
+      console.error('Error creating review:', error);
       toast({
         title: "Error creating review",
-        description: error.message,
+        description: error.message || "Please try again later",
         variant: "destructive",
       });
       throw error;
     }
-    
-    return data as Review;
+  },
+
+  async update(id: string, reviewData: Partial<Review>): Promise<Review> {
+    try {
+      const updatedReview = await reviewService.update(id, reviewData);
+
+      toast({
+        title: "Success",
+        description: "Review updated successfully",
+      });
+
+      return updatedReview;
+    } catch (error: any) {
+      console.error('Error updating review:', error);
+      toast({
+        title: "Error updating review",
+        description: error.message || "Please try again later", 
+        variant: "destructive",
+      });
+      throw error;
+    }
+  },
+
+  async delete(id: string) {
+    try {
+      await reviewService.delete(id);
+      
+      toast({
+        title: "Success",
+        description: "Review deleted successfully",
+      });
+    } catch (error: any) {
+      console.error('Error deleting review:', error);
+      toast({
+        title: "Error deleting review",
+        description: error.message || "Please try again later",
+        variant: "destructive",
+      });
+      throw error;
+    }
   }
 };

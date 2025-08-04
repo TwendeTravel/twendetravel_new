@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Menu, X, User } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { useAuth } from '@/contexts/AuthContext';
 import { 
@@ -16,7 +17,7 @@ import {
 const Header = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const { user, signOut } = useAuth();
+  const { user, logout } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -30,7 +31,7 @@ const Header = () => {
 
   const handleSignOut = async () => {
     try {
-      await signOut();
+      await logout();
       navigate('/', { replace: true });
     } catch (error) {
       console.error('Error during sign out:', error);
@@ -70,6 +71,16 @@ const Header = () => {
             Home
           </Link>
           <Link
+            to="/service-request"
+            className={`text-sm font-medium transition-colors hover:text-twende-teal ${
+              isScrolled
+                ? 'text-gray-800 dark:text-gray-200'
+                : 'text-white/90 hover:text-white'
+            }`}
+          >
+            Plan My Trip
+          </Link>
+          <Link
             to="/destinations"
             className={`text-sm font-medium transition-colors hover:text-twende-teal ${
               isScrolled
@@ -80,16 +91,6 @@ const Header = () => {
             Destinations
           </Link>
           <Link
-            to="/experiences"
-            className={`text-sm font-medium transition-colors hover:text-twende-teal ${
-              isScrolled
-                ? 'text-gray-800 dark:text-gray-200'
-                : 'text-white/90 hover:text-white'
-            }`}
-          >
-            Experiences
-          </Link>
-          <Link
             to="/about"
             className={`text-sm font-medium transition-colors hover:text-twende-teal ${
               isScrolled
@@ -97,17 +98,17 @@ const Header = () => {
                 : 'text-white/90 hover:text-white'
             }`}
           >
-            About
+            About Us
           </Link>
           <Link
-            to="/contact"
+            to="/chat"
             className={`text-sm font-medium transition-colors hover:text-twende-teal ${
               isScrolled
                 ? 'text-gray-800 dark:text-gray-200'
                 : 'text-white/90 hover:text-white'
             }`}
           >
-            Contact
+            24/7 Support
           </Link>
         </nav>
 
@@ -119,24 +120,44 @@ const Header = () => {
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button 
-                  variant="outline" 
-                  className={`flex items-center space-x-2 border-twende-teal ${
-                    isScrolled ? '' : 'border-white/80 text-white hover:bg-white/10'
+                  variant="ghost" 
+                  className={`flex items-center space-x-2 p-1 rounded-full ${
+                    isScrolled ? 'hover:bg-gray-100 dark:hover:bg-gray-800' : 'hover:bg-white/10'
                   }`}
                 >
-                  <User size={16} />
-                  <span className="hidden sm:inline">{user.email?.split('@')[0]}</span>
+                  <Avatar className="h-8 w-8">
+                    <AvatarImage 
+                      src={user.photoURL || ''} 
+                      alt={user.displayName || user.email || 'User'} 
+                    />
+                    <AvatarFallback className="bg-twende-teal text-white text-sm">
+                      {user.displayName ? user.displayName.charAt(0).toUpperCase() : 
+                       user.email ? user.email.charAt(0).toUpperCase() : 'U'}
+                    </AvatarFallback>
+                  </Avatar>
+                  <span className={`hidden sm:inline text-sm ${
+                    isScrolled ? 'text-gray-800 dark:text-gray-200' : 'text-white'
+                  }`}>
+                    {user.displayName || user.email?.split('@')[0]}
+                  </span>
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-48">
                 <DropdownMenuItem onClick={() => navigate('/dashboard')}>
-                  Dashboard
+                  My Dashboard
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => navigate('/profile')}>
-                  My Profile
+                  Profile Settings
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => navigate('/dashboard?tab=my-trips')}>
+                  My Trips
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => navigate('/dashboard?tab=new-request')}>
+                  New Request
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => navigate('/chat')}>
-                  Messages
+                  24/7 Support
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={handleSignOut}>
@@ -193,6 +214,13 @@ const Header = () => {
               Home
             </Link>
             <Link
+              to="/service-request"
+              className="block text-gray-800 dark:text-gray-200 hover:text-twende-teal py-2"
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              Plan My Trip
+            </Link>
+            <Link
               to="/destinations"
               className="block text-gray-800 dark:text-gray-200 hover:text-twende-teal py-2"
               onClick={() => setMobileMenuOpen(false)}
@@ -200,25 +228,18 @@ const Header = () => {
               Destinations
             </Link>
             <Link
-              to="/experiences"
-              className="block text-gray-800 dark:text-gray-200 hover:text-twende-teal py-2"
-              onClick={() => setMobileMenuOpen(false)}
-            >
-              Experiences
-            </Link>
-            <Link
               to="/about"
               className="block text-gray-800 dark:text-gray-200 hover:text-twende-teal py-2"
               onClick={() => setMobileMenuOpen(false)}
             >
-              About
+              About Us
             </Link>
             <Link
-              to="/contact"
+              to="/chat"
               className="block text-gray-800 dark:text-gray-200 hover:text-twende-teal py-2"
               onClick={() => setMobileMenuOpen(false)}
             >
-              Contact
+              24/7 Support
             </Link>
             
             <div className="pt-4 border-t border-gray-200 dark:border-gray-700">

@@ -1,12 +1,12 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Mail, Lock, Eye, EyeOff, AlertCircle } from 'lucide-react';
-// ...existing code...
-// Removed Supabase import; using AuthContext login
 import { useToast } from '@/hooks/use-toast';
 import { motion } from 'framer-motion';
 import PageTransition from '@/components/PageTransition';
 import { useAuth } from '@/contexts/AuthContext';
+import { signInWithPopup, GoogleAuthProvider, FacebookAuthProvider } from 'firebase/auth';
+import { auth } from '@/lib/firebase';
 
 const Login = () => {
   const [email, setEmail] = useState('');
@@ -299,13 +299,13 @@ const Login = () => {
                   transition={{ type: "spring", stiffness: 400, damping: 17 }}
                   onClick={async () => {
                     try {
-                      const { error } = await supabase.auth.signInWithOAuth({
-                        provider: 'google',
-                        options: {
-                          redirectTo: `${window.location.origin}/dashboard`,
-                        },
+                      const provider = new GoogleAuthProvider();
+                      await signInWithPopup(auth, provider);
+                      toast({
+                        title: "Login successful",
+                        description: "Welcome back to Twende Travel!",
                       });
-                      if (error) throw error;
+                      navigate('/dashboard', { replace: true });
                     } catch (err) {
                       console.error('Google login error:', err);
                       toast({
@@ -329,13 +329,13 @@ const Login = () => {
                   transition={{ type: "spring", stiffness: 400, damping: 17 }}
                   onClick={async () => {
                     try {
-                      const { error } = await supabase.auth.signInWithOAuth({
-                        provider: 'facebook',
-                        options: {
-                          redirectTo: `${window.location.origin}/dashboard`,
-                        },
+                      const provider = new FacebookAuthProvider();
+                      await signInWithPopup(auth, provider);
+                      toast({
+                        title: "Login successful",
+                        description: "Welcome back to Twende Travel!",
                       });
-                      if (error) throw error;
+                      navigate('/dashboard', { replace: true });
                     } catch (err) {
                       console.error('Facebook login error:', err);
                       toast({

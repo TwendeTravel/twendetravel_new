@@ -19,7 +19,8 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { format } from 'date-fns';
 import { toast } from '@/hooks/use-toast';
-import { supabase } from '@/lib/supabaseClient';
+import { auth } from '@/lib/firebase';
+import { supabase } from '@/lib/temp-supabase-stubs';
 import { Link } from 'react-router-dom';
 
 export default function AdminChatManagement() {
@@ -111,7 +112,7 @@ export default function AdminChatManagement() {
     try {
       const { data, error } = await supabase
         .from('conversations')
-        .insert({ traveler_id: selectedTraveller, admin_id: user.id, title: `Chat with ${selectedTraveller}`, status: 'active', priority: 'normal', category: 'general' })
+        .insert({ traveler_id: selectedTraveller, admin_id: user.uid, title: `Chat with ${selectedTraveller}`, status: 'active', priority: 'normal', category: 'general' })
         .select('id')
         .single();
       if (error) throw error;

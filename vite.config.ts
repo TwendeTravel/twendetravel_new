@@ -14,9 +14,7 @@ export default defineConfig(({ mode }) => ({
       strategies: "generateSW",
       registerType: "autoUpdate",
       devOptions: { enabled: true },       // ← enable virtual module in dev
-  includeAssets: ["favicon.ico", "robots.txt", "placeholder.svg"],
-  // Always serve index.html for SPA navigation
-  navigateFallback: '/index.html',
+      includeAssets: ["favicon.ico", "robots.txt", "placeholder.svg"],
       workbox: {
         // Remove outdated caches and serve index.html for SPA navigation
         cleanupOutdatedCaches: true,

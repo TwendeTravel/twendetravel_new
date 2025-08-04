@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
-import { destinationService, type Destination } from '@/services/destinations';
+import { destinationsService, type Destination } from '@/services/destinations';
 import { 
   Map, 
   Calendar, 
@@ -36,11 +36,11 @@ const DestinationInfo = () => {
   useEffect(() => {
     const fetchDest = async () => {
       try {
-        const data = await destinationService.getById(id!);
+        const data = await destinationsService.getById(id!);
         setDestination(data);
         setIsFavorite(localStorage.getItem(`favorite-${id}`) === 'true');
         // also fetch list for similar destinations
-        const list = await destinationService.getAll();
+        const list = await destinationsService.getAll();
         setAllDestinations(list);
       } catch (err) {
         console.error('Error fetching destination or list:', err);

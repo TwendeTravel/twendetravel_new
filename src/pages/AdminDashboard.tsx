@@ -14,7 +14,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { toast } from '@/hooks/use-toast';
 import DashboardHeader from '@/components/dashboard/DashboardHeader';
 import { Loader } from '@/components/Loader';
-import { supabase } from '@/lib/supabaseClient';
+import { auth } from '@/lib/firebase';
+import { supabase } from '@/lib/temp-supabase-stubs';
 import { serviceRequestService } from '@/services/service-requests';
 import { Shield, Users, UserCheck, Calendar, ChartPie } from "lucide-react";
 import { ArrowLeft } from "lucide-react";

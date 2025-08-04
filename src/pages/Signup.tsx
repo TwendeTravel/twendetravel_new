@@ -3,6 +3,8 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Mail, Lock, Eye, EyeOff, User, AlertCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
+import { signInWithPopup, GoogleAuthProvider, FacebookAuthProvider } from 'firebase/auth';
+import { auth } from '@/lib/firebase';
 
 const Signup = () => {
   const [email, setEmail] = useState('');
@@ -14,7 +16,7 @@ const Signup = () => {
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
   const navigate = useNavigate();
-  const { register, user } = useAuth();
+  const { signup, user } = useAuth();
   
   useEffect(() => {
     if (user) {
@@ -39,8 +41,8 @@ const Signup = () => {
     }
     
     try {
-      // Call register from AuthContext (email, password, first_name, last_name)
-      await register(email, password, name, '');
+      // Call signup from AuthContext (email, password, fullName)
+      await signup(email, password, name);
       toast({
         title: "Account created successfully",
         description: "Welcome to Twende Travel!",
@@ -233,13 +235,13 @@ const Signup = () => {
                 className="flex justify-center items-center py-2 px-4 border border-gray-300 rounded-md shadow-sm bg-white text-sm font-medium text-gray-700 hover:bg-gray-50"
                 onClick={async () => {
                   try {
-                    const { error } = await supabase.auth.signInWithOAuth({
-                      provider: 'google',
-                      options: {
-                        redirectTo: `${window.location.origin}/dashboard`,
-                      },
+                    const provider = new GoogleAuthProvider();
+                    await signInWithPopup(auth, provider);
+                    toast({
+                      title: "Account created successfully",
+                      description: "Welcome to Twende Travel!",
                     });
-                    if (error) throw error;
+                    navigate('/dashboard', { replace: true });
                   } catch (err) {
                     console.error('Google signup error:', err);
                     toast({
@@ -260,13 +262,13 @@ const Signup = () => {
                 className="flex justify-center items-center py-2 px-4 border border-gray-300 rounded-md shadow-sm bg-white text-sm font-medium text-gray-700 hover:bg-gray-50"
                 onClick={async () => {
                   try {
-                    const { error } = await supabase.auth.signInWithOAuth({
-                      provider: 'facebook',
-                      options: {
-                        redirectTo: `${window.location.origin}/dashboard`,
-                      },
+                    const provider = new FacebookAuthProvider();
+                    await signInWithPopup(auth, provider);
+                    toast({
+                      title: "Account created successfully",
+                      description: "Welcome to Twende Travel!",
                     });
-                    if (error) throw error;
+                    navigate('/dashboard', { replace: true });
                   } catch (err) {
                     console.error('Facebook signup error:', err);
                     toast({

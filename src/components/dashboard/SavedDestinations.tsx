@@ -6,7 +6,7 @@ import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { toast } from "@/components/ui/use-toast";
 import { useSavedDestinations } from "@/hooks/useSavedDestinations";
-import { destinationService, Destination } from "@/services/destinations";
+import { destinationsService, Destination } from "@/services/destinations";
 
 interface SavedDestinationsProps {
   extended?: boolean;
@@ -57,7 +57,7 @@ const SavedDestinations = ({ extended = false }: SavedDestinationsProps) => {
         return;
       }
       try {
-        const items = await Promise.all(savedIds.map(id => destinationService.getById(id)));
+        const items = await Promise.all(savedIds.map(id => destinationsService.getById(id)));
         setDestinations(items);
       } catch (e) {
         console.error(e);

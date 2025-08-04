@@ -32,34 +32,46 @@ import { ThemeToggle } from '@/components/ThemeToggle';
 
 const DashboardHeader = () => {
   const [showMobileMenu, setShowMobileMenu] = useState(false);
-  const { signOut, user } = useAuth();
+  const { logout, user } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
 
   const handleSignOut = async () => {
-    await signOut();
-    navigate('/?logged_out=true', { replace: true });
+    try {
+      await logout();
+      toast({
+        title: "Signed out successfully",
+        description: "You have been logged out of your account.",
+      });
+      navigate('/?logged_out=true', { replace: true });
+    } catch (error) {
+      console.error('Logout error:', error);
+      toast({
+        variant: "destructive",
+        title: "Logout failed",
+        description: "There was an error signing you out. Please try again.",
+      });
+    }
   };
 
-  const userName = user?.user_metadata?.name || 'User';
+  const userName = user?.displayName || user?.email?.split('@')[0] || 'User';
   const userInitial = userName.charAt(0).toUpperCase();
   const userEmail = user?.email || '';
 
   return (
-    <header className="sticky top-0 z-50 bg-card/80 backdrop-blur-sm border-b border-border">
-      <div className="container mx-auto px-4 py-3">
-        <div className="flex items-center justify-between">
-          {/* Logo & Navigation */}
-          <div className="flex items-center">
-            <button 
-              onClick={() => setShowMobileMenu(!showMobileMenu)}
-              className="mr-3 md:hidden text-foreground hover:bg-muted rounded-lg p-2"
-            >
-              {showMobileMenu ? <X size={24} /> : <Menu size={24} />}
-            </button>
-            
-            <Link to="/" className="flex items-center">
-              <span className="text-xl font-bold text-twende-teal dark:text-twende-skyblue">Twende
+    <header className="fixed top-0 left-0 right-0 z-50 bg-white dark:bg-gray-900 backdrop-blur-sm border-b border-gray-200 dark:border-gray-800 h-16">
+      <div className="flex items-center justify-between px-4 md:px-6 h-full w-full">
+        {/* Logo & Navigation */}
+        <div className="flex items-center">
+          <button 
+            onClick={() => setShowMobileMenu(!showMobileMenu)}
+            className="mr-3 md:hidden text-foreground hover:bg-muted rounded-lg p-2"
+          >
+            {showMobileMenu ? <X size={24} /> : <Menu size={24} />}
+          </button>
+          
+          <Link to="/" className="flex items-center">
+            <span className="text-xl font-bold text-twende-teal dark:text-twende-skyblue">Twende
                 <span className="text-twende-orange">Travel</span>
               </span>
             </Link>
@@ -87,17 +99,20 @@ const DashboardHeader = () => {
                 <DropdownMenuTrigger asChild>
                   <button className="flex items-center">
                     <Avatar className="h-8 w-8 md:h-9 md:w-9 cursor-pointer ring-1 ring-border">
-                      <AvatarImage src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?fit=crop&w=80&h=80" />
+                      <AvatarImage 
+                        src={user?.photoURL || ''} 
+                        alt={userName}
+                      />
                       <AvatarFallback className="bg-twende-teal text-white dark:bg-twende-skyblue dark:text-black">
-                        {user?.user_metadata?.name?.charAt(0) || user?.email?.charAt(0) || 'U'}</AvatarFallback>
+                        {userInitial}</AvatarFallback>
                     </Avatar>
                   </button>
                 </DropdownMenuTrigger>
                 
                 <DropdownMenuContent align="end" className="w-56 bg-card border border-border text-foreground">
                   <div className="p-2 border-b border-border">
-                    <p className="font-medium">{user?.user_metadata?.name || user?.email?.split('@')[0] || 'User'}</p>
-                    <p className="text-xs text-muted-foreground">{user?.email}</p>
+                    <p className="font-medium">{userName}</p>
+                    <p className="text-xs text-muted-foreground">{userEmail}</p>
                   </div>
                   
                   <DropdownMenuItem className="hover:bg-muted cursor-pointer" onClick={() => navigate('/profile')}>
@@ -120,7 +135,6 @@ const DashboardHeader = () => {
               </DropdownMenu>
             </div>
           </div>
-        </div>
         
         {/* Mobile Menu */}
         {showMobileMenu && (

@@ -1,185 +1,167 @@
-import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
-import { toast } from '@/hooks/use-toast';
-import { supabase } from '@/lib/supabaseClient';
-import { permissionService } from '@/services/roles';
+import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { 
+  createUserWithEmailAndPassword, 
+  signInWithEmailAndPassword, 
+  signOut, 
+  updateProfile,
+  sendPasswordResetEmail,
+  onAuthStateChanged,
+  User as FirebaseUser
+} from 'firebase/auth';
+import { auth } from '@/lib/firebase';
 
-// User type with full name stored in metadata
+// User type based on Firebase User
 type User = {
-  id: string;
+  uid: string;
   email: string;
-  full_name?: string;
+  displayName?: string | null;
+  photoURL?: string | null;
+  emailVerified: boolean;
 };
 
-type AuthContextType = {
+interface AuthContextType {
   user: User | null;
   isLoading: boolean;
   login: (email: string, password: string) => Promise<void>;
-  register: (email: string, password: string, full_name: string) => Promise<void>;
-  signOut: () => Promise<void>;
-  updateProfile: (data: { full_name?: string }) => Promise<void>;
-};
+  logout: () => Promise<void>;
+  signOut: () => Promise<void>; // Alias for logout for backward compatibility
+  signup: (email: string, password: string, fullName: string) => Promise<void>;
+  updateUserProfile: (data: { displayName?: string; photoURL?: string }) => Promise<void>;
+  resetPassword: (email: string) => Promise<void>;
+}
 
 const AuthContext = createContext<AuthContextType>({
   user: null,
   isLoading: true,
   login: async () => {},
-  register: async () => {},
+  logout: async () => {},
   signOut: async () => {},
-  updateProfile: async () => {},
+  signup: async () => {},
+  updateUserProfile: async () => {},
+  resetPassword: async () => {},
 });
 
-export const useAuth = () => useContext(AuthContext);
-
-type AuthProviderProps = {
-  children: ReactNode;
+export const useAuth = () => {
+  const context = useContext(AuthContext);
+  if (context === undefined) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
 };
 
-export const AuthProvider = ({ children }: AuthProviderProps) => {
+export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
+  // Listen for authentication state changes
   useEffect(() => {
-    // initialize session & listen for auth changes
-    (async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session?.user) {
-      const u = session.user;
-      // Clear any outdated 'role' metadata (to avoid DB-level SET ROLE errors)
-      const md = { ...u.user_metadata };
-      if (md.role !== undefined) {
-        delete md.role;
-        // await metadata update before further DB operations
-        await supabase.auth.updateUser({ data: md }).catch(console.error);
-      }
-      setUser({ id: u.id, email: u.email!, full_name: u.user_metadata.full_name });
-      // Seed default permission if missing, after metadata cleared
-      permissionService.getUserPermission(u.id).then((rec) => {
-        if (rec.id === undefined) {
-          permissionService.setUserPermission(u.id, 0)
-            .catch(err => console.error('Permission seeding error:', err));
-        }
-      }).catch(console.error);
-      }
-      setIsLoading(false);
-    })();
-    const { data: listener } = supabase.auth.onAuthStateChange((_, session) => {
-      if (session?.user) {
-        const u = session.user;
-        // Clear outdated 'role' metadata then seed permission
-        const md2 = { ...u.user_metadata };
-        const setup = async () => {
-          if (md2.role !== undefined) {
-            delete md2.role;
-            await supabase.auth.updateUser({ data: md2 }).catch(console.error);
-          }
-          setUser({ id: u.id, email: u.email!, full_name: u.user_metadata.full_name });
-          try {
-            const rec = await permissionService.getUserPermission(u.id);
-            if (rec.id === undefined) {
-              await permissionService.setUserPermission(u.id, 0);
-            }
-          } catch(e) { console.error(e); }
+    const unsubscribe = onAuthStateChanged(auth, (firebaseUser: FirebaseUser | null) => {
+      if (firebaseUser) {
+        const user: User = {
+          uid: firebaseUser.uid,
+          email: firebaseUser.email || '',
+          displayName: firebaseUser.displayName,
+          photoURL: firebaseUser.photoURL,
+          emailVerified: firebaseUser.emailVerified,
         };
-        setup();
+        setUser(user);
       } else {
         setUser(null);
       }
       setIsLoading(false);
     });
-    return () => {
-      listener.subscription.unsubscribe();
-    };
+
+    return () => unsubscribe();
   }, []);
 
   const login = async (email: string, password: string) => {
-    setIsLoading(true);
-    const { data: signInData, error } = await supabase.auth.signInWithPassword({ email, password });
-    setIsLoading(false);
-    if (error) {
-      toast({ title: 'Login failed', description: error.message, variant: 'destructive' });
-      throw error;
+    try {
+      await signInWithEmailAndPassword(auth, email, password);
+    } catch (error: any) {
+      console.error('Login error:', error);
+      // Provide user-friendly error messages
+      if (error.code === 'auth/user-not-found') {
+        throw new Error('No account found with this email address.');
+      } else if (error.code === 'auth/wrong-password') {
+        throw new Error('Incorrect password.');
+      } else if (error.code === 'auth/invalid-email') {
+        throw new Error('Invalid email address.');
+      } else if (error.code === 'auth/user-disabled') {
+        throw new Error('This account has been disabled.');
+      } else {
+        throw new Error(error.message || 'Login failed. Please try again.');
+      }
     }
-    const session = signInData.session;
-    const u = signInData.user;
-    // Remove any custom 'role' metadata by updating only full_name
-    await supabase.auth.updateUser({ data: { full_name: u.user_metadata.full_name } }).catch(console.error);
-    // Refresh session tokens to get JWT without old role claim
-    if (session) {
-      await supabase.auth.setSession({
-        access_token: session.access_token,
-        refresh_token: session.refresh_token
-      });
-    }
-    setUser({ id: u.id, email: u.email!, full_name: u.user_metadata.full_name });
   };
 
-  const register = async (email: string, password: string, full_name: string) => {
-    setIsLoading(true);
-    const { data, error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        data: { full_name },
-        emailRedirectTo: import.meta.env.VITE_SUPABASE_REDIRECT_TO || window.location.origin
+  const signup = async (email: string, password: string, fullName: string) => {
+    try {
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      
+      // Update the user's display name
+      if (fullName) {
+        await updateProfile(userCredential.user, {
+          displayName: fullName,
+        });
       }
-    });
-    setIsLoading(false);
-    // If signup fails due to user_permissions insert, ignore and continue
-    if (error) {
-      if (error.message.includes('permission denied for table user_permissions')) {
-        console.warn('Ignored permission error during signup:', error.message);
+    } catch (error: any) {
+      console.error('Signup error:', error);
+      // Provide user-friendly error messages
+      if (error.code === 'auth/email-already-in-use') {
+        throw new Error('An account with this email already exists.');
+      } else if (error.code === 'auth/weak-password') {
+        throw new Error('Password is too weak. Please choose a stronger password.');
+      } else if (error.code === 'auth/invalid-email') {
+        throw new Error('Invalid email address.');
       } else {
-        toast({ title: 'Sign up failed', description: error.message, variant: 'destructive' });
+        throw new Error(error.message || 'Signup failed. Please try again.');
+      }
+    }
+  };
+
+  const logout = async () => {
+    try {
+      await signOut(auth);
+    } catch (error) {
+      console.error('Logout error:', error);
+      throw error;
+    }
+  };
+
+  const updateUserProfile = async (data: { displayName?: string; photoURL?: string }) => {
+    if (auth.currentUser) {
+      try {
+        await updateProfile(auth.currentUser, data);
+        // Update local user state
+        setUser((prev) => prev ? { ...prev, ...data } : null);
+      } catch (error) {
+        console.error('Update profile error:', error);
         throw error;
       }
     }
-    const u = data.user;
-    if (data.session) {
-      // auto-logged in if session present
-      setUser({ id: u.id, email: u.email!, full_name });
-      toast({ title: 'Sign up successful', description: 'Welcome!' });
-      // create default permission record in twende_permissions
-      permissionService.setUserPermission(u.id, 0).catch((err) => console.error('Permission seeding error:', err));
-    } else {
-      // email confirmation required
-      toast({ title: 'Check your email', description: 'Please confirm your address before logging in.' });
-    }
   };
 
-  const signOut = async () => {
-    const { error } = await supabase.auth.signOut();
-    if (error) {
-      toast({ title: 'Error signing out', description: error.message, variant: 'destructive' });
+  const resetPassword = async (email: string) => {
+    try {
+      await sendPasswordResetEmail(auth, email);
+    } catch (error) {
+      console.error('Reset password error:', error);
       throw error;
     }
-    setUser(null);
-    toast({ title: 'Signed out successfully', description: "You've been logged out." });
   };
 
-  const updateProfile = async (data: { full_name?: string }) => {
-    const { data: userData, error } = await supabase.auth.updateUser({ data });
-    if (error) {
-      toast({ title: 'Update failed', description: error.message, variant: 'destructive' });
-      throw error;
-    }
-    setUser({ id: userData.id, email: userData.email!, full_name: userData.user_metadata.full_name });
-    toast({ title: 'Profile updated', description: 'Your profile was updated.' });
-  };
-
-  const value = {
+  const value: AuthContextType = {
     user,
     isLoading,
     login,
-    register,
-    signOut,
-    updateProfile,
+    logout,
+    signOut: logout, // Alias for logout
+    signup,
+    updateUserProfile,
+    resetPassword,
   };
 
-  return (
-    <AuthContext.Provider value={value}>
-      {children}
-    </AuthContext.Provider>
-  );
-};
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+}
 
-export { AuthContext };
+export default { useAuth, AuthProvider };

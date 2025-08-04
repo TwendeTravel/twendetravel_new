@@ -1,13 +1,15 @@
 
-import { ArrowRight } from 'lucide-react';
+import { ArrowRight, MessageCircle, Phone } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 
 const CTASection = () => {
-  // const navigate = useNavigate();
   return (
-    <section className="py-20 bg-ghana-pattern bg-cover bg-center relative">
-      <div className="absolute inset-0 bg-gradient-to-r from-twende-teal/90 to-twende-teal/70 dark:from-twende-skyblue/80 dark:to-twende-teal/60"></div>
+    <section className="py-20 bg-gradient-to-br from-twende-teal to-twende-teal/80 relative overflow-hidden">
+      {/* Background Pattern */}
+      <div className="absolute inset-0 opacity-10">
+        <div className="pattern-dots h-full w-full"></div>
+      </div>
       
       {/* Motion background elements */}
       <div className="absolute inset-0 overflow-hidden">
@@ -45,7 +47,7 @@ const CTASection = () => {
           transition={{ duration: 0.6 }}
           viewport={{ once: true }}
         >
-          Ready for Your Next Adventure?
+          Ready for Your Perfect African Adventure?
         </motion.h2>
         
         <motion.p 
@@ -55,7 +57,8 @@ const CTASection = () => {
           transition={{ duration: 0.6, delay: 0.2 }}
           viewport={{ once: true }}
         >
-          Let us handle the details while you focus on creating memories that last a lifetime.
+          Tell us your dreams and budget. Our concierge team will handle every detail - 
+          from flights to authentic experiences. No stress, just pure adventure.
         </motion.p>
         
         <motion.div 
@@ -66,10 +69,10 @@ const CTASection = () => {
           viewport={{ once: true }}
         >
           <Link
-            to={`/chat?message=${encodeURIComponent('I would like help planning my next trip')}`}
-            className="bg-white text-twende-teal hover:bg-gray-100 transition-colors duration-300 font-bold py-3 px-8 rounded-lg flex items-center justify-center hover:shadow-lg group dark:bg-gray-900 dark:text-twende-skyblue dark:hover:bg-gray-800"
+            to="/service-request"
+            className="bg-white text-twende-teal hover:bg-gray-100 transition-all duration-300 font-bold py-4 px-8 rounded-xl flex items-center justify-center hover:shadow-xl group text-lg"
           >
-            Plan Your Trip
+            Start My Journey
             <motion.span
               className="inline-block ml-2"
               animate={{ x: [0, 5, 0] }}
@@ -79,12 +82,35 @@ const CTASection = () => {
             </motion.span>
           </Link>
           
-        <Link
-          to={`/chat?message=${encodeURIComponent('Hello, I need assistance')}`}
-          className="bg-transparent text-white border-2 border-white hover:bg-white/10 transition-colors duration-300 font-bold py-3 px-8 rounded-lg hover:shadow-lg"
+          <Link
+            to="/chat"
+            className="bg-transparent text-white border-2 border-white hover:bg-white/10 transition-all duration-300 font-bold py-4 px-8 rounded-xl hover:shadow-xl flex items-center justify-center text-lg"
+          >
+            <MessageCircle className="h-5 w-5 mr-2" />
+            Chat with Expert
+          </Link>
+        </motion.div>
+
+        {/* Trust Indicators */}
+        <motion.div 
+          className="mt-12 flex flex-col sm:flex-row items-center justify-center gap-8 text-white/80"
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.6 }}
+          viewport={{ once: true }}
         >
-          Contact Us
-        </Link>
+          <div className="flex items-center gap-2">
+            <Phone className="w-5 h-5" />
+            <span>24/7 Support Available</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <span>🏆</span>
+            <span>500+ Happy Travelers</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <span>⭐</span>
+            <span>4.9/5 Average Rating</span>
+          </div>
         </motion.div>
       </div>
     </section>

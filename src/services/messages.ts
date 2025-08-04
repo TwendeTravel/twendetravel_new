@@ -1,80 +1,89 @@
 // filepath: src/services/messages.ts
-import { supabase } from '@/lib/supabaseClient'
+import { COLLECTIONS, Message, CreateDocumentData } from '@/lib/firebase-types';
+import { FirestoreService, firestoreHelpers } from '@/lib/firestore-service';
+import { auth } from '@/lib/firebase';
+
+const messageService = new FirestoreService<Message>(COLLECTIONS.MESSAGES);
 
 /**
- * Chat message record from `messages` table, including sender relation
+ * Chat message record with sender information
  */
-export interface ChatMessage {
-  id: string;
-  conversation_id: string;
-  sender_id: string;
-  text: string;
-  read: boolean;
-  created_at: string;
+export interface ChatMessage extends Message {
   sender?: { id: string; email: string };
 }
 
-export const messageService = {
-  async list(conversationId: string) {
-    // Fetch raw messages
-    const { data: msgs, error: msgErr } = await supabase
-      .from('messages')
-      .select('*')
-      .eq('conversation_id', conversationId)
-      .order('created_at', { ascending: true });
-    if (msgErr) throw msgErr;
-    // Collect unique sender IDs
-    const senderIds = Array.from(new Set(msgs.map(m => m.sender_id)));
-    // Fetch sender emails via view
-    const { data: users, error: usersErr } = await supabase
-      .from('user_emails_view')
-      // view fields: id and email
-      .select('id, email')
-      .in('id', senderIds as string[]);
-    if (usersErr) console.error('Error fetching sender emails:', usersErr);
-    // Attach sender info to messages
-    return msgs.map(m => ({
-      ...m,
-      sender: {
-        id: m.sender_id,
-        email: users?.find(u => u.id === m.sender_id)?.email || ''
-      }
-    }));
+export const messagesService = {
+  firestoreService: messageService,
+
+  async list(conversationId: string): Promise<ChatMessage[]> {
+    try {
+      // Fetch messages for this conversation
+      const messages = await messageService.getWithQuery([
+        firestoreHelpers.where('conversationId', '==', conversationId),
+        firestoreHelpers.orderBy('createdAt', 'asc')
+      ]);
+
+      // For now, return without sender details as we'd need to query users collection
+      // This can be enhanced later by joining with users collection
+      return messages.map(msg => ({
+        ...msg,
+        sender: {
+          id: msg.senderId,
+          email: '' // TODO: Fetch from users collection if needed
+        }
+      }));
+    } catch (error) {
+      console.error('Error fetching messages:', error);
+      throw error;
+    }
   },
+
   // Send a new message
   async send({ conversation_id, content }: { conversation_id: string; content: string }) {
-    // Include sender_id for message
-    const { data: sessionData, error: sessErr } = await supabase.auth.getSession();
-    if (sessErr) throw sessErr;
-    const userId = sessionData.session?.user.id;
-    if (!userId) throw new Error('User not authenticated');
-    const { data, error } = await supabase
-      .from('messages')
-      .insert([{ conversation_id, text: content, sender_id: userId }])
-      .select()
-      .single();
-    if (error) throw error;
-    return data;
+    const currentUser = auth.currentUser;
+    if (!currentUser) {
+      throw new Error('User not authenticated');
+    }
+
+    try {
+      const message = await messageService.create({
+        conversationId: conversation_id,
+        senderId: currentUser.uid,
+        content: content,
+        status: 'sent',
+      });
+
+      return message;
+    } catch (error) {
+      console.error('Error sending message:', error);
+      throw error;
+    }
   },
+
   // Subscribe to new messages in a conversation
-  subscribeToNewMessages(conversationId: string, callback: (msg: any) => void) {
-    return supabase
-      .channel(`public:messages:conversation_id=eq.${conversationId}`)
-      .on('postgres_changes', {
-        event: 'INSERT',
-        schema: 'public',
-        table: 'messages',
-        filter: `conversation_id=eq.${conversationId}`
-      }, (payload) => {
-        callback(payload.new);
-      })
-      .subscribe();
+  subscribeToNewMessages(conversationId: string, callback: (msg: Message) => void) {
+    return messageService.subscribeToCollection(
+      (messages) => {
+        // Get the latest message and call callback
+        if (messages.length > 0) {
+          const latestMessage = messages[messages.length - 1];
+          callback(latestMessage);
+        }
+      },
+      [
+        firestoreHelpers.where('conversationId', '==', conversationId),
+        firestoreHelpers.orderBy('createdAt', 'asc')
+      ]
+    );
   },
+
   // Mark a message as read
-  markAsRead(messageId: string) {
-    return supabase
-      .from('messages')
-      .update({ read: true })
-      .eq('id', messageId);
+  async markAsRead(messageId: string) {
+    try {
+      await messageService.update(messageId, { status: 'read' });
+    } catch (error) {
+      console.error('Error marking message as read:', error);
+      throw error;
+    }
   }
-}
+};

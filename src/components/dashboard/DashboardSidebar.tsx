@@ -54,7 +54,7 @@ const DashboardSidebar = () => {
   const { isAdmin, isLoading } = useRole();
   
   return (
-    <aside className="hidden md:block w-64 bg-white dark:bg-gray-900 h-screen border-r dark:border-gray-800 fixed top-16 left-0 overflow-y-auto pb-20">
+    <aside className="hidden md:block w-64 bg-white dark:bg-gray-900 border-r dark:border-gray-800 fixed top-16 left-0 bottom-0 overflow-y-auto z-40">
       <nav className="p-4 space-y-1">
         <SidebarLink to="/dashboard" icon={<Home size={18} />} label="Dashboard" end />
         
@@ -72,8 +72,18 @@ const DashboardSidebar = () => {
         {/* User-specific links (hidden for admins) */}
         {!isAdmin && (
           <>
-            <SidebarLink to="/destination" icon={<Map size={18} />} label="Destinations" />
-            <SidebarLink to="/trip" icon={<Calendar size={18} />} label="My Trips" />
+            <SidebarLink 
+              to="/dashboard?tab=my-trips" 
+              icon={<Calendar size={18} />} 
+              label="My Trips"
+              matchSearch={search => new URLSearchParams(search).get('tab') === 'my-trips'}
+            />
+            <SidebarLink
+              to="/dashboard?tab=destinations"
+              icon={<Map size={18} />}
+              label="Destinations"
+              matchSearch={search => new URLSearchParams(search).get('tab') === 'destinations'}
+            />
             <SidebarLink
               to="/dashboard?tab=messages"
               icon={<MessageSquare size={18} />}

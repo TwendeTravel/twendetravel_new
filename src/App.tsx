@@ -7,18 +7,20 @@ import { BrowserRouter } from "react-router-dom";
 import { AuthProvider } from './contexts/AuthContext';
 import { AnimatePresence } from "framer-motion";
 import { ThemeProvider } from "./components/ThemeProvider";
+import NetworkStatus from "./components/NetworkStatus";
 import MainRoutes from "./routes/MainRoutes";
 
 const queryClient = new QueryClient();
 
 const App = () => (
-  <ThemeProvider defaultTheme="dark" storageKey="twende-theme">
+  <ThemeProvider defaultTheme="light" storageKey="twende-theme">
     <BrowserRouter>
       <QueryClientProvider client={queryClient}>
         <AuthProvider>
           <TooltipProvider>
             <Toaster />
             <Sonner />
+            <NetworkStatus />
             <MainRoutes />
           </TooltipProvider>
         </AuthProvider>

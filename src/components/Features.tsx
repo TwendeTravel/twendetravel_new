@@ -1,56 +1,77 @@
 
-import { ShieldCheck, Clock, Globe, Users, Map, MessageCircle } from 'lucide-react';
+import { ShieldCheck, Clock, Globe, Users, Phone, MessageCircle, Plane, Hotel, Car, Camera } from 'lucide-react';
 
 const Features = () => {
   return (
-    <section className="py-20 bg-background">
+    <section className="py-20 bg-gray-50">
       <div className="container mx-auto px-4">
-        <h2 className="section-title text-center dark:text-twende-skyblue">Why Choose Twende Travel</h2>
-        <p className="section-subtitle text-center dark:text-gray-300">
-          We combine expertise, technology, and genuine care to create seamless travel experiences
+        <h2 className="text-3xl md:text-4xl font-bold text-center text-gray-900 mb-4">Your Complete Concierge Service</h2>
+        <p className="text-lg text-center text-gray-600 max-w-3xl mx-auto mb-12">
+          From the moment you tell us your travel dreams to your safe return home, our expert team handles every detail of your African adventure
         </p>
         
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mt-12">
           <FeatureCard 
-            icon={<Globe className="w-10 h-10 text-twende-teal dark:text-twende-skyblue" />}
-            title="Local Expertise" 
-            description="Our team of local experts ensure you experience authentic culture and hidden gems most tourists miss."
+            icon={<MessageCircle className="w-10 h-10 text-twende-teal" />}
+            title="24/7 Personal Concierge" 
+            description="Your dedicated travel assistant available via WhatsApp, phone, or chat anytime during your journey. Real human support, not chatbots."
             delay={100}
           />
           
           <FeatureCard 
-            icon={<ShieldCheck className="w-10 h-10 text-twende-teal dark:text-twende-skyblue" />}
-            title="Stress-Free Guarantee" 
-            description="From airport pickup to departure, we coordinate every detail so you can focus on enjoying your trip."
+            icon={<Users className="w-10 h-10 text-twende-teal" />}
+            title="Local Expert Network" 
+            description="Native coordinators in Ghana, Kenya, and South Africa who know the authentic experiences, best restaurants, and hidden gems."
             delay={200}
           />
           
           <FeatureCard 
-            icon={<Clock className="w-10 h-10 text-twende-teal dark:text-twende-skyblue" />}
-            title="24/7 Support" 
-            description="Our dedicated team is available around the clock to assist with any questions or changes."
+            icon={<Plane className="w-10 h-10 text-twende-teal" />}
+            title="Flight Management" 
+            description="We find and book the best flights, handle changes, upgrades, and ensure smooth connections. You just show up at the airport."
             delay={300}
           />
           
           <FeatureCard 
-            icon={<Users className="w-10 h-10 text-twende-teal dark:text-twende-skyblue" />}
-            title="Personalized Experiences" 
-            description="Every itinerary is tailored to your preferences, interests, and travel style."
+            icon={<Hotel className="w-10 h-10 text-twende-teal" />}
+            title="Accommodation Curation" 
+            description="Hand-picked hotels, lodges, and unique stays that match your style and budget. From luxury resorts to authentic guesthouses."
             delay={400}
           />
           
           <FeatureCard 
-            icon={<Map className="w-10 h-10 text-twende-teal dark:text-twende-skyblue" />}
-            title="Comprehensive Planning" 
-            description="Accommodation, transport, activities, and dining recommendations all in one place."
+            icon={<Car className="w-10 h-10 text-twende-teal" />}
+            title="Transport & Transfers" 
+            description="Airport pickup, private drivers, domestic flights, and all local transport arranged. No waiting, no confusion, just smooth travel."
             delay={500}
           />
           
           <FeatureCard 
-            icon={<MessageCircle className="w-10 h-10 text-twende-teal dark:text-twende-skyblue" />}
-            title="Community Insights" 
-            description="Access tips and reviews from our community of travelers and local experts."
+            icon={<Camera className="w-10 h-10 text-twende-teal" />}
+            title="Authentic Experiences" 
+            description="Cultural tours, wildlife safaris, cooking classes, and unique activities curated by locals who know the real Africa."
             delay={600}
+          />
+
+          <FeatureCard 
+            icon={<ShieldCheck className="w-10 h-10 text-twende-teal" />}
+            title="Complete Care Package" 
+            description="Visa assistance, travel insurance, health requirements, emergency support, and cultural briefings - we handle everything."
+            delay={700}
+          />
+          
+          <FeatureCard 
+            icon={<Globe className="w-10 h-10 text-twende-teal" />}
+            title="Pre-Trip Planning" 
+            description="Detailed itineraries, packing lists, cultural guides, and local contacts shared before departure. You'll feel prepared and excited."
+            delay={800}
+          />
+          
+          <FeatureCard 
+            icon={<Phone className="w-10 h-10 text-twende-teal" />}
+            title="Emergency Support" 
+            description="Lost passport? Flight cancelled? Medical emergency? Our team is on standby 24/7 to resolve any issue immediately."
+            delay={900}
           />
         </div>
       </div>

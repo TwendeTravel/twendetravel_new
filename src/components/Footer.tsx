@@ -14,7 +14,7 @@ const Footer = () => {
               Twende<span className="text-twende-orange">Travel</span>
             </h3>
             <p className="text-gray-400 mb-6">
-              Transforming journeys into effortless, meaningful experiences through personalized planning, local expertise, and technology-enhanced convenience.
+              Your personal African travel concierge. We handle every detail so you can focus on creating unforgettable memories across Ghana, Kenya, and South Africa.
             </p>
             <div className="flex space-x-4">
               <SocialLink href="https://facebook.com" icon={<Facebook size={18} />} />
@@ -24,74 +24,78 @@ const Footer = () => {
             </div>
           </div>
           
-          {/* Quick Links */}
+          {/* Services */}
           <div>
-            <h4 className="text-lg font-bold mb-6">Quick Links</h4>
+            <h4 className="text-lg font-bold mb-6">Our Services</h4>
             <ul className="space-y-3">
-              <FooterLink href="#destinations" label="Destinations" />
-              <FooterLink href="#plan" label="Plan Your Trip" />
-              <FooterLink href="#experiences" label="Experiences" />
-              <FooterLink href="#about" label="About Us" />
-              <FooterLink href="#contact" label="Contact" />
-              <FooterLink href="/login" label="Sign In / Register" />
+              <FooterLink href="/service-request" label="Plan My Trip" />
+              <FooterLink href="/destinations" label="Destinations" />
+              <FooterLink href="/chat" label="24/7 Concierge Support" />
+              <FooterLink href="/dashboard" label="My Dashboard" />
+              <FooterLink href="/about" label="About Our Service" />
+              <FooterLink href="/login" label="Access My Account" />
             </ul>
           </div>
           
-          {/* Resources */}
+          {/* Support */}
           <div>
-            <h4 className="text-lg font-bold mb-6">Resources</h4>
+            <h4 className="text-lg font-bold mb-6">Support & Info</h4>
             <ul className="space-y-3">
-              <FooterLink href="/blog" label="Travel Blog" />
+              <FooterLink href="/how-it-works" label="How It Works" />
               <FooterLink href="/faq" label="FAQ" />
-              <FooterLink href="/visa-info" label="Visa Information" />
-              <FooterLink href="/health-safety" label="Health & Safety" />
+              <FooterLink href="/visa-info" label="Visa Assistance" />
+              <FooterLink href="/travel-insurance" label="Travel Insurance" />
               <FooterLink href="/terms" label="Terms & Conditions" />
               <FooterLink href="/privacy" label="Privacy Policy" />
             </ul>
           </div>
           
-          {/* Contact Info */}
+          {/* 24/7 Concierge Contact */}
           <div>
-            <h4 className="text-lg font-bold mb-6">Contact Us</h4>
+            <h4 className="text-lg font-bold mb-6">24/7 Concierge</h4>
             <div className="space-y-4">
               <div className="flex items-start">
                 <Mail className="text-twende-orange mr-3 mt-1 flex-shrink-0" size={18} />
-                <span className="text-gray-400">twendetravel@gmail.com</span>
+                <span className="text-gray-400">concierge@twendetravel.com</span>
               </div>
               <div className="flex items-start">
                 <Phone className="text-twende-orange mr-3 mt-1 flex-shrink-0" size={18} />
                 <span className="text-gray-400">
-                  0530862072 (Ghana)<br />
-                  0768543581 (Kenya)
+                  WhatsApp: +233 53 086 2072<br />
+                  Kenya: +254 76 854 3581
                 </span>
               </div>
               <div className="flex items-start">
                 <MapPin className="text-twende-orange mr-3 mt-1 flex-shrink-0" size={18} />
                 <span className="text-gray-400">
-                  Accra, Ghana <br />
-                  Nairobi, Kenya
+                  Local offices in Accra, Nairobi & Cape Town
                 </span>
+              </div>
+              <div className="mt-4 p-3 bg-twende-teal/20 rounded-lg">
+                <p className="text-sm text-twende-orange font-medium">
+                  🟢 Always Available - Your personal travel assistant
+                </p>
               </div>
             </div>
           </div>
         </div>
         
-        {/* Newsletter */}
+        {/* Concierge Newsletter */}
         <div className="py-8 border-t border-gray-800">
           <div className="max-w-3xl mx-auto text-center">
-            <h4 className="text-xl font-bold mb-3">Subscribe to Our Newsletter</h4>
+            <h4 className="text-xl font-bold mb-3">Get Exclusive Travel Insights</h4>
             <p className="text-gray-400 mb-6">
-              Get travel inspiration, tips, and exclusive offers right in your inbox
+              Join our community for insider tips, destination guides, and special concierge offers from our African travel experts
             </p>
             <form className="flex flex-col sm:flex-row gap-3">
               <input
                 type="email"
                 placeholder="Your email address"
-                className="input-field flex-grow text-gray-800"
+                className="flex-grow px-4 py-3 rounded-lg bg-gray-800 border border-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-twende-teal"
                 required
               />
-              <button type="submit" className="btn-secondary whitespace-nowrap">
-                Subscribe
+              <button type="submit" className="px-6 py-3 bg-twende-teal hover:bg-twende-teal/90 text-white rounded-lg font-medium transition-colors whitespace-nowrap">
+                Join Community
               </button>
             </form>
           </div>

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
-import { experienceService, type Experience } from '@/services/experiences';
+import { experiencesService, type Experience } from '@/services/experiences';
 import { Loader } from './Loader';
 
 const ExperienceSection = () => {
@@ -12,7 +12,7 @@ const ExperienceSection = () => {
   useEffect(() => {
     const fetchExperiences = async () => {
       try {
-        const data = await experienceService.getAll();
+        const data = await experiencesService.getAll();
         setExperiences(data);
       } catch (err: any) {
         setError(err.message);
@@ -139,7 +139,7 @@ const ExperienceSection = () => {
                 <p className="text-white/90 text-sm mb-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                   {experience.description}
                 </p>
-                <button className="px-4 py-2 bg-white dark:bg-twende-skyblue text-twende-teal dark:text-black font-medium rounded-lg hover:bg-opacity-90 transition-all opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                <button className="px-4 py-2 bg-white dark:bg-twende-skyblue text-twende-teal dark:text-black font-medium rounded-lg hover:bg-opacity-90 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                   Explore
                 </button>
               </div>

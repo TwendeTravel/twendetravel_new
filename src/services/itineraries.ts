@@ -1,66 +1,72 @@
 
 import { toast } from "@/components/ui/use-toast";
-import type { Database } from "@/integrations/supabase/types";
+import { COLLECTIONS, Itinerary, CreateDocumentData } from '@/lib/firebase-types';
+import { FirestoreService, firestoreHelpers } from '@/lib/firestore-service';
+import { auth } from '@/lib/firebase';
 
-export type Itinerary = Database['public']['Tables']['itineraries']['Row'];
-type ItineraryInsert = Database['public']['Tables']['itineraries']['Insert'];
+const itineraryService = new FirestoreService<Itinerary>(COLLECTIONS.ITINERARIES);
 
-export const itineraryService = {
+export const itinerariesService = {
+  firestoreService: itineraryService,
+
   async getAll() {
-    const { data, error } = await supabase
-      .from('itineraries')
-      .select(`
-        *,
-        admin:admin_id(*),
-        items:itinerary_items(*)
-      `)
-      .order('created_at', { ascending: false });
-
-    if (error) {
+    try {
+      const itineraries = await itineraryService.getWithQuery([
+        firestoreHelpers.orderBy('createdAt', 'desc')
+      ]);
+      
+      return itineraries;
+    } catch (error: any) {
+      console.error('Error fetching itineraries:', error);
       toast({
         title: "Error fetching itineraries",
-        description: error.message,
+        description: error.message || "Please try again later",
         variant: "destructive",
       });
       throw error;
     }
-
-    return data;
   },
 
   async getById(id: string) {
-    const { data, error } = await supabase
-      .from('itineraries')
-      .select(`
-        *,
-        admin:admin_id(*),
-        items:itinerary_items(
-          *,
-          flight_booking:flight_bookings(*),
-          hotel_booking:hotel_bookings(*),
-          transport_booking:transportation_bookings(*)
-        )
-      `)
-      .eq('id', id)
-      .single();
-
-    if (error) {
+    try {
+      const itinerary = await itineraryService.getById(id);
+      if (!itinerary) {
+        throw new Error('Itinerary not found');
+      }
+      return itinerary;
+    } catch (error: any) {
+      console.error('Error fetching itinerary:', error);
       toast({
         title: "Error fetching itinerary",
-        description: error.message,
+        description: error.message || "Please try again later",
         variant: "destructive",
       });
       throw error;
     }
-
-    return data;
   },
 
-  async create(itineraryData: Omit<ItineraryInsert, 'user_id' | 'created_at' | 'updated_at'>) {
-    const { data: sessionData } = await supabase.auth.getSession();
-    const userId = sessionData.session?.user.id;
+  async getUserItineraries(userId?: string) {
+    const currentUser = auth.currentUser;
+    const targetUserId = userId || currentUser?.uid;
     
-    if (!userId) {
+    if (!targetUserId) {
+      return [];
+    }
+
+    try {
+      return await itineraryService.getWithQuery([
+        firestoreHelpers.where('userId', '==', targetUserId),
+        firestoreHelpers.orderBy('createdAt', 'desc')
+      ]);
+    } catch (error) {
+      console.error('Error fetching user itineraries:', error);
+      throw error;
+    }
+  },
+
+  async create(itineraryData: CreateDocumentData<Itinerary>) {
+    const currentUser = auth.currentUser;
+    if (!currentUser) {
       toast({
         title: "Authentication Error",
         description: "You must be logged in to create an itinerary",
@@ -69,44 +75,66 @@ export const itineraryService = {
       throw new Error("User not authenticated");
     }
 
-    const { data, error } = await supabase
-      .from('itineraries')
-      .insert({
+    try {
+      const itinerary = await itineraryService.create({
         ...itineraryData,
-        user_id: userId
-      })
-      .select()
-      .single();
+        userId: itineraryData.userId || currentUser.uid,
+      });
 
-    if (error) {
+      toast({
+        title: "Success",
+        description: "Itinerary created successfully",
+      });
+
+      return itinerary;
+    } catch (error: any) {
+      console.error('Error creating itinerary:', error);
       toast({
         title: "Error creating itinerary",
-        description: error.message,
+        description: error.message || "Please try again later",
         variant: "destructive",
       });
       throw error;
     }
-
-    return data;
   },
 
   async update(id: string, itineraryData: Partial<Itinerary>) {
-    const { data, error } = await supabase
-      .from('itineraries')
-      .update(itineraryData)
-      .eq('id', id)
-      .select()
-      .single();
+    try {
+      const updatedItinerary = await itineraryService.update(id, itineraryData);
 
-    if (error) {
+      toast({
+        title: "Success",
+        description: "Itinerary updated successfully",
+      });
+
+      return updatedItinerary;
+    } catch (error: any) {
+      console.error('Error updating itinerary:', error);
       toast({
         title: "Error updating itinerary",
-        description: error.message,
+        description: error.message || "Please try again later",
         variant: "destructive",
       });
       throw error;
     }
+  },
 
-    return data;
+  async delete(id: string) {
+    try {
+      await itineraryService.delete(id);
+      
+      toast({
+        title: "Success",
+        description: "Itinerary deleted successfully",
+      });
+    } catch (error: any) {
+      console.error('Error deleting itinerary:', error);
+      toast({
+        title: "Error deleting itinerary",
+        description: error.message || "Please try again later",
+        variant: "destructive",
+      });
+      throw error;
+    }
   }
 };

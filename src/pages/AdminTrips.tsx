@@ -5,7 +5,8 @@ import { ArrowLeft } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select';
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table';
-import { supabase } from '@/lib/supabaseClient';
+import { auth } from '@/lib/firebase';
+import { supabase } from '@/lib/temp-supabase-stubs';
 import { toast } from '@/hooks/use-toast';
 import PageTransition from '@/components/PageTransition';
 import { format } from 'date-fns';
@@ -88,7 +89,7 @@ export default function AdminTrips() {
           <Input placeholder="Destination" value={form.destination} onChange={e => setForm({ ...form, destination: e.target.value })} />
           <Input type="date" placeholder="Start Date" value={form.start_date} onChange={e => setForm({ ...form, start_date: e.target.value })} />
           <Input type="date" placeholder="End Date" value={form.end_date} onChange={e => setForm({ ...form, end_date: e.target.value })} />
-          <Select value={form.status} onChange={val => setForm({ ...form, status: val })}>
+          <Select value={form.status} onValueChange={val => setForm({ ...form, status: val })}>
             <SelectTrigger className="w-[120px]">
               <SelectValue placeholder="Status" />
             </SelectTrigger>

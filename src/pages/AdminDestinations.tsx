@@ -5,7 +5,7 @@ import { ArrowLeft } from 'lucide-react';
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { destinationService, Destination } from '@/services/destinations';
+import { destinationsService, Destination } from '@/services/destinations';
 import { toast } from '@/hooks/use-toast';
 
 export default function AdminDestinations() {
@@ -19,7 +19,7 @@ export default function AdminDestinations() {
   const fetchAll = async () => {
     setLoading(true);
     try {
-      const data = await destinationService.getAll();
+      const data = await destinationsService.getAll();
       setDestinations(data);
     } catch (e: any) {
       toast({ title: 'Error loading destinations', description: e.message, variant: 'destructive' });
@@ -37,10 +37,10 @@ export default function AdminDestinations() {
     const payload = { ...form, rating: parseFloat(form.rating) };
     try {
       if (editing) {
-        await destinationService.update(editing.id, payload);
+        await destinationsService.update(editing.id, payload);
         toast({ title: 'Destination updated' });
       } else {
-        await destinationService.create(payload);
+        await destinationsService.create(payload);
         toast({ title: 'Destination created' });
       }
       resetForm(); fetchAll();
@@ -64,7 +64,7 @@ export default function AdminDestinations() {
       return;
     }
     try {
-      await destinationService.remove(id);
+      await destinationsService.remove(id);
       toast({ title: 'Deleted' });
       fetchAll();
     } catch (e: any) {

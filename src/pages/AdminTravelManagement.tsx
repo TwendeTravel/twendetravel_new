@@ -26,9 +26,9 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Link } from 'react-router-dom';
 import { format } from 'date-fns';
-import { supabase } from '@/lib/supabaseClient';
+import { auth } from '@/lib/firebase';
+import { supabase } from '@/lib/temp-supabase-stubs';
 import { roleService } from '@/services/roles';
 import { toast } from '@/hooks/use-toast';
 
@@ -71,7 +71,7 @@ export default function AdminTravelManagement() {
       const roles = await roleService.getAllUserRoles();
       const enriched = (reqData || []).map(req => ({
         ...req,
-        email: roles.find(r => r.user_id === req.user_id)?.email || 'Unknown'
+        email: roles.find(r => r.userId === req.user_id)?.email || 'Unknown'
       }));
       setServiceRequests(enriched);
 

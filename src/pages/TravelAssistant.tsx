@@ -10,6 +10,8 @@ import { useNavigate, Link } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { askGemini } from '@/services/gemini';
 import ReactMarkdown from 'react-markdown';
+import TravelPatternBackground from "@/components/ui/travel-pattern-background";
+import WhatsAppStyleTravelBackground from "@/components/ui/whatsapp-style-travel-background";
 
 const SAMPLE_SUGGESTIONS = [
   "What are the best beaches in Ghana?",
@@ -96,8 +98,11 @@ const TravelAssistant = () => {
   }, [messages]);
 
   return (
-    <div className="min-h-screen bg-background">
-      <header className="bg-card border-b border-border py-4 px-6">
+    <div className="min-h-screen bg-gradient-to-br from-twende-beige via-white to-twende-skyblue/20 relative overflow-hidden">
+      {/* Authentic WhatsApp-Style Travel Pattern Background */}
+      <WhatsAppStyleTravelBackground opacity={0.03} />
+      
+      <header className="bg-white/80 backdrop-blur border-b border-border py-4 px-6 relative z-10">
         <div className="container mx-auto flex items-center">
           <Button variant="ghost" size="icon" asChild className="mr-4">
             <Link to="/dashboard">
@@ -111,7 +116,7 @@ const TravelAssistant = () => {
         </div>
       </header>
       
-      <div className="flex-1 container mx-auto flex flex-col md:flex-row gap-6 p-6">
+      <div className="flex-1 container mx-auto flex flex-col md:flex-row gap-6 p-6 relative z-10">
         <div className="flex-1 bg-card rounded-lg shadow-md border border-border flex flex-col">
           <ScrollArea className="flex-1 p-4">
             <div className="space-y-4">

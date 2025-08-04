@@ -2,6 +2,9 @@ import { useEffect, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useRole } from "@/hooks/useRole";
 import { chatService } from "@/services/chat";
+import { conversationsService } from "@/services/conversations";
+import { messagesService } from "@/services/messages";
+import { roleService } from "@/services/roles";
 import { ChatWindow } from "@/components/chat/ChatWindow";
 import { Card } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -19,8 +22,13 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { format } from "date-fns";
 import { toast } from "@/components/ui/use-toast";
-import { supabase } from '@/lib/supabaseClient';
+import { auth } from '@/lib/firebase';
 import { useNavigate } from 'react-router-dom';
+import { supabase } from '@/lib/temp-supabase-stubs';
+import { TravelDoodles, EmptyStateIllustrations, DecorativeElements } from "@/components/ui/travel-doodles";
+import TravelPatternBackground from "@/components/ui/travel-pattern-background";
+import WhatsAppStyleTravelBackground from "@/components/ui/whatsapp-style-travel-background";
+import AuthenticWhatsAppTravelBackground from "@/components/ui/authentic-whatsapp-travel-background";
 
 interface Conversation {
   id: string;
@@ -81,7 +89,7 @@ export default function Chat() {
           .select('id, title, traveler_id, admin_id, status, created_at, updated_at')
           .order('updated_at', { ascending: false });
         if (!isAdmin) {
-          convQuery = convQuery.eq('traveler_id', user.id);
+          convQuery = convQuery.eq('traveler_id', user.uid);
         }
         const { data: convs, error: convErr } = await convQuery;
         if (convErr) throw convErr;
@@ -191,7 +199,7 @@ export default function Chat() {
       const { data: existing, error: findErr } = await supabase
         .from('conversations')
         .select('id')
-        .eq('traveler_id', user.id)
+        .eq('traveler_id', user.uid)
         .eq('admin_id', null)
         .maybeSingle();
       if (findErr) throw findErr;
@@ -199,7 +207,7 @@ export default function Chat() {
       if (!convId) {
         const { data: newConv, error: createErr } = await supabase
           .from('conversations')
-          .insert([{ traveler_id: user.id, admin_id: null, title: 'Travel Assistance Request', status: 'active', priority: 'normal', category: 'general' }])
+          .insert([{ traveler_id: user.uid, admin_id: null, title: 'Travel Assistance Request', status: 'active', priority: 'normal', category: 'general' }])
           .select('id')
           .single();
         if (createErr) throw createErr;
@@ -223,7 +231,7 @@ export default function Chat() {
         .from('conversations')
         .insert({
           traveler_id: travelerId,
-          admin_id: user.id,
+          admin_id: user.uid,
           title: `Chat with ${travelerId}`,
           status: 'active',
           priority: 'normal',
@@ -264,7 +272,11 @@ export default function Chat() {
   };
 
   return (
-    <div className="container mx-auto py-6">
+    <div className="min-h-screen bg-gradient-to-br from-twende-beige via-white to-twende-skyblue/20 relative overflow-hidden">
+      {/* Authentic WhatsApp Chat Background Style */}
+      <AuthenticWhatsAppTravelBackground opacity={0.012} />
+      
+      <div className="container mx-auto py-6 relative z-10">
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold">Conversations</h1>
         {!isAdmin ? (
@@ -297,7 +309,7 @@ export default function Chat() {
                   .from('conversations')
                   .insert({
                     traveler_id: selectedTraveller,
-                    admin_id: user.id,
+                    admin_id: user.uid,
                     title: `Chat with ${travellers.find(t => t.id === selectedTraveller)?.email || selectedTraveller}`,
                     status: 'active',
                     priority: 'normal',
@@ -478,6 +490,7 @@ export default function Chat() {
           )}
         </div>
       </div>
+    </div>
     </div>
   );
 }

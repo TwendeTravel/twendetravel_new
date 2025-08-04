@@ -15,7 +15,8 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import PageTransition from "@/components/PageTransition";
 import DashboardHeader from "@/components/dashboard/DashboardHeader";
-import { supabase } from '@/lib/supabaseClient';
+import { auth } from '@/lib/firebase';
+import { supabase } from '@/lib/temp-supabase-stubs';
 
 // GNews API configuration
 const GNEWS_API_KEY = import.meta.env.VITE_GNEWS_API_KEY;

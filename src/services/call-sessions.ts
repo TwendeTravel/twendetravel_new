@@ -1,5 +1,7 @@
 
 import { toast } from "@/components/ui/use-toast";
+import { auth } from '@/lib/firebase';
+import { supabase } from '@/lib/temp-supabase-stubs';
 import type { Database } from "@/integrations/supabase/types";
 
 export type CallSession = Database['public']['Tables']['call_sessions']['Row'];
@@ -7,10 +9,9 @@ type CallSessionInsert = Database['public']['Tables']['call_sessions']['Insert']
 
 export const callSessionService = {
   async create(callData: Omit<CallSessionInsert, 'initiator_id' | 'created_at' | 'updated_at'>) {
-    const { data: sessionData } = await supabase.auth.getSession();
-    const userId = sessionData.session?.user.id;
+    const currentUser = auth.currentUser;
     
-    if (!userId) {
+    if (!currentUser) {
       toast({
         title: "Authentication Error",
         description: "You must be logged in to start a call",
@@ -23,7 +24,7 @@ export const callSessionService = {
       .from('call_sessions')
       .insert({
         ...callData,
-        initiator_id: userId
+        initiator_id: currentUser.uid
       })
       .select()
       .single();

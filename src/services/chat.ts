@@ -1,53 +1,88 @@
 // filepath: src/services/chat.ts
-import { supabase } from '@/lib/supabaseClient'
-import { messageService } from './messages'
-import { toast } from '@/components/ui/use-toast'
+import { COLLECTIONS, Conversation } from '@/lib/firebase-types';
+import { FirestoreService, firestoreHelpers } from '@/lib/firestore-service';
+import { messagesService } from './messages';
+import { conversationsService } from './conversations';
+import { auth } from '@/lib/firebase';
+import { toast } from '@/components/ui/use-toast';
+
+const conversationService = new FirestoreService<Conversation>(COLLECTIONS.CONVERSATIONS);
 
 export const chatService = {
   // Fetch all messages for a conversation
   async getMessages(conversationId: string) {
-    // use messageService to include sender email
-    return await messageService.list(conversationId);
+    try {
+      return await messagesService.list(conversationId);
+    } catch (error) {
+      console.error('Error fetching messages:', error);
+      throw error;
+    }
   },
+
   async getConversation(id: string) {
-    const { data, error } = await supabase
-      .from('conversations')
-      .select('*')
-      .eq('id', id)
-      .single()
-    if (error) throw error
-    return data
+    try {
+      const conversation = await conversationService.getById(id);
+      if (!conversation) {
+        throw new Error('Conversation not found');
+      }
+      return conversation;
+    } catch (error) {
+      console.error('Error fetching conversation:', error);
+      throw error;
+    }
   },
+
   async sendMessage(conversation_id: string, text: string) {
-    // Retrieve authenticated user
-    const { data: sessionData, error: sessErr } = await supabase.auth.getSession();
-    if (sessErr) throw sessErr;
-    const userId = sessionData.session?.user.id;
-    if (!userId) throw new Error('User not authenticated');
-    const { data, error } = await supabase
-      .from('messages')
-      .insert({ conversation_id, text, sender_id: userId })
-      .select()
-      .single();
-    if (error) throw error;
-    return data;
+    const currentUser = auth.currentUser;
+    if (!currentUser) {
+      throw new Error('User not authenticated');
+    }
+
+    try {
+      const message = await messagesService.send({
+        conversation_id,
+        content: text
+      });
+
+      // Update conversation's updatedAt timestamp
+      await conversationService.update(conversation_id, {
+        updatedAt: firestoreHelpers.now()
+      });
+
+      return message;
+    } catch (error) {
+      console.error('Error sending message:', error);
+      toast({
+        title: "Error sending message",
+        description: "Please try again later",
+        variant: "destructive",
+      });
+      throw error;
+    }
   },
+
   // Subscribe to new messages in a conversation
   subscribeToMessages(conversationId: string, callback: (msg: any) => void) {
-    return supabase
-      .channel(`public:messages:conversation_id=eq.${conversationId}`)
-      .on('postgres_changes', {
-        event: 'INSERT', schema: 'public', table: 'messages', filter: `conversation_id=eq.${conversationId}`
-      }, payload => callback(payload.new))
-      .subscribe();
+    return messagesService.subscribeToNewMessages(conversationId, callback);
   },
+
   // Subscribe to updates (e.g., status changes) on a conversation
-  subscribeToConversationUpdates(conversationId: string, callback: (conv: any) => void) {
-    return supabase
-      .channel(`public:conversations:id=eq.${conversationId}`)
-      .on('postgres_changes', {
-        event: 'UPDATE', schema: 'public', table: 'conversations', filter: `id=eq.${conversationId}`
-      }, payload => callback(payload.new))
-      .subscribe();
+  subscribeToConversationUpdates(conversationId: string, callback: (conv: Conversation) => void) {
+    return conversationService.subscribeToDoc(conversationId, callback);
   },
-}
+
+  // Get or create a support conversation for the current user
+  async getOrCreateSupportConversation() {
+    const currentUser = auth.currentUser;
+    if (!currentUser) {
+      throw new Error('User not authenticated');
+    }
+
+    try {
+      return await conversationsService.getOrCreateSupportConversation(currentUser.uid);
+    } catch (error) {
+      console.error('Error getting/creating support conversation:', error);
+      throw error;
+    }
+  }
+};

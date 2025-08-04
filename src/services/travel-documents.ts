@@ -1,5 +1,7 @@
 
 import { toast } from "@/components/ui/use-toast";
+import { auth } from '@/lib/firebase';
+import { supabase } from '@/lib/temp-supabase-stubs';
 import type { Database } from "@/integrations/supabase/types";
 
 export type TravelDocument = Database['public']['Tables']['travel_documents']['Row'];
@@ -7,13 +9,13 @@ type TravelDocumentInsert = Database['public']['Tables']['travel_documents']['In
 
 export const travelDocumentService = {
   async getCurrentUserDocuments() {
-    const { data: sessionData } = await supabase.auth.getSession();
-    if (!sessionData.session?.user) return null;
+    const currentUser = auth.currentUser;
+    if (!currentUser) return null;
 
     const { data, error } = await supabase
       .from('travel_documents')
       .select('*')
-      .eq('user_id', sessionData.session.user.id)
+      .eq('user_id', currentUser.uid)
       .single();
 
     if (error && error.code !== 'PGRST116') { // Not found error
@@ -29,10 +31,9 @@ export const travelDocumentService = {
   },
 
   async upsert(documentData: Omit<TravelDocumentInsert, 'user_id' | 'created_at' | 'updated_at'>) {
-    const { data: sessionData } = await supabase.auth.getSession();
-    const userId = sessionData.session?.user.id;
+    const currentUser = auth.currentUser;
     
-    if (!userId) {
+    if (!currentUser) {
       toast({
         title: "Authentication Error",
         description: "You must be logged in to update travel documents",
@@ -45,7 +46,7 @@ export const travelDocumentService = {
       .from('travel_documents')
       .upsert({
         ...documentData,
-        user_id: userId,
+        user_id: currentUser.uid,
         updated_at: new Date().toISOString()
       })
       .select()

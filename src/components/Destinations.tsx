@@ -3,7 +3,7 @@ import DestinationCard from './DestinationCard';
 import { useSavedDestinations } from '@/hooks/useSavedDestinations';
 import { Loader } from './Loader';
 import { toast } from '@/components/ui/use-toast';
-import { destinationService, type Destination } from '@/services/destinations';
+import { destinationsService, type Destination } from '@/services/destinations';
 import { useNavigate } from 'react-router-dom';
 
 const Destinations = () => {
@@ -18,7 +18,7 @@ const Destinations = () => {
     const fetchDestinations = async () => {
       try {
         setIsLoading(true);
-        const data = await destinationService.getAll();
+        const data = await destinationsService.getAll();
         setDestinations(data);
       } catch (err: any) {
         console.error('Error fetching destinations:', err);

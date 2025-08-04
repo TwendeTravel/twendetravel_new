@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
+import AuthContextModule from '@/contexts/AuthContext';
 import { permissionService, PermissionRecord } from '@/services/roles';
+
+const { useAuth } = AuthContextModule;
 
 /**
  * Hook to determine the current user's role based on the `roles` table.
@@ -23,11 +25,16 @@ export function useRole() {
         return;
       }
       try {
-        const rec: PermissionRecord = await permissionService.getUserPermission(user.id);
+        const rec: PermissionRecord = await permissionService.getUserPermission(user.uid);
         setIsAdmin(rec.permission === 1);
         setIsTraveller(rec.permission === 0);
-      } catch (err) {
+      } catch (err: any) {
         console.error('Error fetching permission:', err);
+        // Handle network errors gracefully - default to traveller role
+        if (err.code === 'unavailable' || err.code === 'failed-precondition' || 
+            err.message?.includes('offline') || err.message?.includes('network')) {
+          console.warn('Network unavailable, defaulting to traveller role');
+        }
         setIsAdmin(false);
         setIsTraveller(true);
       } finally {
